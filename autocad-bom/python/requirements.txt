@@ -1,0 +1,2 @@
+ezdxf>=0.18
+openpyxl>=3.0
