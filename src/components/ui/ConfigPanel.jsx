@@ -133,7 +133,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
         onPointerDown={onPointerDown}
       >
-        <span className="text-white font-bold text-sm">선반 구성 도구</span>
+        <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
         <div className="flex gap-2 items-center">
           <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs">📷</button>
           <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs">
@@ -204,7 +204,7 @@ function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
       >
         <div className="p-4">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-white font-bold text-sm">선반 구성 도구</span>
+            <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
             <div className="flex gap-2">
               <button onClick={onScreenshot} className="text-white/70 hover:text-white text-xs">📷</button>
               <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
