@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
@@ -43,85 +43,139 @@ function useDraggable(initialPos) {
   return { pos, onPointerDown }
 }
 
-export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
-  const [collapsed, setCollapsed] = useState(false)
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
+// 공통 패널 내용
+function PanelContent({ onCameraPreset, onScreenshot, onArMode, collapsed, setCollapsed }) {
   const { mode, renderMode, setRenderMode } = useShelfStore()
+  const ModePanel = MODE_PANELS[mode] || ShelfMode
+
+  return (
+    <>
+      {/* Render mode toggle */}
+      <div className="flex gap-1 mb-3">
+        {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
+          <button
+            key={val}
+            onClick={() => setRenderMode(val)}
+            className={`flex-1 py-1 rounded-lg text-xs font-medium transition-all
+              ${renderMode === val
+                ? 'bg-white/30 text-white'
+                : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
+          >
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      <ModePanel />
+      <BomPanel />
+      <CameraPresetButtons onPreset={onCameraPreset} />
+
+      <button
+        onClick={onArMode}
+        className="w-full mt-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-all"
+      >
+        📷 공간 사진으로 시뮬레이션
+      </button>
+    </>
+  )
+}
+
+// 데스크탑: 드래그 가능 플로팅 패널
+function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
+  const [collapsed, setCollapsed] = useState(false)
   const { pos, onPointerDown } = useDraggable({
     x: window.innerWidth - 300,
     y: Math.round(window.innerHeight / 2) - 200,
   })
 
-  const ModePanel = MODE_PANELS[mode] || ShelfMode
-
   return (
     <div
       className="config-panel fixed z-10 w-72 p-4 select-none"
-      style={{
-        left: pos.x,
-        top: pos.y,
-        maxHeight: 'calc(100vh - 80px)',
-        overflowY: 'auto',
-      }}
+      style={{ left: pos.x, top: pos.y, maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}
     >
-      {/* Header — drag handle */}
       <div
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing"
         onPointerDown={onPointerDown}
       >
         <span className="text-white font-bold text-sm">선반 구성 도구</span>
         <div className="flex gap-2 items-center">
-          <button
-            onClick={onScreenshot}
-            title="스크린샷"
-            className="text-white/70 hover:text-white text-xs transition-all"
-          >
-            📷
-          </button>
-          <button
-            onClick={() => setCollapsed(v => !v)}
-            className="text-white/70 hover:text-white text-xs transition-all"
-          >
+          <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs">📷</button>
+          <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs">
             {collapsed ? '▼' : '▲'}
           </button>
         </div>
       </div>
-
       {!collapsed && (
-        <>
-          {/* Render mode toggle */}
-          <div className="flex gap-1 mb-3">
-            {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
-              <button
-                key={val}
-                onClick={() => setRenderMode(val)}
-                className={`flex-1 py-1 rounded-lg text-xs font-medium transition-all
-                  ${renderMode === val
-                    ? 'bg-white/30 text-white'
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
-              >
-                {lbl}
-              </button>
-            ))}
-          </div>
-
-          {/* Mode-specific params */}
-          <ModePanel />
-
-          {/* BOM */}
-          <BomPanel />
-
-          {/* Camera presets */}
-          <CameraPresetButtons onPreset={onCameraPreset} />
-
-          {/* AR photo mode */}
-          <button
-            onClick={onArMode}
-            className="w-full mt-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-all"
-          >
-            📷 공간 사진으로 시뮬레이션
-          </button>
-        </>
+        <PanelContent
+          onCameraPreset={onCameraPreset}
+          onScreenshot={onScreenshot}
+          onArMode={onArMode}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+        />
       )}
     </div>
   )
+}
+
+// 모바일: 하단 슬라이드업 시트
+function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      {/* 하단 탭 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-center pb-2 pointer-events-none">
+        <button
+          className="pointer-events-auto config-panel px-6 py-2 rounded-full text-white text-sm font-bold shadow-lg"
+          onClick={() => setOpen(v => !v)}
+        >
+          선반 구성 도구 {open ? '▼' : '▲'}
+        </button>
+      </div>
+
+      {/* 슬라이드업 시트 */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-10 config-panel rounded-t-2xl transition-transform duration-300"
+        style={{
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          maxHeight: '75vh',
+          overflowY: 'auto',
+          paddingBottom: '60px',
+        }}
+      >
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-white font-bold text-sm">선반 구성 도구</span>
+            <div className="flex gap-2">
+              <button onClick={onScreenshot} className="text-white/70 hover:text-white text-xs">📷</button>
+              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
+            </div>
+          </div>
+          <PanelContent
+            onCameraPreset={onCameraPreset}
+            onScreenshot={onScreenshot}
+            onArMode={onArMode}
+          />
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
+  const isMobile = useIsMobile()
+  return isMobile
+    ? <MobilePanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
+    : <DesktopPanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
 }

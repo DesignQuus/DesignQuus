@@ -1,4 +1,4 @@
-import { Suspense, useRef, useCallback } from 'react'
+import { Suspense, useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
@@ -22,6 +22,24 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       controlsRef.current.update()
     }
   }, [camera, height])
+
+  // ISO 모드 전환 시 카메라 앵글 자동 변경
+  const prevRenderMode = useRef(renderMode)
+  useEffect(() => {
+    if (renderMode === prevRenderMode.current) return
+    prevRenderMode.current = renderMode
+    if (renderMode === 'technical') {
+      // ISO 등축 앵글 (45° 수평, 35° 수직)
+      const d = 20
+      camera.position.set(d, d * 0.7, d)
+      const target = new THREE.Vector3(0, height / 200, 0)
+      camera.lookAt(target)
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(target)
+        controlsRef.current.update()
+      }
+    }
+  }, [renderMode, camera, height])
 
   // Expose screenshot handler
   screenshotRef.current = useCallback(() => {
@@ -91,13 +109,14 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       />
 
       {/* ViewCube gizmo */}
-      <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+      <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
         <GizmoViewcube
           faces={['우', '좌', '위', '아래', '앞', '뒤']}
-          color="#d1d5db"
+          color={renderMode === 'technical' ? '#e2e8f0' : '#2d2d4e'}
           hoverColor="#7c3aed"
-          textColor="#1f2937"
-          strokeColor="#555555"
+          textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
+          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6366f1'}
+          opacity={0.9}
         />
       </GizmoHelper>
     </>
