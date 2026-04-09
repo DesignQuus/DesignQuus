@@ -1,13 +1,6 @@
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
-const btnStyle = (active) => ({
-  flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 500,
-  border: 'none', cursor: 'pointer',
-  background: active ? '#F97316' : '#F3F4F6',
-  color: active ? '#ffffff' : '#6B7280',
-})
-
 export default function ShelfMode() {
   const {
     width, setWidth,
@@ -24,11 +17,19 @@ export default function ShelfMode() {
       <SliderRow label="깊이" value={depth}  min={300} max={900}  step={50}  onChange={setDepth} />
       <SliderRow label="선반 수" value={shelfCount} min={1} max={10} step={1} unit="단" onChange={setShelfCount} />
 
-      <div style={{ marginTop: 10 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: '#374151', display: 'block', marginBottom: 6 }}>바닥 발</span>
-        <div style={{ display: 'flex', gap: 6 }}>
+      <div className="mt-3">
+        <span className="text-xs font-medium text-white/90 block mb-2">바닥 발</span>
+        <div className="flex gap-2">
           {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
-            <button key={val} onClick={() => setFeetType(val)} style={btnStyle(feetType === val)}>
+            <button
+              key={val}
+              onClick={() => setFeetType(val)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
+                ${feetType === val
+                  ? 'bg-teal-400 text-white shadow-md'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+                }`}
+            >
               {lbl}
             </button>
           ))}

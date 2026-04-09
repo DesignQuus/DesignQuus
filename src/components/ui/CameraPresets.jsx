@@ -1,5 +1,7 @@
-import * as THREE from 'three'
+import { useRef } from 'react'
 import { useThree } from '@react-three/fiber'
+import { useSpring } from '@react-spring/three'
+import * as THREE from 'three'
 
 const PRESETS = [
   { label: '정면', pos: [0, 8, 16] },
@@ -29,15 +31,12 @@ export function useCameraPreset() {
 // UI buttons rendered in DOM (outside Canvas)
 export default function CameraPresetButtons({ onPreset }) {
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
+    <div className="flex gap-1 mt-3 border-t border-white/20 pt-3">
       {PRESETS.map(({ label, pos }) => (
         <button
           key={label}
           onClick={() => onPreset(pos)}
-          style={{
-            flex: 1, padding: '5px 0', background: '#F3F4F6', color: '#374151',
-            fontSize: 11, borderRadius: 6, border: 'none', cursor: 'pointer',
-          }}
+          className="flex-1 py-1 bg-white/20 hover:bg-white/30 text-white text-xs rounded-lg transition-all"
         >
           {label}
         </button>

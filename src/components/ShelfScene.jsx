@@ -51,7 +51,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
     link.click()
   }, [gl, scene, camera, width, height])
 
-  const bgColor = renderMode === 'technical' ? '#f0f4ff' : '#F5F0E8'
+  const bgColor = renderMode === 'technical' ? '#f0f4ff' : '#1a1a2e'
 
   return (
     <>
@@ -112,10 +112,10 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       <GizmoHelper alignment="bottom-right" margin={[100, 100]}>
         <GizmoViewcube
           faces={['우', '좌', '위', '아래', '앞', '뒤']}
-          color={renderMode === 'technical' ? '#e2e8f0' : '#e2e8f0'}
-          hoverColor="#F97316"
-          textColor={renderMode === 'technical' ? '#1f2937' : '#374151'}
-          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#9CA3AF'}
+          color={renderMode === 'technical' ? '#e2e8f0' : '#2d2d4e'}
+          hoverColor="#7c3aed"
+          textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
+          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6366f1'}
           opacity={0.9}
         />
       </GizmoHelper>
