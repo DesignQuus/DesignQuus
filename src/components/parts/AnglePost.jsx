@@ -14,19 +14,22 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], render
   const THICK  = 0.012  // 1.2mm outer wall thickness
   const LIP    = 0.014  // 1.4mm inner return lip
 
-  // L-shaped cross section with inner return lips (from DXF)
+  // Correct L-section cross section (DXF accurate)
+  // Two arms meeting at corner, each with return lip at free end
   const postGeo = useMemo(() => {
     const shape = new THREE.Shape()
+
+    // Clockwise from outer top-left corner:
     shape.moveTo(0, 0)
-    shape.lineTo(FLANGE, 0)                         // top outer edge
-    shape.lineTo(FLANGE, THICK)                     // right outer wall
-    shape.lineTo(FLANGE - LIP, THICK)               // right inner lip
-    shape.lineTo(FLANGE - LIP, THICK + LIP)         // right lip end
-    shape.lineTo(THICK + LIP, THICK + LIP)          // inner horizontal
-    shape.lineTo(THICK + LIP, FLANGE - LIP)         // inner vertical
-    shape.lineTo(THICK, FLANGE - LIP)               // bottom lip left
-    shape.lineTo(THICK, FLANGE)                     // left outer wall
-    shape.lineTo(0, FLANGE)                         // left outer edge
+    shape.lineTo(FLANGE, 0)              // horizontal arm — top outer edge
+    shape.lineTo(FLANGE, THICK + LIP)   // right end: outer wall + return lip down
+    shape.lineTo(FLANGE - LIP, THICK + LIP) // right return lip inward
+    shape.lineTo(FLANGE - LIP, THICK)   // right return lip top
+    shape.lineTo(THICK, THICK)          // inner horizontal to inner corner
+    shape.lineTo(THICK, FLANGE - LIP)   // inner vertical
+    shape.lineTo(THICK + LIP, FLANGE - LIP) // bottom return lip step
+    shape.lineTo(THICK + LIP, FLANGE)   // bottom return lip down
+    shape.lineTo(0, FLANGE)             // vertical arm — left outer edge
     shape.closePath()
 
     const extrudeSettings = {
