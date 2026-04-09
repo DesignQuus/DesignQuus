@@ -10,19 +10,23 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], render
   const x = positionMm[0] * SCALE
   const z = positionMm[1] * SCALE
 
-  const FLANGE = 0.35  // 35mm flange width
-  const THICK  = 0.04  // 4mm wall thickness
+  const FLANGE = 0.35   // 35mm flange width
+  const THICK  = 0.012  // 1.2mm outer wall thickness
+  const LIP    = 0.014  // 1.4mm inner return lip
 
-  // L-shaped cross section via ExtrudeGeometry
+  // L-shaped cross section with inner return lips (from DXF)
   const postGeo = useMemo(() => {
     const shape = new THREE.Shape()
-    // Draw L from bottom-left, counterclockwise
     shape.moveTo(0, 0)
-    shape.lineTo(FLANGE, 0)
-    shape.lineTo(FLANGE, THICK)
-    shape.lineTo(THICK, THICK)
-    shape.lineTo(THICK, FLANGE)
-    shape.lineTo(0, FLANGE)
+    shape.lineTo(FLANGE, 0)                         // top outer edge
+    shape.lineTo(FLANGE, THICK)                     // right outer wall
+    shape.lineTo(FLANGE - LIP, THICK)               // right inner lip
+    shape.lineTo(FLANGE - LIP, THICK + LIP)         // right lip end
+    shape.lineTo(THICK + LIP, THICK + LIP)          // inner horizontal
+    shape.lineTo(THICK + LIP, FLANGE - LIP)         // inner vertical
+    shape.lineTo(THICK, FLANGE - LIP)               // bottom lip left
+    shape.lineTo(THICK, FLANGE)                     // left outer wall
+    shape.lineTo(0, FLANGE)                         // left outer edge
     shape.closePath()
 
     const extrudeSettings = {
