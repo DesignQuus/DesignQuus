@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
@@ -16,39 +16,37 @@ const MODE_PANELS = {
 
 function useDraggable(initialPos) {
   const [pos, setPos] = useState(initialPos)
-  const dragging = useRef(false)
-  const offset = useRef({ x: 0, y: 0 })
+  const posRef = useRef(pos)
+  posRef.current = pos
 
-  const onMouseDown = useCallback((e) => {
+  const onPointerDown = useCallback((e) => {
     if (e.target.closest('button, input, a, select')) return
-    dragging.current = true
-    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
     e.preventDefault()
-  }, [pos])
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const startX = e.clientX - posRef.current.x
+    const startY = e.clientY - posRef.current.y
 
-  useEffect(() => {
-    function onMouseMove(e) {
-      if (!dragging.current) return
-      const x = Math.max(0, Math.min(window.innerWidth - 288, e.clientX - offset.current.x))
-      const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - offset.current.y))
+    function onMove(ev) {
+      const x = Math.max(0, Math.min(window.innerWidth - 288, ev.clientX - startX))
+      const y = Math.max(0, Math.min(window.innerHeight - 60, ev.clientY - startY))
       setPos({ x, y })
     }
-    function onMouseUp() { dragging.current = false }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
+    function onUp() {
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
     }
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
   }, [])
 
-  return { pos, onMouseDown }
+  return { pos, onPointerDown }
 }
 
 export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
   const { mode, renderMode, setRenderMode } = useShelfStore()
-  const { pos, onMouseDown } = useDraggable({
+  const { pos, onPointerDown } = useDraggable({
     x: window.innerWidth - 300,
     y: Math.round(window.innerHeight / 2) - 200,
   })
@@ -68,7 +66,7 @@ export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) 
       {/* Header — drag handle */}
       <div
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing"
-        onMouseDown={onMouseDown}
+        onPointerDown={onPointerDown}
       >
         <span className="text-white font-bold text-sm">선반 구성 도구</span>
         <div className="flex gap-2 items-center">
