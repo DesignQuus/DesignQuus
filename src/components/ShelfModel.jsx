@@ -13,7 +13,7 @@ const BOARD_THICK = 25
 const BOTTOM_Y = 100
 
 export default function ShelfModel() {
-  const { camera, gl } = useThree()
+  const { camera, gl, controls } = useThree()
   const {
     width, height, depth,
     shelfPositions,
@@ -48,7 +48,8 @@ export default function ShelfModel() {
     dragIdxRef.current = i
     setSelectedShelfIdx(i)
     document.body.style.cursor = 'grabbing'
-  }, [setSelectedShelfIdx])
+    if (controls) controls.enabled = false
+  }, [setSelectedShelfIdx, controls])
 
   useEffect(() => {
     function onPointerMove(e) {
@@ -69,6 +70,7 @@ export default function ShelfModel() {
       if (dragIdxRef.current >= 0) {
         dragIdxRef.current = -1
         document.body.style.cursor = 'auto'
+        if (controls) controls.enabled = true
       }
     }
 
@@ -78,7 +80,7 @@ export default function ShelfModel() {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
-  }, [camera, gl, height, raycaster, dragPlane, dragTarget, setShelfPosition])
+  }, [camera, gl, controls, height, raycaster, dragPlane, dragTarget, setShelfPosition])
 
   return (
     <group>
