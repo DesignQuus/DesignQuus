@@ -21,10 +21,15 @@ const useShelfStore = create((set, get) => ({
   // active product mode
   mode: urlParams.mode || 'shelf',
 
-  // main dimensions (mm)
+  // main dimensions (mm) — 선반 규격
   width: urlParams.width || 900,
   height: urlParams.height || 2400,
   depth: urlParams.depth || 450,
+
+  // installation space dimensions (mm) — 설치 가상 공간
+  spaceWidth:  urlParams.spaceWidth  || 1100,
+  spaceHeight: urlParams.spaceHeight || 2600,
+  spaceDepth:  urlParams.spaceDepth  || 650,
 
   // shelf count (between bottom and top board)
   shelfCount: urlParams.shelfCount || 4,
@@ -100,6 +105,10 @@ const useShelfStore = create((set, get) => ({
   setSelectedShelfIdx: (idx) => set({ selectedShelfIdx: idx }),
 
   setArMode: (arMode) => set({ arMode }),
+
+  setSpaceWidth:  (v) => { set({ spaceWidth: v });  syncToUrl(get()) },
+  setSpaceHeight: (v) => { set({ spaceHeight: v }); syncToUrl(get()) },
+  setSpaceDepth:  (v) => { set({ spaceDepth: v });  syncToUrl(get()) },
 
   setWasherWidth: (v) => set({ washerWidth: v }),
   setWasherHeight: (v) => set({ washerHeight: v }),

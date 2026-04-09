@@ -10,7 +10,7 @@ import useShelfStore from '../store/useShelfStore.js'
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
-  const { width, height, depth, renderMode } = useShelfStore()
+  const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode } = useShelfStore()
 
   // Expose camera preset handler
   cameraRef.current = useCallback((pos) => {
@@ -88,7 +88,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       <FloorGrid />
 
       {/* Bounding box */}
-      <BoundingBox width={width} height={height} depth={depth} />
+      <BoundingBox width={spaceWidth} height={spaceHeight} depth={spaceDepth} />
 
       {/* Shelf model */}
       <Suspense fallback={null}>
