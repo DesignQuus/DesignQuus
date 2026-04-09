@@ -1,0 +1,47 @@
+import { useRef, useState, useCallback } from 'react'
+import ModeTab from './components/ui/ModeTab.jsx'
+import ConfigPanel from './components/ui/ConfigPanel.jsx'
+import ShelfScene from './components/ShelfScene.jsx'
+import PhotoARMode from './components/ar/PhotoARMode.jsx'
+import useShelfStore from './store/useShelfStore.js'
+
+export default function App() {
+  const { arMode, setArMode } = useShelfStore()
+  const cameraRef = useRef(() => {})
+  const controlsRef = useRef(null)
+  const screenshotRef = useRef(() => {})
+
+  const handleCameraPreset = useCallback((pos) => {
+    cameraRef.current?.(pos)
+  }, [])
+
+  const handleScreenshot = useCallback(() => {
+    screenshotRef.current?.()
+  }, [])
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {/* 3D Viewport */}
+      <ShelfScene
+        cameraRef={cameraRef}
+        controlsRef={controlsRef}
+        screenshotRef={screenshotRef}
+      />
+
+      {/* Mode tabs — top */}
+      <ModeTab />
+
+      {/* Config panel — right */}
+      <ConfigPanel
+        onCameraPreset={handleCameraPreset}
+        onScreenshot={handleScreenshot}
+        onArMode={() => setArMode(true)}
+      />
+
+      {/* Photo AR overlay */}
+      {arMode && (
+        <PhotoARMode onClose={() => setArMode(false)} />
+      )}
+    </div>
+  )
+}
