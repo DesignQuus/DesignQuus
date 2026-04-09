@@ -2,23 +2,23 @@
 .panel-scroll::-webkit-scrollbar { display: none; }
 .panel-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 
-/* 플로팅 패널 — 보라 그라디언트 */
+/* 플로팅 패널 — 다크 네이비 */
 .config-panel {
-  background: linear-gradient(135deg, #c8b4e8 0%, #b8a4f0 50%, #a89ee8 100%);
+  background: linear-gradient(135deg, #1e2535 0%, #15192b 50%, #111827 100%);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(120, 80, 200, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
-/* 틸(Teal) 슬라이더 */
+/* 오렌지 슬라이더 */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25);
   outline: none;
-  accent-color: #2dd4bf;
+  accent-color: #f97316;
 }
 
 input[type='range']::-webkit-slider-thumb {
@@ -27,19 +27,19 @@ input[type='range']::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: #f97316;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(45, 212, 191, 0.5);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.5);
 }
 
 input[type='range']::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2dd4bf;
+  background: #f97316;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 6px rgba(45, 212, 191, 0.5);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.5);
 }
 
 /* 모드 탭 */
@@ -71,7 +71,7 @@ input[type='range']::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: #f97316;
   border: 3px solid white;
   cursor: grab;
   transform: translate(-50%, -50%);
@@ -82,7 +82,7 @@ input[type='range']::-moz-range-thumb {
 
 .corner-pin:active {
   cursor: grabbing;
-  background: #5b21b6;
+  background: #ea580c;
 }
 
 .corner-pin-label {

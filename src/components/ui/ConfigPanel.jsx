@@ -82,7 +82,7 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode }) {
 
       <button
         onClick={onArMode}
-        className="w-full mt-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-all"
+        className="w-full mt-3 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-medium rounded-lg transition-all"
       >
         📷 공간 사진으로 시뮬레이션
       </button>

@@ -61,7 +61,7 @@ export default function ShelfMode() {
                     onClick={() => setFeetType(val)}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
                       ${feetType === val
-                        ? 'bg-teal-400 text-white shadow-md'
+                        ? 'bg-orange-500 text-white shadow-md'
                         : 'bg-white/20 text-white/80 hover:bg-white/30'
                       }`}
                   >

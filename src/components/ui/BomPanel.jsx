@@ -58,7 +58,7 @@ export default function BomPanel() {
               href="https://dekiri.com"
               target="_blank"
               rel="noreferrer"
-              className="flex-1 py-1.5 bg-teal-400 hover:bg-teal-300 text-white text-xs rounded-lg text-center transition-all"
+              className="flex-1 py-1.5 bg-orange-500 hover:bg-orange-400 text-white text-xs rounded-lg text-center transition-all"
             >
               견적 문의
             </a>
