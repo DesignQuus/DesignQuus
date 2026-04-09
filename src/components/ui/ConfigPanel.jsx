@@ -1,4 +1,3 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
@@ -7,175 +6,76 @@ import AquariumMode from '../modes/AquariumMode.jsx'
 import BomPanel from './BomPanel.jsx'
 import CameraPresetButtons from './CameraPresets.jsx'
 
-const MODE_PANELS = {
-  shelf:     ShelfMode,
-  washer:    WasherMode,
-  dressroom: DressroomMode,
-  aquarium:  AquariumMode,
-}
+const MODE_PANELS = { shelf: ShelfMode, washer: WasherMode, dressroom: DressroomMode, aquarium: AquariumMode }
+const MODE_TITLES = { shelf: '선반 시리즈', washer: '세탁기선반', dressroom: '드레스룸', aquarium: '축양장' }
 
-function useDraggable(initialPos) {
-  const [pos, setPos] = useState(initialPos)
-  const posRef = useRef(pos)
-  posRef.current = pos
-
-  const onPointerDown = useCallback((e) => {
-    if (e.target.closest('button, input, a, select')) return
-    e.preventDefault()
-    const el = e.currentTarget
-    el.setPointerCapture(e.pointerId)
-    const startX = e.clientX - posRef.current.x
-    const startY = e.clientY - posRef.current.y
-
-    function onMove(ev) {
-      const x = Math.max(0, Math.min(window.innerWidth - 288, ev.clientX - startX))
-      const y = Math.max(0, Math.min(window.innerHeight - 60, ev.clientY - startY))
-      setPos({ x, y })
-    }
-    function onUp() {
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerup', onUp)
-    }
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp)
-  }, [])
-
-  return { pos, onPointerDown }
-}
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-  return isMobile
-}
-
-// 공통 패널 내용
-function PanelContent({ onCameraPreset, onScreenshot, onArMode, collapsed, setCollapsed }) {
-  const { mode, renderMode, setRenderMode } = useShelfStore()
+export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
+  const { mode, width, height, depth } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
   return (
-    <>
-      {/* Render mode toggle */}
-      <div className="flex gap-1 mb-3">
-        {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
-          <button
-            key={val}
-            onClick={() => setRenderMode(val)}
-            className={`flex-1 py-1 rounded-lg text-xs font-medium transition-all
-              ${renderMode === val
-                ? 'bg-white/30 text-white'
-                : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
-          >
-            {lbl}
-          </button>
-        ))}
-      </div>
-
-      <ModePanel />
-      <BomPanel />
-      <CameraPresetButtons onPreset={onCameraPreset} />
-
-      <button
-        onClick={onArMode}
-        className="w-full mt-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-all"
-      >
-        📷 공간 사진으로 시뮬레이션
-      </button>
-    </>
-  )
-}
-
-// 데스크탑: 드래그 가능 플로팅 패널
-function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
-  const [collapsed, setCollapsed] = useState(false)
-  const { pos, onPointerDown } = useDraggable({
-    x: window.innerWidth - 300,
-    y: Math.round(window.innerHeight / 2) - 200,
-  })
-
-  return (
-    <div
-      className="config-panel fixed z-10 w-72 p-4 select-none"
-      style={{ left: pos.x, top: pos.y, maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}
-    >
-      <div
-        className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing"
-        onPointerDown={onPointerDown}
-      >
-        <span className="text-white font-bold text-sm">선반 구성 도구</span>
-        <div className="flex gap-2 items-center">
-          <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs">📷</button>
-          <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs">
-            {collapsed ? '▼' : '▲'}
-          </button>
+    <div style={{
+      width: 300, flexShrink: 0,
+      background: '#FFFFFF', borderRight: '1px solid #E5E7EB',
+      display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #F3F4F6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <span style={{ fontSize: 14 }}>📐</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#1F2937' }}>{MODE_TITLES[mode]}</span>
         </div>
+        <span style={{ fontSize: 11, color: '#9CA3AF' }}>치수를 설정하고 3D로 확인하세요</span>
       </div>
-      {!collapsed && (
-        <PanelContent
-          onCameraPreset={onCameraPreset}
-          onScreenshot={onScreenshot}
-          onArMode={onArMode}
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-        />
-      )}
-    </div>
-  )
-}
 
-// 모바일: 하단 슬라이드업 시트
-function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
-  const [open, setOpen] = useState(false)
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+        <ModePanel />
 
-  return (
-    <>
-      {/* 하단 탭 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-center pb-2 pointer-events-none">
-        <button
-          className="pointer-events-auto config-panel px-6 py-2 rounded-full text-white text-sm font-bold shadow-lg"
-          onClick={() => setOpen(v => !v)}
-        >
-          선반 구성 도구 {open ? '▼' : '▲'}
+        <div style={{ marginTop: 8, borderTop: '1px solid #F3F4F6', paddingTop: 12 }}>
+          <BomPanel />
+        </div>
+
+        <div style={{ marginTop: 8, borderTop: '1px solid #F3F4F6', paddingTop: 12 }}>
+          <CameraPresetButtons onPreset={onCameraPreset} />
+        </div>
+
+        <button onClick={onArMode} style={{
+          width: '100%', marginTop: 10, padding: '9px',
+          background: '#F97316', color: '#FFFFFF', border: 'none',
+          borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        }}>
+          📷 공간 사진으로 시뮬레이션
         </button>
       </div>
 
-      {/* 슬라이드업 시트 */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-10 config-panel rounded-t-2xl transition-transform duration-300"
-        style={{
-          transform: open ? 'translateY(0)' : 'translateY(100%)',
-          maxHeight: '75vh',
-          overflowY: 'auto',
-          paddingBottom: '60px',
-        }}
-      >
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-white font-bold text-sm">선반 구성 도구</span>
-            <div className="flex gap-2">
-              <button onClick={onScreenshot} className="text-white/70 hover:text-white text-xs">📷</button>
-              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
-            </div>
+      {/* Summary */}
+      <div style={{
+        background: '#F9FAFB', borderTop: '1px solid #E5E7EB',
+        padding: '10px 16px', display: 'flex', justifyContent: 'space-around',
+      }}>
+        {[['가로', width], ['세로', depth], ['높이', height]].map(([label, val]) => (
+          <div key={label} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#F97316' }}>{val}</div>
+            <div style={{ fontSize: 10, color: '#6B7280' }}>{label} mm</div>
           </div>
-          <PanelContent
-            onCameraPreset={onCameraPreset}
-            onScreenshot={onScreenshot}
-            onArMode={onArMode}
-          />
-        </div>
+        ))}
       </div>
-    </>
-  )
-}
 
-export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
-  const isMobile = useIsMobile()
-  return isMobile
-    ? <MobilePanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
-    : <DesktopPanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
+      {/* CTA */}
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #E5E7EB' }}>
+        <button
+          onClick={() => window.open('https://dekiri.com', '_blank')}
+          style={{
+            width: '100%', padding: '13px',
+            background: '#F97316', color: '#FFFFFF', border: 'none',
+            borderRadius: 8, fontSize: 14, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}
+        >
+          다음: 제품 선택 →
+        </button>
+      </div>
+    </div>
+  )
 }

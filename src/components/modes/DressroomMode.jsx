@@ -1,6 +1,13 @@
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
+const btnStyle = (active) => ({
+  flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 500,
+  border: 'none', cursor: 'pointer',
+  background: active ? '#F97316' : '#F3F4F6',
+  color: active ? '#ffffff' : '#6B7280',
+})
+
 export default function DressroomMode() {
   const {
     width, setWidth, height, setHeight, depth, setDepth,
@@ -16,16 +23,14 @@ export default function DressroomMode() {
       <SliderRow label="높이"   value={height}   min={1200} max={2400} step={100} onChange={setHeight} />
       <SliderRow label="깊이"   value={depth}    min={400}  max={700}  step={50}  onChange={setDepth} />
       <SliderRow label="선반 수" value={shelfCount} min={0} max={6} step={1} unit="단" onChange={setShelfCount} />
-      <div className="border-t border-white/20 my-2 pt-2">
-        <span className="text-xs text-white/60 block mb-2">행거 설정</span>
+      <div style={{ borderTop: '1px solid #F3F4F6', margin: '8px 0', paddingTop: 8 }}>
+        <span style={{ fontSize: 11, color: '#9CA3AF', display: 'block', marginBottom: 6 }}>행거 설정</span>
         <SliderRow label="행거봉 높이" value={hangerHeight} min={800} max={2200} step={50} onChange={setHangerHeight} />
         <SliderRow label="파티션 수" value={partitionCount} min={1} max={6} step={1} unit="개" onChange={setPartitionCount} />
       </div>
-      <div className="flex gap-2 mt-2">
+      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
         {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
-          <button key={val} onClick={() => setFeetType(val)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-              ${feetType === val ? 'bg-teal-400 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+          <button key={val} onClick={() => setFeetType(val)} style={btnStyle(feetType === val)}>
             {lbl}
           </button>
         ))}

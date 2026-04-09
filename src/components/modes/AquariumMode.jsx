@@ -7,12 +7,18 @@ const TANK_SIZES = [
   { value: '120', label: '120cm 수조' },
 ]
 
-// Standard aquarium dimensions (mm)
 const TANK_DIMS = {
   '60':  { width: 600,  depth: 300 },
   '90':  { width: 900,  depth: 450 },
   '120': { width: 1200, depth: 450 },
 }
+
+const btnStyle = (active) => ({
+  flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 500,
+  border: 'none', cursor: 'pointer',
+  background: active ? '#F97316' : '#F3F4F6',
+  color: active ? '#ffffff' : '#6B7280',
+})
 
 export default function AquariumMode() {
   const {
@@ -31,13 +37,11 @@ export default function AquariumMode() {
 
   return (
     <>
-      <div className="mb-3">
-        <span className="text-xs text-white/60 block mb-2">수조 규격</span>
-        <div className="grid grid-cols-3 gap-1">
+      <div style={{ marginBottom: 12 }}>
+        <span style={{ fontSize: 11, color: '#9CA3AF', display: 'block', marginBottom: 6 }}>수조 규격</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           {TANK_SIZES.map(({ value, label }) => (
-            <button key={value} onClick={() => handleTankSize(value)}
-              className={`py-1.5 rounded-lg text-xs font-medium transition-all
-                ${tankSize === value ? 'bg-teal-400 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+            <button key={value} onClick={() => handleTankSize(value)} style={btnStyle(tankSize === value)}>
               {label}
             </button>
           ))}
@@ -47,11 +51,9 @@ export default function AquariumMode() {
       <SliderRow label="높이"   value={height}   min={600}  max={2400} step={100} onChange={setHeight} />
       <SliderRow label="깊이"   value={depth}    min={400}  max={600}  step={50}  onChange={setDepth} />
       <SliderRow label="선반 수" value={shelfCount} min={1} max={6} step={1} unit="단" onChange={setShelfCount} />
-      <div className="flex gap-2 mt-2">
+      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
         {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
-          <button key={val} onClick={() => setFeetType(val)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-              ${feetType === val ? 'bg-teal-400 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+          <button key={val} onClick={() => setFeetType(val)} style={btnStyle(feetType === val)}>
             {lbl}
           </button>
         ))}
