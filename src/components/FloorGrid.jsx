@@ -14,11 +14,11 @@ export default function FloorGrid() {
       <Grid
         position={[0, 0.001, 0]}
         args={[40, 40]}
-        cellSize={0.5}
-        cellThickness={0.4}
+        cellSize={1}
+        cellThickness={0.5}
         cellColor="#6b7280"
-        sectionSize={2}
-        sectionThickness={0.4}
+        sectionSize={4}
+        sectionThickness={1}
         sectionColor="#9ca3af"
         fadeDistance={30}
         fadeStrength={1}
