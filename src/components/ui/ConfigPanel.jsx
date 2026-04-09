@@ -164,7 +164,6 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
             justifyContent: 'center',
             cursor: 'ns-resize',
             flexShrink: 0,
-            borderTop: '1px solid rgba(255,255,255,0.15)',
           }}
         >
           <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
