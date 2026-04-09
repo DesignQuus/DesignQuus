@@ -16,10 +16,10 @@ export default function FloorGrid() {
         args={[40, 40]}
         cellSize={0.5}
         cellThickness={0.5}
-        cellColor="#6b7280"
+        cellColor="#BDD5F0"
         sectionSize={2}
         sectionThickness={1}
-        sectionColor="#9ca3af"
+        sectionColor="#93C5FD"
         fadeDistance={30}
         fadeStrength={1}
         followCamera={false}
