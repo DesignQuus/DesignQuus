@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
@@ -14,19 +14,62 @@ const MODE_PANELS = {
   aquarium:  AquariumMode,
 }
 
+function useDraggable(initialPos) {
+  const [pos, setPos] = useState(initialPos)
+  const dragging = useRef(false)
+  const offset = useRef({ x: 0, y: 0 })
+
+  const onMouseDown = useCallback((e) => {
+    if (e.target.closest('button, input, a, select')) return
+    dragging.current = true
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
+    e.preventDefault()
+  }, [pos])
+
+  useEffect(() => {
+    function onMouseMove(e) {
+      if (!dragging.current) return
+      const x = Math.max(0, Math.min(window.innerWidth - 288, e.clientX - offset.current.x))
+      const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - offset.current.y))
+      setPos({ x, y })
+    }
+    function onMouseUp() { dragging.current = false }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
+  return { pos, onMouseDown }
+}
+
 export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
-  const { mode, renderMode, setRenderMode, setArMode } = useShelfStore()
+  const { mode, renderMode, setRenderMode } = useShelfStore()
+  const { pos, onMouseDown } = useDraggable({
+    x: window.innerWidth - 300,
+    y: Math.round(window.innerHeight / 2) - 200,
+  })
 
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
   return (
     <div
-      className="config-panel fixed right-4 top-1/2 -translate-y-1/2 z-10 w-72 p-4 select-none"
-      style={{ maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}
+      className="config-panel fixed z-10 w-72 p-4 select-none"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        maxHeight: 'calc(100vh - 80px)',
+        overflowY: 'auto',
+      }}
     >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-3">
+      {/* Header — drag handle */}
+      <div
+        className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing"
+        onMouseDown={onMouseDown}
+      >
         <span className="text-white font-bold text-sm">선반 구성 도구</span>
         <div className="flex gap-2 items-center">
           <button
