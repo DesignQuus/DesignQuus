@@ -54,7 +54,7 @@ function useIsMobile() {
 }
 
 // 공통 패널 내용
-function PanelContent({ onCameraPreset, onScreenshot, onArMode, collapsed, setCollapsed }) {
+function PanelContent({ onCameraPreset, onScreenshot, onArMode }) {
   const { mode, renderMode, setRenderMode } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
@@ -90,21 +90,47 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, collapsed, setCo
   )
 }
 
-// 데스크탑: 드래그 가능 플로팅 패널
+// 데스크탑: 드래그 가능 플로팅 패널 + 하단 드래그 리사이즈
 function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [panelHeight, setPanelHeight] = useState(480)
+  const panelHeightRef = useRef(panelHeight)
+  panelHeightRef.current = panelHeight
+
   const { pos, onPointerDown } = useDraggable({
     x: window.innerWidth - 300,
     y: Math.round(window.innerHeight / 2) - 200,
   })
 
+  // 하단 리사이즈 핸들 드래그
+  const onResizePointerDown = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const startY = e.clientY
+    const startH = panelHeightRef.current
+
+    function onMove(ev) {
+      const newH = Math.max(200, Math.min(window.innerHeight - 80, startH + (ev.clientY - startY)))
+      setPanelHeight(newH)
+    }
+    function onUp() {
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+    }
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+  }, [])
+
   return (
     <div
-      className="config-panel fixed z-10 w-72 p-4 select-none"
-      style={{ left: pos.x, top: pos.y, maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}
+      className="config-panel fixed z-10 w-72 select-none flex flex-col"
+      style={{ left: pos.x, top: pos.y, height: collapsed ? 'auto' : panelHeight }}
     >
+      {/* 헤더 — 드래그 이동 */}
       <div
-        className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing"
+        className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
         onPointerDown={onPointerDown}
       >
         <span className="text-white font-bold text-sm">선반 구성 도구</span>
@@ -115,14 +141,36 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
           </button>
         </div>
       </div>
+
+      {/* 스크롤 가능한 내용 */}
       {!collapsed && (
-        <PanelContent
-          onCameraPreset={onCameraPreset}
-          onScreenshot={onScreenshot}
-          onArMode={onArMode}
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-        />
+        <div className="flex-1 overflow-y-auto px-4 pb-2">
+          <PanelContent
+            onCameraPreset={onCameraPreset}
+            onScreenshot={onScreenshot}
+            onArMode={onArMode}
+          />
+        </div>
+      )}
+
+      {/* 하단 리사이즈 핸들 */}
+      {!collapsed && (
+        <div
+          onPointerDown={onResizePointerDown}
+          style={{
+            height: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'ns-resize',
+            flexShrink: 0,
+            borderTop: '1px solid rgba(255,255,255,0.15)',
+          }}
+        >
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, userSelect: 'none', lineHeight: 1 }}>
+            ⌄⌄
+          </span>
+        </div>
       )}
     </div>
   )
@@ -134,7 +182,6 @@ function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
 
   return (
     <>
-      {/* 하단 탭 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-center pb-2 pointer-events-none">
         <button
           className="pointer-events-auto config-panel px-6 py-2 rounded-full text-white text-sm font-bold shadow-lg"
@@ -144,7 +191,6 @@ function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
         </button>
       </div>
 
-      {/* 슬라이드업 시트 */}
       <div
         className="fixed bottom-0 left-0 right-0 z-10 config-panel rounded-t-2xl transition-transform duration-300"
         style={{
