@@ -129,9 +129,10 @@ export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
   return (
     <Canvas
       shadows
+      orthographic
       camera={{
-        fov: 50,
         position: [12, height / 100 * 0.7, 18],
+        zoom: 55,
         near: 0.1,
         far: 500,
       }}
