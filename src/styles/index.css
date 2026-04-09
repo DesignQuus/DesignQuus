@@ -9,9 +9,9 @@
 }
 
 body {
-  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow: hidden;
-  background: #F5F0E8;
+  background: #1a1a2e;
 }
 
 #root {
