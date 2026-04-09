@@ -167,8 +167,10 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
             borderTop: '1px solid rgba(255,255,255,0.15)',
           }}
         >
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, userSelect: 'none', lineHeight: 1 }}>
-            ⌄⌄
+          <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
+            {[0,1,2].map(i => (
+              <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'inline-block' }} />
+            ))}
           </span>
         </div>
       )}
