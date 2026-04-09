@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
 export default function ShelfMode() {
+  const [spaceOpen, setSpaceOpen] = useState(false)
+
   const {
     width, setWidth,
     height, setHeight,
@@ -15,12 +18,23 @@ export default function ShelfMode() {
 
   return (
     <>
-      {/* 설치 가상 공간 */}
+      {/* 설치 가상 공간 — 접기/펼치기 */}
       <div className="mb-1">
-        <span className="text-xs font-semibold text-white/60 block mb-2">📐 설치 가상 공간</span>
-        <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
-        <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
-        <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
+        <button
+          onClick={() => setSpaceOpen(v => !v)}
+          className="w-full flex justify-between items-center text-xs font-semibold text-white/60 mb-2"
+        >
+          <span>📐 설치 가상 공간</span>
+          <span>{spaceOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {spaceOpen && (
+          <>
+            <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
+            <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
+            <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
+          </>
+        )}
       </div>
 
       {/* 선반 규격 */}
