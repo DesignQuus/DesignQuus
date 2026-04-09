@@ -1,3 +1,7 @@
+/* 스크롤바 숨기기 */
+.panel-scroll::-webkit-scrollbar { display: none; }
+.panel-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+
 /* 플로팅 패널 — 보라 그라디언트 */
 .config-panel {
   background: linear-gradient(135deg, #c8b4e8 0%, #b8a4f0 50%, #a89ee8 100%);

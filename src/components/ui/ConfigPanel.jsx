@@ -144,7 +144,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
 
       {/* 스크롤 가능한 내용 */}
       {!collapsed && (
-        <div className="flex-1 overflow-y-auto px-4 pb-2">
+        <div className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
           <PanelContent
             onCameraPreset={onCameraPreset}
             onScreenshot={onScreenshot}
