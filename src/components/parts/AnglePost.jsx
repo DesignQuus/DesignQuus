@@ -10,7 +10,7 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], render
   const x = positionMm[0] * SCALE
   const z = positionMm[1] * SCALE
 
-  const FLANGE = 0.40  // 40mm flange width
+  const FLANGE = 0.35  // 35mm flange width
   const THICK  = 0.04  // 4mm wall thickness
 
   // L-shaped cross section via ExtrudeGeometry
