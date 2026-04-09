@@ -116,7 +116,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
           hoverColor="#7c3aed"
           textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
           strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6366f1'}
-          opacity={0.9}
+          opacity={1}
         />
       </GizmoHelper>
     </>
