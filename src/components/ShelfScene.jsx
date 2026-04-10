@@ -1,6 +1,6 @@
 import { Suspense, useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, ContactShadows } from '@react-three/drei'
+import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, AccumulativeShadows, RandomizedLight } from '@react-three/drei'
 import * as THREE from 'three'
 import FloorGrid from './FloorGrid.jsx'
 import BoundingBox from './BoundingBox.jsx'
@@ -75,7 +75,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
           />
           <directionalLight position={[-5, 10, -5]} intensity={0.3} />
           <Environment preset="city" />
-          <ContactShadows position={[0, 0.001, 0]} opacity={0.25} scale={25} blur={120} far={20} />
+          <AccumulativeShadows temporal frames={60} alphaTest={0.8} opacity={0.6} scale={20} position={[0, 0.001, 0]}>
+            <RandomizedLight amount={8} radius={6} intensity={0.8} ambient={0.5} position={[5, 15, 5]} bias={0.001} />
+          </AccumulativeShadows>
         </>
       ) : (
         <>
