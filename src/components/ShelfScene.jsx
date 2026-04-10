@@ -1,6 +1,6 @@
 import { Suspense, useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, AccumulativeShadows, RandomizedLight } from '@react-three/drei'
+import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import FloorGrid from './FloorGrid.jsx'
 import BoundingBox from './BoundingBox.jsx'
@@ -61,23 +61,22 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Lighting */}
       {renderMode === 'realistic' ? (
         <>
-          <ambientLight intensity={0.5} />
+          <ambientLight intensity={0.9} />
           <directionalLight
             position={[10, 20, 10]}
-            intensity={1.2}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-camera-far={100}
-            shadow-camera-left={-20}
-            shadow-camera-right={20}
-            shadow-camera-top={20}
-            shadow-camera-bottom={-20}
+            intensity={0.6}
+            castShadow={false}
           />
-          <directionalLight position={[-5, 10, -5]} intensity={0.3} />
+          <directionalLight position={[-5, 10, -5]} intensity={0.2} />
           <Environment preset="city" />
-          <AccumulativeShadows temporal frames={60} alphaTest={0.8} opacity={0.6} scale={20} position={[0, 0.001, 0]}>
-            <RandomizedLight amount={8} radius={6} intensity={0.8} ambient={0.5} position={[5, 15, 5]} bias={0.001} />
-          </AccumulativeShadows>
+          <ContactShadows
+            position={[0, 0.001, 0]}
+            opacity={0.12}
+            scale={22}
+            blur={6}
+            far={22}
+            resolution={512}
+          />
         </>
       ) : (
         <>
