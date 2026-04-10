@@ -1,66 +1,97 @@
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo } from 'react'
 import * as THREE from 'three'
-import { createKeyholeTexture } from '../../utils/keyholeTexture.js'
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 
-// L-section angle post using two BoxGeometry arms
-// Each corner post correctly orients both arms toward shelf center
+// SVG cross-section paths from Illustrator (viewBox 0 0 127.38 128)
+// Outer corner (top-right of L) is at SVG coords (113.12, 14.38)
+// L span: ~99.2 SVG units = 35mm
+const _OUTER = "M108.87,14.38c2.35,0,4.25,1.9,4.25,4.25h0v26.64c0,2.35-1.91,4.25-4.25,4.25h-54.51s-5.3,5.29-5.3,5.29v54.51c0,2.35-1.91,4.25-4.26,4.25h-26.64c-2.35,0-4.25-1.91-4.25-4.25h0V42.72c0-15.65,12.7-28.34,28.35-28.34h66.61Z"
+const _HOLE1 = "M108.3,17.78h-50.74c-.78,0-1.42.63-1.42,1.41v24.94c0,.78.63,1.42,1.42,1.42h50.74c.78,0,1.42-.63,1.42-1.41h0s0-24.94,0-24.94c0-.78-.63-1.42-1.42-1.42"
+const _HOLE2 = "M17.31,58.02v50.74c0,.78.63,1.42,1.41,1.42h24.94c.78,0,1.42-.63,1.42-1.42v-50.74c0-.78-.63-1.42-1.41-1.42h-24.94c-.78,0-1.42.63-1.42,1.42"
+
+const CORNER_X = 113.12   // outer corner X in SVG units
+const CORNER_Y = 14.38    // outer corner Y in SVG units
+const SVG_SPAN = 99.2     // SVG units representing 35mm
+const SVG_SCALE = 0.35 / SVG_SPAN  // Three.js units per SVG unit (35mm = 0.35)
+
+function parsePath(d) {
+  const loader = new SVGLoader()
+  const data = loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}"/></svg>`)
+  return data.paths[0] ?? null
+}
+
+function buildPostGeometry(h) {
+  const outerPath = parsePath(_OUTER)
+  const hole1Path = parsePath(_HOLE1)
+  const hole2Path = parsePath(_HOLE2)
+  if (!outerPath) return null
+
+  const shapes = SVGLoader.createShapes(outerPath)
+  if (!shapes.length) return null
+  const shape = shapes[0]
+
+  // Attach inner voids as holes
+  ;[hole1Path, hole2Path].forEach(p => {
+    if (!p) return
+    const hs = SVGLoader.createShapes(p)
+    if (hs.length) shape.holes.push(hs[0])
+  })
+
+  // Extrude: depth in SVG units; will be scaled to h (Three.js) later
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: h / SVG_SCALE,
+    bevelEnabled: false,
+    steps: 1,
+  })
+
+  // 1. Move outer corner to origin
+  geo.translate(-CORNER_X, -CORNER_Y, 0)
+  // 2. Scale to Three.js units; negate X so horizontal arm extends +X
+  geo.scale(-SVG_SCALE, SVG_SCALE, SVG_SCALE)
+  // 3. Stand upright: shape XY → XZ plane, extrusion Z → Y
+  //    rotateX(-PI/2): new_y=old_z (extrusion→Y), new_z=-old_y (arm→-Z, fixed by group scale)
+  geo.rotateX(-Math.PI / 2)
+
+  return geo
+}
+
 export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], renderMode = 'realistic' }) {
-  const SCALE = 1 / 100
-  const h = heightMm * SCALE
-  const x = positionMm[0] * SCALE
-  const z = positionMm[1] * SCALE
+  const h = heightMm / 100
+  const x = positionMm[0] / 100
+  const z = positionMm[1] / 100
 
-  const FLANGE = 0.35   // 35mm flange
-  const THICK  = 0.012  // 1.2mm wall thickness
-
-  // Inward direction per corner (toward shelf center)
+  // Inward direction per corner
   const signX = x <= 0 ? 1 : -1
   const signZ = z <= 0 ? 1 : -1
 
-  // ARM1: horizontal plate (runs in X), sits at outer Z edge
-  // ARM2: depth plate (runs in Z), sits at outer X edge, Z-trimmed to avoid corner overlap
-  const arm1Geo = useMemo(() => new THREE.BoxGeometry(FLANGE, h, THICK), [h])
-  const arm2Geo = useMemo(() => new THREE.BoxGeometry(THICK, h, FLANGE - THICK), [h])
-
-  const arm1Z = signZ * (-FLANGE / 2 + THICK / 2)
-  const arm2X = signX * (-FLANGE / 2 + THICK / 2)
-  const arm2Z = signZ * (THICK / 2)
-
-  const keyholeTexRef = useRef(null)
-  useEffect(() => {
-    keyholeTexRef.current = createKeyholeTexture()
-    return () => { if (keyholeTexRef.current) keyholeTexRef.current.dispose() }
-  }, [])
+  const postGeo = useMemo(() => buildPostGeometry(h), [h])
+  const edgeGeo = useMemo(
+    () => (postGeo && renderMode === 'technical' ? new THREE.EdgesGeometry(postGeo, 15) : null),
+    [postGeo, renderMode]
+  )
 
   const mat = useMemo(() => {
-    if (renderMode === 'technical') return new THREE.MeshToonMaterial({ color: '#c0c0c0', side: THREE.DoubleSide })
+    if (renderMode === 'technical') {
+      return new THREE.MeshToonMaterial({ color: '#c0c0c0', side: THREE.DoubleSide })
+    }
     return new THREE.MeshStandardMaterial({
-      color: '#d0d0d0',
-      metalness: 0.7,
-      roughness: 0.3,
-      side: THREE.DoubleSide,
+      color: '#d0d0d0', metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide,
     })
   }, [renderMode])
 
+  if (!postGeo) return null
+
+  // scale=[signX, 1, -signZ] orients the L toward shelf center for each corner
+  // Base geometry: arms in +X and -Z
+  // front-left (1,1,-1): +X, +Z ✓  front-right (-1,1,-1): -X, +Z ✓
+  // back-left  (1,1, 1): +X, -Z ✓  back-right  (-1,1, 1): -X, -Z ✓
   return (
-    <group position={[x, 0, z]}>
-      {/* ARM1: horizontal, faces front/back */}
-      <mesh geometry={arm1Geo} position={[0, h / 2, arm1Z]} material={mat} castShadow receiveShadow />
-
-      {/* ARM2: depth, faces left/right */}
-      <mesh geometry={arm2Geo} position={[arm2X, h / 2, arm2Z]} material={mat} castShadow receiveShadow />
-
-      {renderMode === 'technical' && (
-        <>
-          <lineSegments position={[0, h / 2, arm1Z]}>
-            <edgesGeometry args={[arm1Geo]} />
-            <lineBasicMaterial color="#222222" />
-          </lineSegments>
-          <lineSegments position={[arm2X, h / 2, arm2Z]}>
-            <edgesGeometry args={[arm2Geo]} />
-            <lineBasicMaterial color="#222222" />
-          </lineSegments>
-        </>
+    <group position={[x, 0, z]} scale={[signX, 1, -signZ]}>
+      <mesh geometry={postGeo} material={mat} castShadow receiveShadow />
+      {edgeGeo && (
+        <lineSegments geometry={edgeGeo}>
+          <lineBasicMaterial color="#222222" />
+        </lineSegments>
       )}
     </group>
   )
