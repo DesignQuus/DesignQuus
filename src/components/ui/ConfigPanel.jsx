@@ -95,7 +95,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
 
-  const { pos, onPointerDown } = useDraggable({
+  const { pos, onMouseDown } = useDraggable({
     x: 16,
     y: 16,
   })
