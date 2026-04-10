@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
+import useShelfStore from '../../store/useShelfStore.js'
 
 // SVG cross-section paths from Illustrator (viewBox 0 0 127.38 128)
 // Outer corner (top-right of L) is at SVG coords (113.12, 14.38)
@@ -55,7 +56,13 @@ function buildPostGeometry(h) {
   return geo
 }
 
+const POST_COLORS = {
+  black: { realistic: { color: '#1c1c1c', metalness: 0.6, roughness: 0.35 }, technical: '#606060' },
+  white: { realistic: { color: '#e0e0e0', metalness: 0.5, roughness: 0.25 }, technical: '#d8d8d8' },
+}
+
 export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffsetMm = 0, renderMode = 'realistic' }) {
+  const postColor = useShelfStore(s => s.postColor)
   const h = heightMm / 100
   const x = positionMm[0] / 100
   const z = positionMm[1] / 100
@@ -71,14 +78,14 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     [postGeo, renderMode]
   )
 
+  const palette = POST_COLORS[postColor] ?? POST_COLORS.black
   const mat = useMemo(() => {
     if (renderMode === 'technical') {
-      return new THREE.MeshToonMaterial({ color: '#c0c0c0', side: THREE.DoubleSide })
+      return new THREE.MeshToonMaterial({ color: palette.technical, side: THREE.DoubleSide })
     }
-    return new THREE.MeshStandardMaterial({
-      color: '#d0d0d0', metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide,
-    })
-  }, [renderMode])
+    const { color, metalness, roughness } = palette.realistic
+    return new THREE.MeshStandardMaterial({ color, metalness, roughness, side: THREE.DoubleSide })
+  }, [renderMode, postColor])
 
   if (!postGeo) return null
 

@@ -15,6 +15,7 @@ export default function ShelfMode() {
     spaceWidth, setSpaceWidth,
     spaceHeight, setSpaceHeight,
     spaceDepth, setSpaceDepth,
+    postColor, setPostColor,
   } = useShelfStore()
 
   return (
@@ -67,6 +68,33 @@ export default function ShelfMode() {
                   >
                     {lbl}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 포스트 색상 */}
+            <div className="mt-3">
+              <span className="text-xs font-medium text-white/90 block mb-2">포스트 색상</span>
+              <div className="flex gap-3">
+                {[
+                  { val: 'black', label: '검정', bg: '#1a1a1a', ring: '#f97316' },
+                  { val: 'white', label: '흰색', bg: '#e8e8e8', ring: '#f97316' },
+                ].map(({ val, label, bg }) => (
+                  <button
+                    key={val}
+                    onClick={() => setPostColor(val)}
+                    title={label}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: bg,
+                      border: postColor === val ? '2.5px solid #f97316' : '2px solid rgba(255,255,255,0.25)',
+                      boxShadow: postColor === val ? '0 0 0 2px rgba(249,115,22,0.35)' : 'none',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  />
                 ))}
               </div>
             </div>

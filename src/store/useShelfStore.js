@@ -40,6 +40,9 @@ const useShelfStore = create((set, get) => ({
   // feet type
   feetType: urlParams.feetType || 'level',
 
+  // post color
+  postColor: 'black',
+
   // render mode
   renderMode: 'realistic', // 'realistic' | 'technical'
 
@@ -115,6 +118,7 @@ const useShelfStore = create((set, get) => ({
   setHangerHeight: (v) => set({ hangerHeight: v }),
   setPartitionCount: (v) => set({ partitionCount: v }),
   setTankSize: (v) => set({ tankSize: v }),
+  setPostColor: (v) => set({ postColor: v }),
 }))
 
 export default useShelfStore
