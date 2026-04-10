@@ -51,7 +51,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
     link.click()
   }, [gl, scene, camera, width, height])
 
-  const bgColor = renderMode === 'technical' ? '#f0f4ff' : '#e6e6e6'
+  const bgColor = renderMode === 'technical' ? '#f0f4ff' : '#22293a'
 
   return (
     <>
