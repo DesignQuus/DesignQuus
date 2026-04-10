@@ -6,21 +6,24 @@ import { useMemo } from 'react'
 const MM = 1 / 100
 
 // Orange body profile: [radius, y] from bottom (y=0) to top (y=16.5mm)
-// R7.03 concave curve + R1.60 + R0.50 fillets approximated with smooth points
+// Arc computed from DXF: center at (20, 14.34), R=16.28mm → strong concave shape
+// Tangent at base is near-horizontal → rapid inward curve matching the DXF
 const BODY_PTS = [
   [12.0,  0.00],   // outer bottom edge
   [12.0,  1.00],   // outer rim top
   [10.0,  1.00],   // step inward (2mm rim)
-  [ 9.8,  1.50],   // R7.03 curve start
-  [ 9.2,  3.00],
-  [ 8.3,  5.00],
-  [ 7.2,  7.00],
-  [ 6.2,  9.00],
-  [ 5.4, 11.00],
-  [ 4.8, 12.50],
-  [ 4.4, 13.80],   // R7.03 curve end region
-  [ 4.1, 14.80],   // R1.60 fillet zone
-  [ 3.97, 15.60],  // R0.50 fillet zone
+  [10.0,  1.50],   // arc start — near-horizontal tangent here
+  [ 8.9,  2.40],   // strong concave curve (drops 1.1mm per 0.9mm height)
+  [ 7.9,  3.40],
+  [ 7.0,  4.50],
+  [ 6.2,  5.70],
+  [ 5.5,  7.00],
+  [ 4.9,  8.20],
+  [ 4.4,  9.60],
+  [ 4.1, 11.00],
+  [ 3.84, 12.40],  // R1.60 fillet zone
+  [ 3.73, 13.80],  // shoulder minimum (narrowest point)
+  [ 3.75, 15.20],  // R0.50 fillet — slight step-back to stem
   [ 3.87, 16.50],  // stem bottom
 ].map(([r, y]) => new THREE.Vector2(r * MM, y * MM))
 
