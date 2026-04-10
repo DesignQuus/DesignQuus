@@ -55,10 +55,11 @@ function buildPostGeometry(h) {
   return geo
 }
 
-export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], renderMode = 'realistic' }) {
+export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffsetMm = 0, renderMode = 'realistic' }) {
   const h = heightMm / 100
   const x = positionMm[0] / 100
   const z = positionMm[1] / 100
+  const yOffset = yOffsetMm / 100
 
   // Inward direction per corner
   const signX = x <= 0 ? 1 : -1
@@ -86,7 +87,7 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], render
   // front-left (1,1,-1): +X, +Z ✓  front-right (-1,1,-1): -X, +Z ✓
   // back-left  (1,1, 1): +X, -Z ✓  back-right  (-1,1, 1): -X, -Z ✓
   return (
-    <group position={[x, 0, z]} scale={[signX, 1, -signZ]}>
+    <group position={[x, yOffset, z]} scale={[signX, 1, -signZ]}>
       <mesh geometry={postGeo} material={mat} castShadow receiveShadow />
       {edgeGeo && (
         <lineSegments geometry={edgeGeo}>

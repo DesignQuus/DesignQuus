@@ -86,7 +86,7 @@ export default function ShelfModel() {
     <group>
       {/* Angle posts */}
       {corners.map((pos, i) => (
-        <AnglePost key={i} heightMm={height} positionMm={pos} renderMode={renderMode} />
+        <AnglePost key={i} heightMm={height} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} />
       ))}
 
       {/* Bottom board */}

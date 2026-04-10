@@ -54,8 +54,17 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
   // Stem center Y: starts at 16.5mm, height 29.5mm → center at 16.5 + 14.75 = 31.25mm
   const stemY = (16.5 + 29.5 / 2) * MM
 
+  // Rubber base pad at very bottom (r=13mm, h=2mm) — slightly wider than body
+  const padGeo = useMemo(() => new THREE.CylinderGeometry(13 * MM, 13 * MM, 2 * MM, 32), [])
+  const matRubber = useMemo(() => (
+    new THREE.MeshStandardMaterial({ color: '#222222', roughness: 0.95, metalness: 0 })
+  ), [])
+
   return (
     <group position={[x, 0, z]}>
+      {/* Black rubber pad on floor */}
+      <mesh geometry={padGeo} material={matRubber} receiveShadow
+        position={[0, 1 * MM, 0]} />
       {/* Orange lower body — base + curved body */}
       <mesh geometry={bodyGeo} material={matOrange} castShadow receiveShadow />
       {/* Gray upper stem */}
