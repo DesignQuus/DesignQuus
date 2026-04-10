@@ -114,9 +114,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         <GizmoViewcube
           faces={['우', '좌', '위', '아래', '앞', '뒤']}
           color={renderMode === 'technical' ? '#e2e8f0' : '#888888'}
-          hoverColor="#7c3aed"
+          hoverColor="#f97316"
           textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
-          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6366f1'}
+          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#f97316'}
           opacity={1}
         />
       </GizmoHelper>
