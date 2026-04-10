@@ -13,14 +13,14 @@ export default function FloorGrid() {
       {/* Grid */}
       <Grid
         position={[0, 0.001, 0]}
-        args={[40, 40]}
+        args={[80, 80]}
         cellSize={1}
         cellThickness={0.5}
         cellColor="#b0b8c4"
         sectionSize={10}
         sectionThickness={1}
         sectionColor="#6e7d90"
-        fadeDistance={30}
+        fadeDistance={60}
         fadeStrength={1}
         followCamera={false}
         infiniteGrid={false}
