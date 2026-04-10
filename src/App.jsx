@@ -28,6 +28,22 @@ export default function App() {
         screenshotRef={screenshotRef}
       />
 
+      {/* Gizmo card backdrop — panel 톤앤매너 동일 적용 */}
+      <div
+        style={{
+          position: 'fixed',
+          right: 62,
+          bottom: 62,
+          width: 116,
+          height: 116,
+          borderRadius: 16,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}
+      />
+
       {/* Mode tabs — top */}
       <ModeTab />
 
