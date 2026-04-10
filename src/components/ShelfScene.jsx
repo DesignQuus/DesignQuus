@@ -61,13 +61,13 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Lighting */}
       {renderMode === 'realistic' ? (
         <>
-          <ambientLight intensity={0.85} />
+          <ambientLight intensity={0.5} />
           <directionalLight
             position={[10, 20, 10]}
-            intensity={0.15}
+            intensity={0.6}
             castShadow={false}
           />
-          <directionalLight position={[-5, 10, -5]} intensity={0.05} />
+          <directionalLight position={[-5, 10, -5]} intensity={0.2} />
           <Environment preset="city" />
           <ContactShadows
             position={[0, 0.001, 0]}
@@ -138,7 +138,7 @@ export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
         far: 500,
       }}
       style={{ width: '100%', height: '100%' }}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
+      gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: 0 }}
     >
       <SceneInner
         cameraRef={cameraRef}
