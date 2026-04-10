@@ -18,27 +18,37 @@ function useDraggable(initialPos) {
   const [pos, setPos] = useState(initialPos)
   const posRef = useRef(pos)
   posRef.current = pos
+  const headerRef = useRef(null)
 
-  const onMouseDown = useCallback((e) => {
-    if (e.target.closest('button, input, a, select')) return
-    e.preventDefault()
-    const startX = e.clientX - posRef.current.x
-    const startY = e.clientY - posRef.current.y
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
 
-    function onMove(ev) {
-      const x = Math.max(0, Math.min(window.innerWidth - 288, ev.clientX - startX))
-      const y = Math.max(0, Math.min(window.innerHeight - 60, ev.clientY - startY))
-      setPos({ x, y })
+    function onMouseDown(e) {
+      if (e.target.closest('button, input, a, select')) return
+      e.preventDefault()
+      const startX = e.clientX - posRef.current.x
+      const startY = e.clientY - posRef.current.y
+
+      function onMove(ev) {
+        const x = Math.max(0, Math.min(window.innerWidth - 288, ev.clientX - startX))
+        const y = Math.max(0, Math.min(window.innerHeight - 60, ev.clientY - startY))
+        setPos({ x, y })
+        posRef.current = { x, y }
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
     }
-    function onUp() {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
+
+    el.addEventListener('mousedown', onMouseDown)
+    return () => el.removeEventListener('mousedown', onMouseDown)
   }, [])
 
-  return { pos, onMouseDown }
+  return { pos, headerRef }
 }
 
 function useIsMobile() {
@@ -95,7 +105,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
 
-  const { pos, onMouseDown } = useDraggable({
+  const { pos, headerRef } = useDraggable({
     x: 16,
     y: 16,
   })
@@ -126,8 +136,8 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     >
       {/* 헤더 — 드래그 이동 */}
       <div
+        ref={headerRef}
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
-        onMouseDown={onMouseDown}
       >
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
         <div className="flex gap-2 items-center">
