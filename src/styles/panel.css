@@ -6,6 +6,7 @@
 .config-panel {
   background: linear-gradient(135deg, #1e2535 0%, #15192b 50%, #111827 100%);
   border-radius: 16px;
+  border: 1px solid #4a5e72;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
