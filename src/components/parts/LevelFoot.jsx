@@ -6,24 +6,21 @@ import { useMemo } from 'react'
 const MM = 1 / 100
 
 // Orange body profile: [radius, y] from bottom (y=0) to top (y=16.5mm)
-// Arc computed from DXF: center at (20, 14.34), R=16.28mm → strong concave shape
-// Tangent at base is near-horizontal → rapid inward curve matching the DXF
+// Circular arc: center=(17, 13.11), R=13.56mm — matches DXF concave shape
+// Starts steep (dr/dy≈-1.2 near base), curves gently near top, shoulder at y≈12-14mm
 const BODY_PTS = [
   [12.0,  0.00],   // outer bottom edge
   [12.0,  1.00],   // outer rim top
   [10.0,  1.00],   // step inward (2mm rim)
-  [10.0,  1.50],   // arc start — near-horizontal tangent here
-  [ 8.9,  2.40],   // strong concave curve (drops 1.1mm per 0.9mm height)
-  [ 7.9,  3.40],
-  [ 7.0,  4.50],
-  [ 6.2,  5.70],
-  [ 5.5,  7.00],
-  [ 4.9,  8.20],
-  [ 4.4,  9.60],
-  [ 4.1, 11.00],
-  [ 3.84, 12.40],  // R1.60 fillet zone
-  [ 3.73, 13.80],  // shoulder minimum (narrowest point)
-  [ 3.75, 15.20],  // R0.50 fillet — slight step-back to stem
+  [10.0,  1.50],   // arc start
+  [ 8.3,  2.70],   // strong concave drop
+  [ 6.6,  4.40],
+  [ 5.3,  6.30],
+  [ 4.3,  8.50],
+  [ 3.6, 10.80],
+  [ 3.5, 12.40],   // shoulder minimum
+  [ 3.5, 13.80],
+  [ 3.6, 15.50],   // fillet step-back to stem
   [ 3.87, 16.50],  // stem bottom
 ].map(([r, y]) => new THREE.Vector2(r * MM, y * MM))
 
@@ -32,7 +29,7 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
   const z = positionMm[1] * MM
 
   // Orange lower body (LatheGeometry)
-  const bodyGeo = useMemo(() => new THREE.LatheGeometry(BODY_PTS, 32), [])
+  const bodyGeo = useMemo(() => new THREE.LatheGeometry(BODY_PTS, 48), [])
 
   // Gray upper stem (cylinder r=3.87mm, h=29.5mm)
   const stemGeo = useMemo(
