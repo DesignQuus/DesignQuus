@@ -22,8 +22,6 @@ function useDraggable(initialPos) {
   const onPointerDown = useCallback((e) => {
     if (e.target.closest('button, input, a, select')) return
     e.preventDefault()
-    const el = e.currentTarget
-    el.setPointerCapture(e.pointerId)
     const startX = e.clientX - posRef.current.x
     const startY = e.clientY - posRef.current.y
 
@@ -33,11 +31,11 @@ function useDraggable(initialPos) {
       setPos({ x, y })
     }
     function onUp() {
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
     }
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
   }, [])
 
   return { pos, onPointerDown }
@@ -106,8 +104,6 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const onResizePointerDown = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
-    const el = e.currentTarget
-    el.setPointerCapture(e.pointerId)
     const startY = e.clientY
     const startH = panelHeightRef.current
 
@@ -116,11 +112,11 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       setPanelHeight(newH)
     }
     function onUp() {
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
     }
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
   }, [])
 
   return (
