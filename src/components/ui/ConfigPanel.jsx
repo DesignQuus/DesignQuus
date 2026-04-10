@@ -98,8 +98,8 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   panelHeightRef.current = panelHeight
 
   const { pos, onPointerDown } = useDraggable({
-    x: window.innerWidth - 300,
-    y: Math.round(window.innerHeight / 2) - 200,
+    x: 16,
+    y: 16,
   })
 
   // 하단 리사이즈 핸들 드래그
