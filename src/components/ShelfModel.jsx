@@ -10,7 +10,8 @@ import useShelfStore from '../store/useShelfStore.js'
 
 const PITCH_MM = 27.5
 const BOARD_THICK = 25
-const BOTTOM_Y = 100
+const FOOT_HEIGHT_MM = 46                     // 수평발 총 높이
+const BOTTOM_Y = FOOT_HEIGHT_MM + PITCH_MM   // 46 + 27.5 = 73.5mm
 
 export default function ShelfModel() {
   const { camera, gl, controls } = useThree()
@@ -87,7 +88,7 @@ export default function ShelfModel() {
     <group>
       {/* Angle posts */}
       {corners.map((pos, i) => (
-        <AnglePost key={i} heightMm={height} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} />
+        <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} />
       ))}
 
       {/* Bottom board */}

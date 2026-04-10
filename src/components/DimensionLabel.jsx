@@ -8,7 +8,7 @@ export default function DimensionLabel({ yBottomMm, yTopMm, widthMm, depthMm }) 
   const midY = (yB + yT) / 2
   const gap = yTopMm - yBottomMm
 
-  const x = (widthMm / 100) / 2 + 0.15
+  const x = (widthMm / 100) / 2 + 0.55  // 포스트 외각(22.5mm) + 여유 32.5mm
   const z = 0
 
   return (
