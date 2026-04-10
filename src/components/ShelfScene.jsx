@@ -111,15 +111,10 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
 
       {/* ViewCube gizmo */}
       <GizmoHelper alignment="bottom-right" margin={[120, 120]}>
-        {/* 큐브 아래 바닥 그림자 — 카메라 방향에 따라 자연스럽게 변형 */}
-        <mesh position={[4, -54, -4]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[44, 48]} />
-          <meshBasicMaterial color="#000000" transparent opacity={0.35} depthWrite={false} />
-        </mesh>
         <group scale={1.6}>
           <GizmoViewcube
             faces={['우', '좌', '위', '아래', '앞', '뒤']}
-            color={renderMode === 'technical' ? '#e2e8f0' : '#15192b'}
+            color={renderMode === 'technical' ? '#e2e8f0' : '#111827'}
             hoverColor="#f97316"
             textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
             strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6b8299'}
