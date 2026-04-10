@@ -19,7 +19,7 @@ function useDraggable(initialPos) {
   const posRef = useRef(pos)
   posRef.current = pos
 
-  const onPointerDown = useCallback((e) => {
+  const onMouseDown = useCallback((e) => {
     if (e.target.closest('button, input, a, select')) return
     e.preventDefault()
     const startX = e.clientX - posRef.current.x
@@ -31,14 +31,14 @@ function useDraggable(initialPos) {
       setPos({ x, y })
     }
     function onUp() {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
     }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
   }, [])
 
-  return { pos, onPointerDown }
+  return { pos, onMouseDown }
 }
 
 function useIsMobile() {
@@ -101,7 +101,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   })
 
   // 하단 리사이즈 핸들 드래그
-  const onResizePointerDown = useCallback((e) => {
+  const onResizeMouseDown = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
     const startY = e.clientY
@@ -112,11 +112,11 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       setPanelHeight(newH)
     }
     function onUp() {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
     }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
   }, [])
 
   return (
@@ -127,7 +127,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       {/* 헤더 — 드래그 이동 */}
       <div
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
-        onPointerDown={onPointerDown}
+        onMouseDown={onMouseDown}
       >
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
         <div className="flex gap-2 items-center">
@@ -152,7 +152,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       {/* 하단 리사이즈 핸들 */}
       {!collapsed && (
         <div
-          onPointerDown={onResizePointerDown}
+          onMouseDown={onResizeMouseDown}
           style={{
             height: 20,
             display: 'flex',
