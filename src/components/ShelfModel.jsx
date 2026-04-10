@@ -25,7 +25,7 @@ export default function ShelfModel() {
 
   const halfW = width / 2
   const halfD = depth / 2
-  const POST_OFFSET = 20
+  const POST_OFFSET = 12.4
   const corners = [
     [-halfW + POST_OFFSET, -halfD + POST_OFFSET],
     [ halfW - POST_OFFSET, -halfD + POST_OFFSET],
