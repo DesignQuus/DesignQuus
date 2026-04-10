@@ -105,6 +105,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
   const contentRef = useRef(null)
+  const innerRef = useRef(null)
 
   const { pos, headerRef } = useDraggable({
     x: 16,
@@ -131,12 +132,13 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   }, [])
 
   // 더블클릭 → 내용 높이에 딱 맞게 자동 조절
+  // innerRef(고정 높이 없는 래퍼)의 scrollHeight = 실제 콘텐츠 자연 높이
   const onResizeDblClick = useCallback(() => {
-    if (!contentRef.current) return
+    if (!innerRef.current) return
     const headerH = headerRef.current?.offsetHeight ?? 60
     const handleH = 20
-    const contentH = contentRef.current.scrollHeight
-    const fitH = Math.min(window.innerHeight - 32, headerH + contentH + handleH + 8)
+    const contentH = innerRef.current.scrollHeight
+    const fitH = Math.min(window.innerHeight - 32, headerH + contentH + handleH + 16)
     setPanelHeight(fitH)
   }, [headerRef])
 
@@ -162,11 +164,13 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       {/* 스크롤 가능한 내용 */}
       {!collapsed && (
         <div ref={contentRef} className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
-          <PanelContent
-            onCameraPreset={onCameraPreset}
-            onScreenshot={onScreenshot}
-            onArMode={onArMode}
-          />
+          <div ref={innerRef}>
+            <PanelContent
+              onCameraPreset={onCameraPreset}
+              onScreenshot={onScreenshot}
+              onArMode={onArMode}
+            />
+          </div>
         </div>
       )}
 
