@@ -111,7 +111,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
 
       {/* ViewCube gizmo */}
       <GizmoHelper alignment="bottom-right" margin={[120, 120]}>
-        <group scale={1.6}>
+        <group scale={1.12}>
           <GizmoViewcube
             faces={['우', '좌', '위', '아래', '앞', '뒤']}
             color={renderMode === 'technical' ? '#e2e8f0' : '#111827'}
