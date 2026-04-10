@@ -25,12 +25,13 @@ export default function ShelfModel() {
 
   const halfW = width / 2
   const halfD = depth / 2
-  const POST_OFFSET = 12.5  // (선반판 300mm - 내벽 275mm) / 2 = 12.5mm
+  // L-암 35mm - 선반판 걸침 12.5mm = 포스트 외각이 선반판 바깥으로 22.5mm 돌출
+  const POST_EXT = 22.5
   const corners = [
-    [-halfW + POST_OFFSET, -halfD + POST_OFFSET],
-    [ halfW - POST_OFFSET, -halfD + POST_OFFSET],
-    [-halfW + POST_OFFSET,  halfD - POST_OFFSET],
-    [ halfW - POST_OFFSET,  halfD - POST_OFFSET],
+    [-(halfW + POST_EXT), -(halfD + POST_EXT)],
+    [ (halfW + POST_EXT), -(halfD + POST_EXT)],
+    [-(halfW + POST_EXT),  (halfD + POST_EXT)],
+    [ (halfW + POST_EXT),  (halfD + POST_EXT)],
   ]
 
   const topY = height - BOARD_THICK
