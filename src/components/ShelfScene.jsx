@@ -61,13 +61,13 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Lighting */}
       {renderMode === 'realistic' ? (
         <>
-          <ambientLight intensity={0.45} />
+          <ambientLight intensity={0.85} />
           <directionalLight
             position={[10, 20, 10]}
-            intensity={0.3}
+            intensity={0.15}
             castShadow={false}
           />
-          <directionalLight position={[-5, 10, -5]} intensity={0.1} />
+          <directionalLight position={[-5, 10, -5]} intensity={0.05} />
           <Environment preset="city" />
           <ContactShadows
             position={[0, 0.001, 0]}
@@ -114,9 +114,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         <GizmoViewcube
           faces={['우', '좌', '위', '아래', '앞', '뒤']}
           color={renderMode === 'technical' ? '#e2e8f0' : '#7a8090'}
-          hoverColor="#ff9d3f"
+          hoverColor="#f97316"
           textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
-          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#ff9d3f'}
+          strokeColor={renderMode === 'technical' ? '#94a3b8' : '#f97316'}
           opacity={1}
         />
       </GizmoHelper>
