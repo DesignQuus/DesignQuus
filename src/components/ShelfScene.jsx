@@ -75,7 +75,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
           />
           <directionalLight position={[-5, 10, -5]} intensity={0.3} />
           <Environment preset="city" />
-          <ContactShadows position={[0, 0.001, 0]} opacity={0.25} scale={25} blur={8} far={20} />
+          <ContactShadows position={[0, 0.001, 0]} opacity={0.25} scale={25} blur={24} far={20} />
         </>
       ) : (
         <>
