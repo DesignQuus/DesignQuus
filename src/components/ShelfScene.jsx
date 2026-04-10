@@ -61,13 +61,13 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Lighting */}
       {renderMode === 'realistic' ? (
         <>
-          <ambientLight intensity={0.9} />
+          <ambientLight intensity={0.45} />
           <directionalLight
             position={[10, 20, 10]}
-            intensity={0.6}
+            intensity={0.3}
             castShadow={false}
           />
-          <directionalLight position={[-5, 10, -5]} intensity={0.2} />
+          <directionalLight position={[-5, 10, -5]} intensity={0.1} />
           <Environment preset="city" />
           <ContactShadows
             position={[0, 0.001, 0]}
