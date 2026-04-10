@@ -131,14 +131,26 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     document.addEventListener('mouseup', onUp)
   }, [])
 
-  // 더블클릭 → 내용 높이에 딱 맞게 자동 조절
-  // innerRef(고정 높이 없는 래퍼)의 scrollHeight = 실제 콘텐츠 자연 높이
+  // 콘텐츠 크기 변경 시 패널 높이 자동 조절 (섹션 펼치기/접기)
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    const fit = () => {
+      const headerH = headerRef.current?.offsetHeight ?? 60
+      const fitH = Math.min(window.innerHeight - 32, headerH + el.scrollHeight + 36)
+      setPanelHeight(fitH)
+    }
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    fit() // 초기 맞춤
+    return () => ro.disconnect()
+  }, [collapsed, headerRef])
+
+  // 더블클릭 → 내용 높이에 딱 맞게 수동 강제 조절
   const onResizeDblClick = useCallback(() => {
     if (!innerRef.current) return
     const headerH = headerRef.current?.offsetHeight ?? 60
-    const handleH = 20
-    const contentH = innerRef.current.scrollHeight
-    const fitH = Math.min(window.innerHeight - 32, headerH + contentH + handleH + 16)
+    const fitH = Math.min(window.innerHeight - 32, headerH + innerRef.current.scrollHeight + 36)
     setPanelHeight(fitH)
   }, [headerRef])
 
