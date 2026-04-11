@@ -13,6 +13,8 @@ const useDevStore = create((set, get) => ({
   bboxRelMap: {},    // { partId: { minX,minY,minZ, maxX,maxY,maxZ } } in mm relative to basePos
   showOverallDims: false,
   toggleOverallDims: () => set(s => ({ showOverallDims: !s.showOverallDims })),
+  showSpacingDims: true,
+  toggleSpacingDims: () => set(s => ({ showSpacingDims: !s.showSpacingDims })),
 
   // ── Selection ──────────────────────────────────────────────────────────────
   toggleSelect: (id, shiftKey = false) => set(s => {

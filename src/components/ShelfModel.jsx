@@ -7,6 +7,7 @@ import LevelFoot from './parts/LevelFoot.jsx'
 import Caster from './parts/Caster.jsx'
 import DimensionLabel from './DimensionLabel.jsx'
 import useShelfStore from '../store/useShelfStore.js'
+import useDevStore, { isDev } from '../store/useDevStore.js'
 
 const PITCH_MM = 27.5
 const BOARD_THICK = 25
@@ -23,6 +24,7 @@ export default function ShelfModel() {
     setShelfPosition,
     mode,
   } = useShelfStore()
+  const showSpacingDims = useDevStore(s => isDev ? s.showSpacingDims : true)
 
   const halfW = width / 2
   const halfD = depth / 2
@@ -126,7 +128,7 @@ export default function ShelfModel() {
       ))}
 
       {/* Dimension labels */}
-      {allYs.map((y, i) => {
+      {showSpacingDims && allYs.map((y, i) => {
         if (i === 0) return null
         return (
           <DimensionLabel

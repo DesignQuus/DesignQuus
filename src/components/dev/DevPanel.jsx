@@ -48,6 +48,8 @@ export default function DevPanel() {
   const align = useDevStore(s => s.align)
   const showOverallDims = useDevStore(s => s.showOverallDims)
   const toggleOverallDims = useDevStore(s => s.toggleOverallDims)
+  const showSpacingDims = useDevStore(s => s.showSpacingDims)
+  const toggleSpacingDims = useDevStore(s => s.toggleSpacingDims)
 
   const type = primaryId ? primaryId.replace(/_[^_]+$/, '') : ''
 
@@ -245,20 +247,17 @@ export default function DevPanel() {
       <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0, flexWrap: 'wrap' }}>
         <button
           onClick={toggleOverallDims}
-          style={{
-            background: showOverallDims ? '#1e40af' : 'rgba(255,255,255,0.08)',
-            border: `1px solid ${showOverallDims ? '#3b82f6' : 'rgba(255,255,255,0.18)'}`,
-            borderRadius: 4,
-            color: showOverallDims ? '#93c5fd' : '#9ca3af',
-            fontSize: 10,
-            cursor: 'pointer',
-            padding: '4px 8px',
-            fontWeight: 600,
-            lineHeight: 1.4,
-            flex: '1 1 auto',
-          }}
+          style={toggleBtnStyle(showOverallDims)}
+          title="전체 W/H/D 치수선"
         >
-          {showOverallDims ? '📐 치수 ON' : '📐 치수 OFF'}
+          {showOverallDims ? '전체치수 ●' : '전체치수 ○'}
+        </button>
+        <button
+          onClick={toggleSpacingDims}
+          style={toggleBtnStyle(showSpacingDims)}
+          title="선반 간격 치수"
+        >
+          {showSpacingDims ? '간격치수 ●' : '간격치수 ○'}
         </button>
         <Btn color="#374151" onClick={copyJSON}>JSON 복사</Btn>
         <Btn color="#166534" onClick={handleSave}>파일 저장</Btn>
@@ -319,6 +318,21 @@ function Btn({ color, onClick, children }) {
       {children}
     </button>
   )
+}
+
+function toggleBtnStyle(active) {
+  return {
+    background: active ? '#1e3a5f' : 'rgba(255,255,255,0.06)',
+    border: `1px solid ${active ? '#3b82f6' : 'rgba(255,255,255,0.14)'}`,
+    borderRadius: 4,
+    color: active ? '#93c5fd' : '#6b7280',
+    fontSize: 10,
+    cursor: 'pointer',
+    padding: '4px 6px',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    flex: '1 1 auto',
+  }
 }
 
 const panelStyle = {
