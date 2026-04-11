@@ -202,12 +202,26 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
 }
 
 // 견출 탭 SVG 아이콘 (라인 타입)
-function IconSliders() {
+// 설치 가상 공간 — 룸 코너 투시 (천장·좌벽·우벽·바닥이 모이는 공간감)
+function IconSpace() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" y1="6" x2="20" y2="6"/><circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/>
-      <line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/>
-      <line x1="4" y1="18" x2="20" y2="18"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/>
+      {/* 천장 */}
+      <line x1="3" y1="4" x2="21" y2="4"/>
+      {/* 좌측 벽 기둥 */}
+      <line x1="3" y1="4" x2="3" y2="20"/>
+      {/* 우측 벽 기둥 */}
+      <line x1="21" y1="4" x2="21" y2="20"/>
+      {/* 바닥 */}
+      <line x1="3" y1="20" x2="21" y2="20"/>
+      {/* 소실점 → 좌상 */}
+      <line x1="3" y1="4" x2="12" y2="11"/>
+      {/* 소실점 → 우상 */}
+      <line x1="21" y1="4" x2="12" y2="11"/>
+      {/* 소실점 → 좌하 */}
+      <line x1="3" y1="20" x2="12" y2="11"/>
+      {/* 소실점 → 우하 */}
+      <line x1="21" y1="20" x2="12" y2="11"/>
     </svg>
   )
 }
@@ -232,7 +246,7 @@ function IconLayers() {
 }
 
 const OPTION_TABS = [
-  { id: 'adjust',  icon: <IconSliders />,  tooltip: '배치를 조절합니다.' },
+  { id: 'adjust',  icon: <IconSpace />,   tooltip: '설치 가상 공간' },
   { id: 'palette', icon: <IconPalette />,  tooltip: '컬러를 선택합니다.' },
   { id: 'layers',  icon: <IconLayers />,   tooltip: '선반규격' },
 ]
