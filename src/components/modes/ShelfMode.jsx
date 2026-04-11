@@ -16,7 +16,7 @@ function IconLines({ open }) {
 // onSpaceRef / onShelfRef: DesktopPanel이 섹션 헤더 버튼 DOM 노드를 추적하기 위한 callback ref
 export default function ShelfMode({ onSpaceRef, onShelfRef }) {
   const [spaceOpen, setSpaceOpen] = useState(false)
-  const [shelfOpen, setShelfOpen] = useState(true)
+  const [shelfOpen, setShelfOpen] = useState(false)
 
   const {
     width, setWidth,
