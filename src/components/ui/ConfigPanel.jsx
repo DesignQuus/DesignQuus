@@ -363,9 +363,14 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       {/* 헤더 — 드래그 이동 */}
       <div
         ref={headerRef}
-        className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
+        className="cursor-grab active:cursor-grabbing flex-shrink-0"
+        style={{ padding: '16px 16px 0' }}
       >
-        <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '20px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
+        </div>
+        {/* 드래그 영역 표시 실선 */}
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.25)', marginBottom: 12, borderRadius: 1 }} />
       </div>
 
       {/* 스크롤 가능한 내용 */}
