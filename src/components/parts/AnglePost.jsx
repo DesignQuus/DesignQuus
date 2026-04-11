@@ -1,20 +1,19 @@
 import { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
+import { useShallow } from 'zustand/react/shallow'
 import useShelfStore from '../../store/useShelfStore.js'
 import useDevStore, { isDev, ZERO } from '../../store/useDevStore.js'
 
 // SVG cross-section paths from Illustrator (viewBox 0 0 127.38 128)
-// Outer corner (top-right of L) is at SVG coords (113.12, 14.38)
-// L span: ~99.2 SVG units = 35mm
 const _OUTER = "M108.87,14.38c2.35,0,4.25,1.9,4.25,4.25h0v26.64c0,2.35-1.91,4.25-4.25,4.25h-54.51s-5.3,5.29-5.3,5.29v54.51c0,2.35-1.91,4.25-4.26,4.25h-26.64c-2.35,0-4.25-1.91-4.25-4.25h0V42.72c0-15.65,12.7-28.34,28.35-28.34h66.61Z"
 const _HOLE1 = "M108.3,17.78h-50.74c-.78,0-1.42.63-1.42,1.41v24.94c0,.78.63,1.42,1.42,1.42h50.74c.78,0,1.42-.63,1.42-1.41h0s0-24.94,0-24.94c0-.78-.63-1.42-1.42-1.42"
 const _HOLE2 = "M17.31,58.02v50.74c0,.78.63,1.42,1.41,1.42h24.94c.78,0,1.42-.63,1.42-1.42v-50.74c0-.78-.63-1.42-1.41-1.42h-24.94c-.78,0-1.42.63-1.42,1.42"
 
-const CORNER_X = 113.12   // outer corner X in SVG units
-const CORNER_Y = 14.38    // outer corner Y in SVG units
-const SVG_SPAN = 99.2     // SVG units representing 35mm
-const SVG_SCALE = 0.35 / SVG_SPAN  // Three.js units per SVG unit (35mm = 0.35)
+const CORNER_X = 113.12
+const CORNER_Y = 14.38
+const SVG_SPAN = 99.2
+const SVG_SCALE = 0.35 / SVG_SPAN
 
 const DEG = Math.PI / 180
 
@@ -34,28 +33,20 @@ function buildPostGeometry(h) {
   if (!shapes.length) return null
   const shape = shapes[0]
 
-  // Attach inner voids as holes
   ;[hole1Path, hole2Path].forEach(p => {
     if (!p) return
     const hs = SVGLoader.createShapes(p)
     if (hs.length) shape.holes.push(hs[0])
   })
 
-  // Extrude: depth in SVG units; will be scaled to h (Three.js) later
   const geo = new THREE.ExtrudeGeometry(shape, {
     depth: h / SVG_SCALE,
     bevelEnabled: false,
     steps: 1,
   })
-
-  // 1. Move outer corner to origin
   geo.translate(-CORNER_X, -CORNER_Y, 0)
-  // 2. Scale to Three.js units; negate X so horizontal arm extends +X
   geo.scale(-SVG_SCALE, SVG_SCALE, SVG_SCALE)
-  // 3. Stand upright: shape XY → XZ plane, extrusion Z → Y
-  //    rotateX(-PI/2): new_y=old_z (extrusion→Y), new_z=-old_y (arm→-Z, fixed by group scale)
   geo.rotateX(-Math.PI / 2)
-
   return geo
 }
 
@@ -71,7 +62,6 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
   const z = positionMm[1] / 100
   const yOffset = yOffsetMm / 100
 
-  // Inward direction per corner
   const signX = x <= 0 ? 1 : -1
   const signZ = z <= 0 ? 1 : -1
 
@@ -80,24 +70,24 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     () => (postGeo && renderMode === 'technical' ? new THREE.EdgesGeometry(postGeo, 15) : null),
     [postGeo, renderMode]
   )
-
-  // DEV mode: highlight edges (always built when isDev)
   const devEdgeGeo = useMemo(
     () => (isDev && partId && postGeo ? new THREE.EdgesGeometry(postGeo, 15) : null),
     [postGeo] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  // DEV store subscriptions
-  const devOff = useDevStore(s =>
-    isDev && partId ? { ...ZERO, ...(s.offsets[partId] || {}) } : ZERO
+  // Use stable selector — avoids infinite re-render caused by object creation in selector
+  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const devOff = useMemo(
+    () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
+    [storedOffset]
   )
+
   const selectedId = useDevStore(s => s.selectedId)
   const select = useDevStore(s => s.select)
   const registerPart = useDevStore(s => s.registerPart)
   const unregisterPart = useDevStore(s => s.unregisterPart)
   const isSelected = isDev && partId && selectedId === partId
 
-  // Register / unregister this part
   useEffect(() => {
     if (isDev && partId) {
       registerPart(partId)
@@ -120,30 +110,19 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     ? (e) => { e.stopPropagation(); select(partId) }
     : undefined
 
-  // scale=[-signX, 1, signZ] orients the L arms outward from each shelf corner
-  // Base geometry: arms in +X and -Z
-  // rear-left  (-1,1, 1): -X, -Z ✓  rear-right  (1,1, 1): +X, -Z ✓
-  // front-left (-1,1,-1): -X, +Z ✓  front-right (1,1,-1): +X, +Z ✓
+  // scale=[-signX, 1, signZ] orients L arms outward from each shelf corner
   return (
     <group
       position={[x + devOff.dx / 100, yOffset + devOff.dy / 100, z + devOff.dz / 100]}
       rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
     >
       <group scale={[-signX, 1, signZ]}>
-        <mesh
-          geometry={postGeo}
-          material={mat}
-          castShadow
-          receiveShadow
-          onClick={handleClick}
-        />
-        {/* DEV selection highlight */}
+        <mesh geometry={postGeo} material={mat} castShadow receiveShadow onClick={handleClick} />
         {isSelected && devEdgeGeo && (
           <lineSegments geometry={devEdgeGeo}>
             <lineBasicMaterial color="#f97316" />
           </lineSegments>
         )}
-        {/* Technical mode edge lines */}
         {edgeGeo && !isSelected && (
           <lineSegments geometry={edgeGeo}>
             <lineBasicMaterial color="#222222" />

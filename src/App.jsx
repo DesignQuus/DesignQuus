@@ -5,6 +5,8 @@ import ShelfScene from './components/ShelfScene.jsx'
 import PhotoARMode from './components/ar/PhotoARMode.jsx'
 import useShelfStore from './store/useShelfStore.js'
 import DevTrigger from './components/dev/DevTrigger.jsx'
+import DevPanel from './components/dev/DevPanel.jsx'
+import { isDev } from './store/useDevStore.js'
 
 export default function App() {
   const { arMode, setArMode } = useShelfStore()
@@ -46,6 +48,9 @@ export default function App() {
 
       {/* Hidden DEV mode trigger — 5 rapid clicks in top-left corner */}
       <DevTrigger />
+
+      {/* DEV panel — only visible with ?dev=1 */}
+      {isDev && <DevPanel />}
     </div>
   )
 }

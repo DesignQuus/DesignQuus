@@ -4,16 +4,18 @@ import useDevStore, { isDev, ZERO } from '../../store/useDevStore.js'
 
 const DEG = Math.PI / 180
 
-// Caster wheel at corner position
 export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', partId = null }) {
   const SCALE = 1 / 100
   const x = positionMm[0] * SCALE
   const z = positionMm[1] * SCALE
 
-  // DEV store
-  const devOff = useDevStore(s =>
-    isDev && partId ? { ...ZERO, ...(s.offsets[partId] || {}) } : ZERO
+  // Stable selector — avoids infinite re-render
+  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const devOff = useMemo(
+    () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
+    [storedOffset]
   )
+
   const selectedId = useDevStore(s => s.selectedId)
   const select = useDevStore(s => s.select)
   const registerPart = useDevStore(s => s.registerPart)
@@ -47,23 +49,18 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
       rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
       onClick={handleClick}
     >
-      {/* Mount bracket */}
       <mesh castShadow position={[0, 0.08, 0]}>
         <boxGeometry args={[0.06, 0.04, 0.03]} />
         <primitive object={metalMat} attach="material" />
       </mesh>
-      {/* Axle */}
       <mesh castShadow position={[0, 0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.007, 0.007, 0.07, 8]} />
         <primitive object={metalMat} attach="material" />
       </mesh>
-      {/* Wheel */}
       <mesh castShadow position={[0, 0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
         <torusGeometry args={[0.028, 0.012, 8, 24]} />
         <primitive object={rubberMat} attach="material" />
       </mesh>
-
-      {/* DEV selection highlight */}
       {isDevSelected && (
         <lineSegments position={[0, 0.05, 0]}>
           <edgesGeometry args={[new THREE.BoxGeometry(0.1, 0.1, 0.07)]} />

@@ -5,7 +5,6 @@ import useDevStore, { isDev, ZERO } from '../../store/useDevStore.js'
 
 const MM = 1 / 100
 const DEG = Math.PI / 180
-// Level foot total height = 46mm in Three.js units
 const TOTAL_HEIGHT_MM = 46
 
 useGLTF.preload('/models/level-foot.glb')
@@ -16,10 +15,13 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
 
   const { scene } = useGLTF('/models/level-foot.glb')
 
-  // DEV store
-  const devOff = useDevStore(s =>
-    isDev && partId ? { ...ZERO, ...(s.offsets[partId] || {}) } : ZERO
+  // Stable selector — avoids infinite re-render
+  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const devOff = useMemo(
+    () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
+    [storedOffset]
   )
+
   const selectedId = useDevStore(s => s.selectedId)
   const select = useDevStore(s => s.select)
   const registerPart = useDevStore(s => s.registerPart)
@@ -35,23 +37,15 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
 
   const model = useMemo(() => {
     const clone = scene.clone(true)
-
-    // Compute bounding box of raw GLB
     const box = new THREE.Box3().setFromObject(clone)
     const size = new THREE.Vector3()
     box.getSize(size)
-
-    // Scale so model height = 46mm in Three.js units
     const targetH = TOTAL_HEIGHT_MM * MM
     const scale = size.y > 0 ? targetH / size.y : MM
     clone.scale.setScalar(scale)
-
-    // Recompute after scale — center X/Z, bottom at y=0
     const box2 = new THREE.Box3().setFromObject(clone)
     const center = box2.getCenter(new THREE.Vector3())
     clone.position.set(-center.x, -box2.min.y, -center.z)
-
-    // Technical mode: override with toon materials
     if (renderMode === 'technical') {
       clone.traverse(child => {
         if (child.isMesh) {
@@ -60,11 +54,9 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
         }
       })
     }
-
     return clone
   }, [scene, renderMode])
 
-  // DEV: bounding box for selection highlight
   const devBBox = useMemo(() => {
     if (!isDev || !partId) return null
     const box = new THREE.Box3().setFromObject(model)
@@ -85,8 +77,6 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
       onClick={handleClick}
     >
       <primitive object={model} castShadow receiveShadow />
-
-      {/* DEV selection highlight box */}
       {isDevSelected && devBBox && (
         <lineSegments position={devBBox.center.toArray()}>
           <edgesGeometry args={[new THREE.BoxGeometry(devBBox.size.x, devBBox.size.y, devBBox.size.z)]} />
