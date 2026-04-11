@@ -89,12 +89,12 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
 
   if (!postGeo) return null
 
-  // scale=[signX, 1, -signZ] orients the L toward shelf center for each corner
+  // scale=[-signX, 1, signZ] orients the L arms outward from each shelf corner
   // Base geometry: arms in +X and -Z
-  // front-left (1,1,-1): +X, +Z ✓  front-right (-1,1,-1): -X, +Z ✓
-  // back-left  (1,1, 1): +X, -Z ✓  back-right  (-1,1, 1): -X, -Z ✓
+  // rear-left  (-1,1, 1): -X, -Z ✓  rear-right  (1,1, 1): +X, -Z ✓
+  // front-left (-1,1,-1): -X, +Z ✓  front-right (1,1,-1): +X, +Z ✓
   return (
-    <group position={[x, yOffset, z]} scale={[signX, 1, -signZ]}>
+    <group position={[x, yOffset, z]} scale={[-signX, 1, signZ]}>
       <mesh geometry={postGeo} material={mat} castShadow receiveShadow />
       {edgeGeo && (
         <lineSegments geometry={edgeGeo}>

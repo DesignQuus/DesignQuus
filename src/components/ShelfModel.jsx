@@ -26,8 +26,8 @@ export default function ShelfModel() {
 
   const halfW = width / 2
   const halfD = depth / 2
-  // L-암 35mm - 선반판 걸침 12.5mm = 포스트 외각이 선반판 바깥으로 22.5mm 돌출
-  const POST_EXT = 22.5
+  // 포스트 외각(코너)을 선반판 모서리에 맞추고, 암은 선반 바깥쪽으로 35mm 뻗음
+  const POST_EXT = 0
   const corners = [
     [-(halfW + POST_EXT), -(halfD + POST_EXT)],
     [ (halfW + POST_EXT), -(halfD + POST_EXT)],
