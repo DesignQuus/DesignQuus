@@ -61,6 +61,14 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
         <torusGeometry args={[0.028, 0.012, 8, 24]} />
         <primitive object={rubberMat} attach="material" />
       </mesh>
+      {/* DEV: transparent click catcher — easier to select small part */}
+      {isDev && partId && (
+        <mesh position={[0, 0.05, 0]} onClick={handleClick}>
+          <boxGeometry args={[0.1, 0.1, 0.08]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
+
       {isDevSelected && (
         <lineSegments position={[0, 0.05, 0]}>
           <edgesGeometry args={[new THREE.BoxGeometry(0.1, 0.1, 0.07)]} />

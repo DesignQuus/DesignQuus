@@ -74,9 +74,22 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
     <group
       position={[x + devOff.dx / 100, devOff.dy / 100, z + devOff.dz / 100]}
       rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
-      onClick={handleClick}
     >
-      <primitive object={model} castShadow receiveShadow />
+      {/* onClick on primitive so GLB mesh clicks are captured directly */}
+      <primitive object={model} castShadow receiveShadow onClick={handleClick} />
+
+      {/* DEV: transparent bounding box — easy click target even in empty areas */}
+      {isDev && partId && devBBox && (
+        <mesh
+          position={devBBox.center.toArray()}
+          onClick={handleClick}
+        >
+          <boxGeometry args={[devBBox.size.x, devBBox.size.y, devBBox.size.z]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
+
+      {/* DEV selection highlight */}
       {isDevSelected && devBBox && (
         <lineSegments position={devBBox.center.toArray()}>
           <edgesGeometry args={[new THREE.BoxGeometry(devBBox.size.x, devBBox.size.y, devBBox.size.z)]} />
