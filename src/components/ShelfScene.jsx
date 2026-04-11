@@ -127,12 +127,12 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         <group scale={0.9}>
           <GizmoViewcube
             faces={['우', '좌', '위', '아래', '앞', '뒤']}
-            color={renderMode === 'technical' ? '#e2e8f0' : '#111827'}
+            color="#ffffff"
             hoverColor="#f97316"
-            textColor={renderMode === 'technical' ? '#1f2937' : '#ffffff'}
+            textColor={renderMode === 'technical' ? '#1f2937' : '#111827'}
             strokeColor={renderMode === 'technical' ? '#94a3b8' : '#6b8299'}
             opacity={1}
-            font="40px Arial, sans-serif"
+            font="bold 42px Arial, sans-serif"
           />
         </group>
       </GizmoHelper>
