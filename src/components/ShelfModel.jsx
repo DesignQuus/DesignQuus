@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react'
+import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import AnglePost from './parts/AnglePost.jsx'
@@ -46,6 +46,7 @@ export default function ShelfModel() {
   const raycaster = useMemo(() => new THREE.Raycaster(), [])
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), [])
   const dragTarget = useMemo(() => new THREE.Vector3(), [])
+  const [snapYMm, setSnapYMm] = useState(null)
 
   const startDrag = useCallback((i, e) => {
     e.stopPropagation()
@@ -67,7 +68,9 @@ export default function ShelfModel() {
       const yMm = dragTarget.y * 100
       const pitchIdx = Math.round((yMm - BOTTOM_Y - BOARD_THICK) / PITCH_MM)
       const maxPitch = Math.floor((height - BOARD_THICK * 2 - BOTTOM_Y) / PITCH_MM) - 1
-      setShelfPosition(dragIdxRef.current, Math.max(0, Math.min(maxPitch, pitchIdx)))
+      const clampedIdx = Math.max(0, Math.min(maxPitch, pitchIdx))
+      setSnapYMm(BOTTOM_Y + BOARD_THICK + clampedIdx * PITCH_MM)
+      setShelfPosition(dragIdxRef.current, clampedIdx)
     }
 
     function onPointerUp() {
@@ -75,6 +78,7 @@ export default function ShelfModel() {
         dragIdxRef.current = -1
         document.body.style.cursor = 'auto'
         if (controls) controls.enabled = true
+        setSnapYMm(null)
       }
     }
 
@@ -127,6 +131,11 @@ export default function ShelfModel() {
           : <Caster key={i} positionMm={pos} renderMode={renderMode} partId={`Caster_${i}`} />
       ))}
 
+      {/* Snap guide — horizontal yellow plane during drag */}
+      {snapYMm !== null && (
+        <SnapGuide yMm={snapYMm} widthMm={width} depthMm={depth} />
+      )}
+
       {/* Dimension labels */}
       {showSpacingDims && allYs.map((y, i) => {
         if (i === 0) return null
@@ -144,6 +153,27 @@ export default function ShelfModel() {
       {mode === 'dressroom' && (
         <DressroomExtras widthMm={width} depthMm={depth} heightMm={height} renderMode={renderMode} />
       )}
+    </group>
+  )
+}
+
+// Semi-transparent horizontal plane that shows where the shelf will snap to during drag
+function SnapGuide({ yMm, widthMm, depthMm }) {
+  const y = yMm / 100
+  const w = widthMm / 100 + 0.3
+  const d = depthMm / 100 + 0.3
+  return (
+    <group position={[0, y, 0]}>
+      {/* Filled plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[w, d]} />
+        <meshBasicMaterial color="#facc15" transparent opacity={0.18} depthWrite={false} />
+      </mesh>
+      {/* Outline edges */}
+      <lineSegments>
+        <edgesGeometry args={[new THREE.BoxGeometry(w, 0.001, d)]} />
+        <lineBasicMaterial color="#facc15" />
+      </lineSegments>
     </group>
   )
 }
