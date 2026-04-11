@@ -102,7 +102,15 @@ export default function DevPanel() {
       {/* ── Multi-select alignment grid ── */}
       {selectedCount >= 2 && (
         <div style={{ marginBottom: 8 }}>
-          <div style={sectionLabel}>정렬 ({selectedCount}개 선택)</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={sectionLabel}>정렬 ({selectedCount}개 선택)</span>
+            <button
+              onClick={clear}
+              style={{ ...smallBtn, color: '#fca5a5', borderColor: 'rgba(252,165,165,0.3)', fontSize: 10, padding: '1px 8px' }}
+            >
+              선택 해제
+            </button>
+          </div>
           {ALIGN_AXES.map(({ axis, label, minLabel, centerLabel, maxLabel }) => (
             <div key={axis} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
               <span style={{ color: '#9ca3af', fontSize: 10, width: 28, textAlign: 'right', flexShrink: 0 }}>
@@ -119,9 +127,6 @@ export default function DevPanel() {
               </button>
             </div>
           ))}
-          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-            <Btn color="#374151" onClick={clear}>선택 해제</Btn>
-          </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 8, marginBottom: 6 }} />
           <div style={{ color: '#9ca3af', fontSize: 10, marginBottom: 4 }}>
             개별 조절: {primaryId ?? '—'}
@@ -173,9 +178,7 @@ export default function DevPanel() {
             <Btn color="#1e3a5f" onClick={() => applyToSameType(primaryId)}>
               {type} 모두
             </Btn>
-            {selectedCount === 1 && (
-              <Btn color="#374151" onClick={clear}>해제</Btn>
-            )}
+            <Btn color="#374151" onClick={clear}>해제</Btn>
           </div>
         </>
       )}

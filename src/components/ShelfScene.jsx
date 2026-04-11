@@ -6,6 +6,7 @@ import FloorGrid from './FloorGrid.jsx'
 import BoundingBox from './BoundingBox.jsx'
 import ShelfModel from './ShelfModel.jsx'
 import useShelfStore from '../store/useShelfStore.js'
+import useDevStore, { isDev } from '../store/useDevStore.js'
 
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
@@ -132,11 +133,13 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
 
 export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
   const { height } = useShelfStore()
+  const clearSelection = useDevStore(s => s.clear)
 
   return (
     <Canvas
       shadows
       orthographic
+      onPointerMissed={isDev ? clearSelection : undefined}
       camera={{
         position: [12, height / 100 * 0.7, 18],
         zoom: 55,
