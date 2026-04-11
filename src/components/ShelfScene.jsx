@@ -8,11 +8,13 @@ import ShelfModel from './ShelfModel.jsx'
 import useShelfStore from '../store/useShelfStore.js'
 import useDevStore, { isDev } from '../store/useDevStore.js'
 import DevMeasure from './dev/DevMeasure.jsx'
+import DevDimOverall from './dev/DevDimOverall.jsx'
 
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
   const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode } = useShelfStore()
+  const showOverallDims = useDevStore(s => s.showOverallDims)
 
   // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=0)
   const shelfZOffset = depth / 200
@@ -103,6 +105,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
 
       {/* DEV: edge-to-edge measurement lines */}
       {isDev && <DevMeasure />}
+
+      {/* DEV: overall W/H/D dimension lines */}
+      {isDev && showOverallDims && <DevDimOverall />}
 
       {/* Orbit controls */}
       <OrbitControls

@@ -11,6 +11,8 @@ const useDevStore = create((set, get) => ({
   registeredIds: new Set(),
   basePosMap: {},    // { partId: { x, y, z } } in mm — for alignment math
   bboxRelMap: {},    // { partId: { minX,minY,minZ, maxX,maxY,maxZ } } in mm relative to basePos
+  showOverallDims: false,
+  toggleOverallDims: () => set(s => ({ showOverallDims: !s.showOverallDims })),
 
   // ── Selection ──────────────────────────────────────────────────────────────
   toggleSelect: (id, shiftKey = false) => set(s => {

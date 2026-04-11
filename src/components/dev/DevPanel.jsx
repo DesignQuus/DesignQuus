@@ -46,6 +46,8 @@ export default function DevPanel() {
   const copyJSON = useDevStore(s => s.copyJSON)
   const clear = useDevStore(s => s.clear)
   const align = useDevStore(s => s.align)
+  const showOverallDims = useDevStore(s => s.showOverallDims)
+  const toggleOverallDims = useDevStore(s => s.toggleOverallDims)
 
   const type = primaryId ? primaryId.replace(/_[^_]+$/, '') : ''
 
@@ -240,7 +242,24 @@ export default function DevPanel() {
 
       </div>{/* end scrollable body */}
 
-      <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+        <button
+          onClick={toggleOverallDims}
+          style={{
+            background: showOverallDims ? '#1e40af' : 'rgba(255,255,255,0.08)',
+            border: `1px solid ${showOverallDims ? '#3b82f6' : 'rgba(255,255,255,0.18)'}`,
+            borderRadius: 4,
+            color: showOverallDims ? '#93c5fd' : '#9ca3af',
+            fontSize: 10,
+            cursor: 'pointer',
+            padding: '4px 8px',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            flex: '1 1 auto',
+          }}
+        >
+          {showOverallDims ? '📐 치수 ON' : '📐 치수 OFF'}
+        </button>
         <Btn color="#374151" onClick={copyJSON}>JSON 복사</Btn>
         <Btn color="#166534" onClick={handleSave}>파일 저장</Btn>
       </div>
