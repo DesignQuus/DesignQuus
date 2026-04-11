@@ -25,7 +25,8 @@ function useDraggable(initialPos) {
     if (!el) return
 
     function onMouseDown(e) {
-      if (e.target.closest('button, input, a, select')) return
+      // input/select 은 제외, button은 드래그 허용 (클릭은 정상 동작)
+      if (e.target.closest('input, select')) return
       e.preventDefault()
       const startX = e.clientX - posRef.current.x
       const startY = e.clientY - posRef.current.y
@@ -197,7 +198,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       style={{ left: pos.x, top: pos.y, height: collapsed ? 'auto' : panelHeight }}
     >
       {/* 우측 견출 탭 버튼 */}
-      <div style={{ position: 'absolute', left: '100%', top: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 1 }}>
+      <div style={{ position: 'absolute', left: '100%', top: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 1, borderLeft: '1px solid rgba(255,255,255,0.22)' }}>
         {OPTION_TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
@@ -237,9 +238,9 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
       >
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
-        <div className="flex gap-2 items-center">
-          <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs">📷</button>
-          <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs">
+        <div className="flex gap-2 items-center" style={{ cursor: 'inherit' }}>
+          <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs" style={{ cursor: 'inherit' }}>📷</button>
+          <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs" style={{ cursor: 'inherit' }}>
             {collapsed ? '▼' : '▲'}
           </button>
         </div>
