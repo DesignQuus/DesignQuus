@@ -37,7 +37,7 @@ export default function AquariumMode() {
           {TANK_SIZES.map(({ value, label }) => (
             <button key={value} onClick={() => handleTankSize(value)}
               className={`py-1.5 rounded-lg text-xs font-medium transition-all
-                ${tankSize === value ? 'bg-teal-400 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+                ${tankSize === value ? 'bg-orange-500 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
               {label}
             </button>
           ))}
@@ -51,7 +51,7 @@ export default function AquariumMode() {
         {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
           <button key={val} onClick={() => setFeetType(val)}
             className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-              ${feetType === val ? 'bg-teal-400 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+              ${feetType === val ? 'bg-orange-500 text-white' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
             {lbl}
           </button>
         ))}

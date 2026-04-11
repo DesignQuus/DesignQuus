@@ -14,8 +14,8 @@ function IconLines({ open }) {
 }
 
 export default function ShelfMode() {
-  const [spaceOpen, setSpaceOpen] = useState(true)
-  const [shelfOpen, setShelfOpen] = useState(false)
+  const [spaceOpen, setSpaceOpen] = useState(false)
+  const [shelfOpen, setShelfOpen] = useState(true)
 
   const {
     width, setWidth,
