@@ -148,7 +148,7 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
   )
 }
 
-function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef }) {
+function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const [arActive, setArActive] = useState(false)
   const [dimPreview, setDimPreview] = useState(null)   // data URL or null
   const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
@@ -165,7 +165,7 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef }) {
 
   return (
     <>
-      <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} />
+      <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} spaceOpen={spaceOpen} setSpaceOpen={setSpaceOpen} shelfOpen={shelfOpen} setShelfOpen={setShelfOpen} />
 
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
@@ -282,30 +282,50 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const panelRef = useRef(null)
 
   // ShelfMode 섹션 헤더 DOM 노드
-  const [spaceEl, setSpaceEl] = useState(null)  // 설치 가상 공간
-  const [shelfEl, setShelfEl] = useState(null)  // 선반 규격
+  const [spaceEl, setSpaceEl] = useState(null)
+  const [shelfEl, setShelfEl] = useState(null)
 
-  // 탭 0(adjust→설치 가상 공간), 1(palette→선반 규격) Y 위치
+  // 섹션 열림 상태 — DesktopPanel에서 관리 (자동 접힘 인터랙션)
+  const [spaceOpen, setSpaceOpen] = useState(false)
+  const [shelfOpen, setShelfOpen] = useState(false)
+  // ref로 최신값 유지 (스크롤 핸들러가 클로저 문제 없이 읽을 수 있도록)
+  const spaceOpenRef = useRef(spaceOpen)
+  const shelfOpenRef = useRef(shelfOpen)
+  spaceOpenRef.current = spaceOpen
+  shelfOpenRef.current = shelfOpen
+
+  // 탭 Y 위치
   const [tabTops, setTabTops] = useState({ adjust: 60, palette: 140 })
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
-  // 섹션 헤더 위치 기반 탭 Y 재계산
+  // 섹션 헤더 위치 기반 탭 Y 재계산 + 자동 접힘
   const recomputeTabs = useCallback(() => {
     const panelEl = panelRef.current
     if (!panelEl) return
     const panelRect = panelEl.getBoundingClientRect()
 
+    const COLLAPSE_THRESHOLD = 14  // 패널 상단에서 이 px 이하로 올라오면 자동 접힘
+
     let adjustTop = 60
     if (spaceEl) {
       const r = spaceEl.getBoundingClientRect()
-      adjustTop = Math.max(14, r.top + r.height / 2 - panelRect.top - 19)
+      const computed = r.top + r.height / 2 - panelRect.top - 19
+      // 스크롤로 섹션이 임계점 위로 올라오면 자동 접힘
+      if (spaceOpenRef.current && computed < COLLAPSE_THRESHOLD) {
+        setSpaceOpen(false)
+      }
+      adjustTop = Math.max(COLLAPSE_THRESHOLD, computed)
     }
 
     let paletteTop = adjustTop + 44
     if (shelfEl) {
       const r = shelfEl.getBoundingClientRect()
-      paletteTop = Math.max(adjustTop + 44, r.top + r.height / 2 - panelRect.top - 19)
+      const computed = r.top + r.height / 2 - panelRect.top - 19
+      if (shelfOpenRef.current && computed < adjustTop + 44) {
+        setShelfOpen(false)
+      }
+      paletteTop = Math.max(adjustTop + 44, computed)
     }
 
     setTabTops({ adjust: adjustTop, palette: paletteTop })
@@ -481,6 +501,10 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
               onArMode={onArMode}
               onSpaceRef={setSpaceEl}
               onShelfRef={setShelfEl}
+              spaceOpen={spaceOpen}
+              setSpaceOpen={setSpaceOpen}
+              shelfOpen={shelfOpen}
+              setShelfOpen={setShelfOpen}
             />
           )}
         </div>

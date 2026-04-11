@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
@@ -14,9 +14,8 @@ function IconLines({ open }) {
 }
 
 // onSpaceRef / onShelfRef: DesktopPanel이 섹션 헤더 버튼 DOM 노드를 추적하기 위한 callback ref
-export default function ShelfMode({ onSpaceRef, onShelfRef }) {
-  const [spaceOpen, setSpaceOpen] = useState(false)
-  const [shelfOpen, setShelfOpen] = useState(false)
+// spaceOpen/setSpaceOpen, shelfOpen/setShelfOpen: DesktopPanel에서 관리 (자동 접힘 인터랙션)
+export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
 
   const {
     width, setWidth,
