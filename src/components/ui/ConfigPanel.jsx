@@ -130,9 +130,9 @@ function IconLayers() {
 }
 
 const OPTION_TABS = [
-  { id: 'adjust', icon: <IconSliders /> },
-  { id: 'palette', icon: <IconPalette /> },
-  { id: 'layers', icon: <IconLayers /> },
+  { id: 'adjust',  icon: <IconSliders />,  tooltip: '배치를 조절합니다.' },
+  { id: 'palette', icon: <IconPalette />,  tooltip: '컬러를 선택합니다.' },
+  { id: 'layers',  icon: <IconLayers />,   tooltip: '레이어를 설정합니다.' },
 ]
 
 // 팔레트 탭 — 포스트 색상 선택
@@ -172,6 +172,7 @@ function PaletteTabContent() {
 function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeTab, setActiveTab] = useState(null)
+  const [hoveredTab, setHoveredTab] = useState(null)
   const [panelHeight, setPanelHeight] = useState(480)
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
@@ -234,33 +235,71 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       <div style={{ position: 'absolute', left: '100%', top: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 1, borderLeft: '1px solid rgba(255,255,255,0.22)' }}>
         {OPTION_TABS.map((tab) => {
           const isActive = activeTab === tab.id
+          const isHovered = hoveredTab === tab.id
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(isActive ? null : tab.id)}
-              style={{
-                width: 38,
-                height: 38,
-                background: isActive
-                  ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
-                  : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
-                border: '1px solid #4a5e72',
-                borderLeft: 'none',
-                borderRadius: '0 10px 10px 0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: isActive ? '#f97316' : 'rgba(255,255,255,0.4)',
-                transition: 'color 0.2s, background 0.2s',
-                outline: 'none',
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
-            >
-              {tab.icon}
-            </button>
+            <div key={tab.id} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActiveTab(isActive ? null : tab.id)}
+                onMouseEnter={() => setHoveredTab(tab.id)}
+                onMouseLeave={() => setHoveredTab(null)}
+                style={{
+                  width: 38,
+                  height: 38,
+                  background: isActive
+                    ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
+                    : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
+                  border: '1px solid #4a5e72',
+                  borderLeft: 'none',
+                  borderRadius: '0 10px 10px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: isActive ? '#f97316' : isHovered ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.4)',
+                  transition: 'color 0.2s, background 0.2s',
+                  outline: 'none',
+                  flexShrink: 0,
+                }}
+              >
+                {tab.icon}
+              </button>
+
+              {/* 말풍선 툴팁 */}
+              {isHovered && (
+                <div style={{
+                  position: 'absolute',
+                  left: 'calc(100% + 10px)',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(8,12,24,0.93)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: 8,
+                  padding: '5px 11px',
+                  color: 'rgba(255,255,255,0.92)',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                  zIndex: 100,
+                }}>
+                  {tab.tooltip}
+                  {/* 말풍선 꼬리 — 왼쪽 삼각형 */}
+                  <span style={{
+                    position: 'absolute',
+                    right: '100%',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 0,
+                    height: 0,
+                    borderTop: '5px solid transparent',
+                    borderBottom: '5px solid transparent',
+                    borderRight: '6px solid rgba(8,12,24,0.93)',
+                  }} />
+                </div>
+              )}
+            </div>
           )
         })}
       </div>
