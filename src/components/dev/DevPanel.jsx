@@ -164,7 +164,10 @@ export default function DevPanel() {
             </div>
           )}
 
-          <div style={sectionLabel}>위치 (mm)</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+            <span style={sectionLabel}>위치 (mm)</span>
+            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift = 1mm</span>
+          </div>
           {TRANS_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
               key={key}
@@ -172,13 +175,17 @@ export default function DevPanel() {
               color={AXIS_COLOR[axis]}
               value={cur[key]}
               step={step}
-              onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
-              onPlus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, step) }}
+              shiftStep={1}
+              onMinus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? -1 : -step) }}
+              onPlus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? 1 : step) }}
               onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
 
-          <div style={{ ...sectionLabel, marginTop: 8 }}>회전 (°)</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 8, marginBottom: 4 }}>
+            <span style={sectionLabel}>회전 (°)</span>
+            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift = 10°</span>
+          </div>
           {ROT_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
               key={key}
@@ -186,8 +193,9 @@ export default function DevPanel() {
               color={AXIS_COLOR[axis]}
               value={cur[key]}
               step={step}
-              onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
-              onPlus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, step) }}
+              shiftStep={10}
+              onMinus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? -10 : -step) }}
+              onPlus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? 10 : step) }}
               onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
@@ -212,7 +220,7 @@ export default function DevPanel() {
   )
 }
 
-function FieldRow({ label, color = '#9ca3af', value, step, onMinus, onPlus, onChange }) {
+function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, onPlus, onChange }) {
   const btnStyle = {
     ...smallBtn,
     color,
@@ -224,7 +232,11 @@ function FieldRow({ label, color = '#9ca3af', value, step, onMinus, onPlus, onCh
       <span style={{ color, fontSize: 11, fontWeight: 700, width: 18, textAlign: 'right', flexShrink: 0 }}>
         {label}
       </span>
-      <button onClick={onMinus} style={btnStyle}>−</button>
+      <button
+        onClick={e => onMinus(e.shiftKey)}
+        style={btnStyle}
+        title={shiftStep ? `Shift: ${shiftStep > 1 ? shiftStep + (shiftStep >= 10 ? '°' : 'mm') : shiftStep + 'mm'}` : undefined}
+      >−</button>
       <input
         type="number"
         step={step}
@@ -232,7 +244,11 @@ function FieldRow({ label, color = '#9ca3af', value, step, onMinus, onPlus, onCh
         onChange={e => onChange(e.target.value)}
         style={{ ...inputStyle, borderColor: `${color}44` }}
       />
-      <button onClick={onPlus} style={btnStyle}>+</button>
+      <button
+        onClick={e => onPlus(e.shiftKey)}
+        style={btnStyle}
+        title={shiftStep ? `Shift: +${shiftStep > 1 ? shiftStep + (shiftStep >= 10 ? '°' : 'mm') : shiftStep + 'mm'}` : undefined}
+      >+</button>
     </div>
   )
 }
