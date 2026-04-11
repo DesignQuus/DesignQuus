@@ -208,7 +208,7 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
             <span style={sectionLabel}>위치 (mm)</span>
-            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift = 1mm</span>
+            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift=10  Alt+Shift=1</span>
           </div>
           {TRANS_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
@@ -217,16 +217,16 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
               color={AXIS_COLOR[axis]}
               value={cur[key]}
               step={step}
-              shiftStep={1}
-              onMinus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? -1 : -step) }}
-              onPlus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? 1 : step) }}
+              shiftStep={10}
+              altShiftStep={1}
+              onStep={(delta) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, delta) }}
               onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 8, marginBottom: 4 }}>
             <span style={sectionLabel}>회전 (°)</span>
-            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift = 10°</span>
+            <span style={{ color: '#6b7280', fontSize: 9 }}>Shift=10°  Alt+Shift=5°</span>
           </div>
           {ROT_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
@@ -236,8 +236,8 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
               value={cur[key]}
               step={step}
               shiftStep={10}
-              onMinus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? -10 : -step) }}
-              onPlus={(shifted) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, shifted ? 10 : step) }}
+              altShiftStep={5}
+              onStep={(delta) => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, delta) }}
               onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
@@ -254,7 +254,7 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
 
       </div>{/* end scrollable body */}
 
-      <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0 }}>
         <button
           onClick={toggleOverallDims}
           style={toggleBtnStyle(showOverallDims)}
@@ -276,7 +276,7 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
   )
 }
 
-function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, onPlus, onChange }) {
+function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, altShiftStep, onStep, onChange }) {
   // draft !== null → user is actively editing; hold raw string so "12." or "-5" don't snap
   const [draft, setDraft] = useState(null)
 
@@ -300,6 +300,12 @@ function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, o
     if (e.key === 'Escape') { setDraft(null); e.target.blur() }
   }
 
+  const getStep = (e) => {
+    if (e.shiftKey && e.altKey) return altShiftStep ?? step
+    if (e.shiftKey) return shiftStep ?? step
+    return step
+  }
+
   const btnStyle = {
     ...smallBtn,
     color,
@@ -312,9 +318,9 @@ function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, o
         {label}
       </span>
       <button
-        onClick={e => onMinus(e.shiftKey)}
+        onClick={e => onStep(-getStep(e))}
         style={btnStyle}
-        title={shiftStep ? `Shift: ${shiftStep > 1 ? shiftStep + (shiftStep >= 10 ? '°' : 'mm') : shiftStep + 'mm'}` : undefined}
+        title={`±${step} / Shift:±${shiftStep ?? step} / Alt+Shift:±${altShiftStep ?? step}`}
       >−</button>
       <input
         type="text"
@@ -327,9 +333,9 @@ function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, o
         style={{ ...inputStyle, borderColor: `${color}44` }}
       />
       <button
-        onClick={e => onPlus(e.shiftKey)}
+        onClick={e => onStep(getStep(e))}
         style={btnStyle}
-        title={shiftStep ? `Shift: +${shiftStep > 1 ? shiftStep + (shiftStep >= 10 ? '°' : 'mm') : shiftStep + 'mm'}` : undefined}
+        title={`±${step} / Shift:±${shiftStep ?? step} / Alt+Shift:±${altShiftStep ?? step}`}
       >+</button>
     </div>
   )
@@ -349,6 +355,7 @@ function Btn({ color, onClick, children }) {
         padding: '4px 8px',
         fontWeight: 600,
         lineHeight: 1.4,
+        width: '100%',
       }}
     >
       {children}
@@ -367,7 +374,7 @@ function toggleBtnStyle(active) {
     padding: '4px 6px',
     fontWeight: 600,
     lineHeight: 1.4,
-    flex: '1 1 auto',
+    width: '100%',
   }
 }
 
