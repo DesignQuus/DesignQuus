@@ -67,7 +67,7 @@ export default function App() {
         {/* 마우스 조작 안내 — 하단 중앙 */}
         <div style={{
           position: 'fixed',
-          bottom: 14,
+          bottom: 19,
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
