@@ -103,6 +103,13 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     return new THREE.MeshStandardMaterial({ color, metalness, roughness, side: THREE.DoubleSide })
   }, [renderMode, postColor])
 
+  useEffect(() => {
+    if (!isDev || !partId) return
+    mat.transparent = isSelected
+    mat.opacity = isSelected ? 0.5 : 1
+    mat.needsUpdate = true
+  }, [mat, isSelected])
+
   if (!postGeo) return null
 
   const handleClick = isDev && partId

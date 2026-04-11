@@ -56,6 +56,17 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
     return clone
   }, [scene, renderMode])
 
+  useEffect(() => {
+    if (!isDev || !partId) return
+    model.traverse(child => {
+      if (child.isMesh && child.material) {
+        child.material.transparent = isDevSelected
+        child.material.opacity = isDevSelected ? 0.5 : 1
+        child.material.needsUpdate = true
+      }
+    })
+  }, [model, isDevSelected])
+
   const devBBox = useMemo(() => {
     if (!isDev || !partId) return null
     const box = new THREE.Box3().setFromObject(model)

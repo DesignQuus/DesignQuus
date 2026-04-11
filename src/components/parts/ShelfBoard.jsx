@@ -48,6 +48,13 @@ export default function ShelfBoard({
     return new THREE.MeshStandardMaterial({ color, metalness: 0.0, roughness: 0.6 })
   }, [color, renderMode])
 
+  useEffect(() => {
+    if (!isDev || !partId) return
+    mat.transparent = isDevSelected
+    mat.opacity = isDevSelected ? 0.5 : 1
+    mat.needsUpdate = true
+  }, [mat, isDevSelected])
+
   const handleClick = isDev && partId
     ? (e) => { e.stopPropagation(); toggleSelect(partId, e.shiftKey); onClick?.() }
     : onClick

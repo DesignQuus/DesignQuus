@@ -38,6 +38,15 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
     return new THREE.MeshStandardMaterial({ color: '#2a2a2a', metalness: 0.0, roughness: 0.9 })
   }, [renderMode])
 
+  useEffect(() => {
+    if (!isDev || !partId) return
+    for (const m of [metalMat, rubberMat]) {
+      m.transparent = isDevSelected
+      m.opacity = isDevSelected ? 0.5 : 1
+      m.needsUpdate = true
+    }
+  }, [metalMat, rubberMat, isDevSelected])
+
   const handleClick = isDev && partId
     ? (e) => { e.stopPropagation(); toggleSelect(partId, e.shiftKey) }
     : undefined
