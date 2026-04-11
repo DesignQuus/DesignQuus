@@ -1,22 +1,24 @@
 import { useMemo, useState, useRef, useCallback } from 'react'
 import useDevStore, { ZERO } from '../../store/useDevStore.js'
 
+const AXIS_COLOR = { x: '#ef4444', y: '#22c55e', z: '#3b82f6' }
+
 const TRANS_FIELDS = [
-  { key: 'dx', label: 'X', step: 0.1 },
-  { key: 'dy', label: 'Y', step: 0.1 },
-  { key: 'dz', label: 'Z', step: 0.1 },
+  { key: 'dx', label: 'X', step: 0.1, axis: 'x' },
+  { key: 'dy', label: 'Y', step: 0.1, axis: 'y' },
+  { key: 'dz', label: 'Z', step: 0.1, axis: 'z' },
 ]
 const ROT_FIELDS = [
-  { key: 'rx', label: 'Rx', step: 1 },
-  { key: 'ry', label: 'Ry', step: 1 },
-  { key: 'rz', label: 'Rz', step: 1 },
+  { key: 'rx', label: 'Rx', step: 1, axis: 'x' },
+  { key: 'ry', label: 'Ry', step: 1, axis: 'y' },
+  { key: 'rz', label: 'Rz', step: 1, axis: 'z' },
 ]
 
 // Alignment grid: axis × mode
 const ALIGN_AXES = [
-  { axis: 'x', label: 'X축', minLabel: '←', centerLabel: '↔', maxLabel: '→' },
-  { axis: 'y', label: 'Y축', minLabel: '↓', centerLabel: '↕', maxLabel: '↑' },
-  { axis: 'z', label: 'Z축', minLabel: '앞', centerLabel: '⇔', maxLabel: '뒤' },
+  { axis: 'x', label: 'X', minLabel: '←', centerLabel: '↔', maxLabel: '→' },
+  { axis: 'y', label: 'Y', minLabel: '↓', centerLabel: '↕', maxLabel: '↑' },
+  { axis: 'z', label: 'Z', minLabel: '앞', centerLabel: '⇔', maxLabel: '뒤' },
 ]
 
 const PANEL_W = 210
@@ -117,22 +119,31 @@ export default function DevPanel() {
               선택 해제
             </button>
           </div>
-          {ALIGN_AXES.map(({ axis, label, minLabel, centerLabel, maxLabel }) => (
-            <div key={axis} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
-              <span style={{ color: '#9ca3af', fontSize: 10, width: 28, textAlign: 'right', flexShrink: 0 }}>
-                {label}
-              </span>
-              <button onClick={() => align(axis, 'min')} style={alignBtn} title={`${axis}축 최솟값 정렬`}>
-                {minLabel}
-              </button>
-              <button onClick={() => align(axis, 'center')} style={alignBtn} title={`${axis}축 중앙 정렬`}>
-                {centerLabel}
-              </button>
-              <button onClick={() => align(axis, 'max')} style={alignBtn} title={`${axis}축 최댓값 정렬`}>
-                {maxLabel}
-              </button>
-            </div>
-          ))}
+          {ALIGN_AXES.map(({ axis, label, minLabel, centerLabel, maxLabel }) => {
+            const c = AXIS_COLOR[axis]
+            const btn = {
+              ...alignBtn,
+              background: `${c}22`,
+              border: `1px solid ${c}55`,
+              color: c,
+            }
+            return (
+              <div key={axis} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
+                <span style={{ color: c, fontSize: 11, fontWeight: 700, width: 28, textAlign: 'right', flexShrink: 0 }}>
+                  {label}
+                </span>
+                <button onClick={() => align(axis, 'min')} style={btn} title={`${axis}축 최솟값 정렬`}>
+                  {minLabel}
+                </button>
+                <button onClick={() => align(axis, 'center')} style={btn} title={`${axis}축 중앙 정렬`}>
+                  {centerLabel}
+                </button>
+                <button onClick={() => align(axis, 'max')} style={btn} title={`${axis}축 최댓값 정렬`}>
+                  {maxLabel}
+                </button>
+              </div>
+            )
+          })}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 8, marginBottom: 6 }} />
           <div style={{ color: '#9ca3af', fontSize: 10, marginBottom: 4 }}>
             개별 조절: {primaryId ?? '—'}
@@ -154,10 +165,11 @@ export default function DevPanel() {
           )}
 
           <div style={sectionLabel}>위치 (mm)</div>
-          {TRANS_FIELDS.map(({ key, label, step }) => (
+          {TRANS_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
               key={key}
               label={label}
+              color={AXIS_COLOR[axis]}
               value={cur[key]}
               step={step}
               onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
@@ -167,10 +179,11 @@ export default function DevPanel() {
           ))}
 
           <div style={{ ...sectionLabel, marginTop: 8 }}>회전 (°)</div>
-          {ROT_FIELDS.map(({ key, label, step }) => (
+          {ROT_FIELDS.map(({ key, label, step, axis }) => (
             <FieldRow
               key={key}
               label={label}
+              color={AXIS_COLOR[axis]}
               value={cur[key]}
               step={step}
               onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
@@ -199,21 +212,27 @@ export default function DevPanel() {
   )
 }
 
-function FieldRow({ label, value, step, onMinus, onPlus, onChange }) {
+function FieldRow({ label, color = '#9ca3af', value, step, onMinus, onPlus, onChange }) {
+  const btnStyle = {
+    ...smallBtn,
+    color,
+    borderColor: `${color}55`,
+    background: `${color}18`,
+  }
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
-      <span style={{ color: '#9ca3af', fontSize: 10, width: 22, textAlign: 'right', flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3, borderLeft: `2px solid ${color}`, paddingLeft: 4 }}>
+      <span style={{ color, fontSize: 11, fontWeight: 700, width: 18, textAlign: 'right', flexShrink: 0 }}>
         {label}
       </span>
-      <button onClick={onMinus} style={smallBtn}>−</button>
+      <button onClick={onMinus} style={btnStyle}>−</button>
       <input
         type="number"
         step={step}
         value={value}
         onChange={e => onChange(e.target.value)}
-        style={inputStyle}
+        style={{ ...inputStyle, borderColor: `${color}44` }}
       />
-      <button onClick={onPlus} style={smallBtn}>+</button>
+      <button onClick={onPlus} style={btnStyle}>+</button>
     </div>
   )
 }
