@@ -19,7 +19,7 @@ export default function ShelfBoard({
   const SCALE = 1 / 100
   const w = widthMm * SCALE
   const d = depthMm * SCALE
-  const thick = 0.025
+  const thick = 0.010
   const y = yMm * SCALE
 
   const color = selected ? '#fbbf24' : (type === 'middle' ? '#e8e0d0' : '#ddd8c8')
@@ -39,7 +39,7 @@ export default function ShelfBoard({
   useEffect(() => {
     if (isDev && partId) {
       registerPart(partId, { x: 0, y: yMm, z: 0 },
-        { minX: -widthMm / 2, minY: 0, minZ: -depthMm / 2, maxX: widthMm / 2, maxY: 25, maxZ: depthMm / 2 })
+        { minX: -widthMm / 2, minY: 0, minZ: -depthMm / 2, maxX: widthMm / 2, maxY: 10, maxZ: depthMm / 2 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps

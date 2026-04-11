@@ -63,6 +63,42 @@ export default function App() {
           <PhotoARMode onClose={() => setArMode(false)} />
         )}
 
+        {/* 마우스 조작 안내 — 하단 중앙 */}
+        <div style={{
+          position: 'fixed',
+          bottom: 14,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          background: 'rgba(21, 25, 43, 0.78)',
+          border: '1px solid rgba(74, 94, 114, 0.55)',
+          borderRadius: 8,
+          padding: '5px 0',
+          fontSize: 11,
+          color: 'rgba(255,255,255,0.65)',
+          boxShadow: '0 2px 14px rgba(0,0,0,0.35)',
+          backdropFilter: 'blur(10px)',
+          userSelect: 'none',
+          zIndex: 50,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          {[
+            '좌클릭 드래그: 회전',
+            '우클릭 드래그: 이동',
+            '스크롤: 줌',
+            'Shift+좌클릭: 이동',
+          ].map((hint, i, arr) => (
+            <React.Fragment key={i}>
+              <span style={{ padding: '0 14px' }}>{hint}</span>
+              {i < arr.length - 1 && (
+                <span style={{ color: 'rgba(74,94,114,0.8)', fontSize: 14, lineHeight: 1 }}>│</span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
         {/* Hidden DEV mode trigger — 5 rapid clicks in top-left corner */}
         <DevTrigger />
 

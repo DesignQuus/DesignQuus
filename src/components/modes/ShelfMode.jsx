@@ -27,6 +27,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef }) {
     spaceWidth, setSpaceWidth,
     spaceHeight, setSpaceHeight,
     spaceDepth, setSpaceDepth,
+    renderMode, setRenderMode,
   } = useShelfStore()
 
   // callback ref — 노드가 마운트/언마운트 될 때 부모에 알림
@@ -81,6 +82,24 @@ export default function ShelfMode({ onSpaceRef, onShelfRef }) {
                     onClick={() => setFeetType(val)}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
                       ${feetType === val
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-white/20 text-white/80 hover:bg-white/30'
+                      }`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-2">
+              <span className="text-xs font-medium text-white/90 block mb-2">렌더 모드</span>
+              <div className="flex gap-2">
+                {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
+                  <button
+                    key={val}
+                    onClick={() => setRenderMode(val)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
+                      ${renderMode === val
                         ? 'bg-orange-500 text-white shadow-md'
                         : 'bg-white/20 text-white/80 hover:bg-white/30'
                       }`}

@@ -10,7 +10,7 @@ import useShelfStore from '../store/useShelfStore.js'
 import useDevStore, { isDev } from '../store/useDevStore.js'
 
 const PITCH_MM = 27.5
-const BOARD_THICK = 25
+const BOARD_THICK = 10
 const FOOT_HEIGHT_MM = 46                     // 수평발 총 높이
 const BOTTOM_Y = FOOT_HEIGHT_MM + PITCH_MM   // 46 + 27.5 = 73.5mm
 

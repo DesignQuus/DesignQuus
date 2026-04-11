@@ -67,28 +67,12 @@ function useIsMobile() {
 // onSpaceRef / onShelfRef: ShelfMode의 섹션 헤더 DOM 노드를 부모로 전달
 function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onShelfRef }) {
   const [arActive, setArActive] = useState(false)
-  const { mode, renderMode, setRenderMode } = useShelfStore()
+  const { mode } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
   return (
     <>
       <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} />
-
-      {/* Render mode toggle — 섹션 아래 */}
-      <div className="flex gap-1 mt-3 mb-1">
-        {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
-          <button
-            key={val}
-            onClick={() => setRenderMode(val)}
-            className={`flex-1 py-1 rounded-lg text-xs font-medium transition-all
-              ${renderMode === val
-                ? 'bg-white/30 text-white'
-                : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
-          >
-            {lbl}
-          </button>
-        ))}
-      </div>
 
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
