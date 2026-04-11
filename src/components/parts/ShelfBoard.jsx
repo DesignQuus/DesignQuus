@@ -53,6 +53,7 @@ export default function ShelfBoard({
     if (!isDev || !partId) return
     mat.transparent = isDevSelected
     mat.opacity = isDevSelected ? 0.5 : 1
+    mat.depthWrite = !isDevSelected
     mat.needsUpdate = true
   }, [mat, isDevSelected])
 

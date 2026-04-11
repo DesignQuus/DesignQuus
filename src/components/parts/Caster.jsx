@@ -44,6 +44,7 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
     for (const m of [metalMat, rubberMat]) {
       m.transparent = isDevSelected
       m.opacity = isDevSelected ? 0.5 : 1
+      m.depthWrite = !isDevSelected
       m.needsUpdate = true
     }
   }, [metalMat, rubberMat, isDevSelected])

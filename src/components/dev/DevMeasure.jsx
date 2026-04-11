@@ -103,7 +103,7 @@ export default function DevMeasure() {
         return [a, b]
       }
 
-      acc.push({ key, gapMm, start, end, label, capA: cap(start), capB: cap(end), color: AXIS_COLOR[key] })
+      acc.push({ key, gapMm, mainPts: [start, end], label, capA: cap(start), capB: cap(end), color: AXIS_COLOR[key] })
       return acc
     }, [])
   }, [selectedIds, basePosMap, bboxRelMap, offsets])
@@ -112,10 +112,10 @@ export default function DevMeasure() {
 
   return (
     <>
-      {lines.map(({ key, gapMm, start, end, label, capA, capB, color }) => (
+      {lines.map(({ key, gapMm, mainPts, label, capA, capB, color }) => (
         <group key={key}>
           {/* Main dimension line */}
-          <SegLine points={[start, end]} color={color} />
+          <SegLine points={mainPts} color={color} />
           {/* End cap ticks */}
           <SegLine points={capA} color={color} />
           <SegLine points={capB} color={color} />

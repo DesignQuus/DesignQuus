@@ -63,6 +63,7 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
       if (child.isMesh && child.material) {
         child.material.transparent = isDevSelected
         child.material.opacity = isDevSelected ? 0.5 : 1
+        child.material.depthWrite = !isDevSelected
         child.material.needsUpdate = true
       }
     })

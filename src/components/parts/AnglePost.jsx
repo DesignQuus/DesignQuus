@@ -108,6 +108,7 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     if (!isDev || !partId) return
     mat.transparent = isSelected
     mat.opacity = isSelected ? 0.5 : 1
+    mat.depthWrite = !isSelected
     mat.needsUpdate = true
   }, [mat, isSelected])
 

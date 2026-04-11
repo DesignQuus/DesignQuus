@@ -54,13 +54,22 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
   const type = primaryId ? primaryId.replace(/_[^_]+$/, '') : ''
 
   // ── Edge-to-edge measurements (2 selected) ──────────────────────────────────
-  const gaps = useDevStore(s => {
-    if (s.selectedIds.length !== 2) return null
-    const bA = getEffBbox(s.selectedIds[0], s.basePosMap, s.bboxRelMap, s.offsets)
-    const bB = getEffBbox(s.selectedIds[1], s.basePosMap, s.bboxRelMap, s.offsets)
+  // Use primitive selectors so Zustand can do stable reference comparison.
+  // A selector that returns a new object on every call causes infinite re-renders
+  // in Zustand v5 because the component always appears "changed".
+  const selectedIdsStr = useDevStore(s => s.selectedIds.join(','))
+  const basePosMap = useDevStore(s => s.basePosMap)
+  const bboxRelMap = useDevStore(s => s.bboxRelMap)
+  const offsets = useDevStore(s => s.offsets)
+
+  const gaps = useMemo(() => {
+    const ids = selectedIdsStr.split(',').filter(Boolean)
+    if (ids.length !== 2) return null
+    const bA = getEffBbox(ids[0], basePosMap, bboxRelMap, offsets)
+    const bB = getEffBbox(ids[1], basePosMap, bboxRelMap, offsets)
     if (!bA || !bB) return null
     return computeGaps(bA, bB)
-  })
+  }, [selectedIdsStr, basePosMap, bboxRelMap, offsets])
 
   // ── Drag state ──────────────────────────────────────────
   const [pos, setPos] = useState({ x: 14, y: 70 })
