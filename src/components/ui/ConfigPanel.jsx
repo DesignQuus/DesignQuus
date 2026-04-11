@@ -71,8 +71,10 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
 
   return (
     <>
-      {/* Render mode toggle */}
-      <div className="flex gap-1 mb-3">
+      <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} />
+
+      {/* Render mode toggle — 섹션 아래 */}
+      <div className="flex gap-1 mt-3 mb-1">
         {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
           <button
             key={val}
@@ -87,7 +89,6 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
         ))}
       </div>
 
-      <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} />
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
 
