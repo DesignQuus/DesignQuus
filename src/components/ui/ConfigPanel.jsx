@@ -64,7 +64,8 @@ function useIsMobile() {
 }
 
 // 공통 패널 내용
-function PanelContent({ onCameraPreset, onScreenshot, onArMode }) {
+// onSpaceRef / onShelfRef: ShelfMode의 섹션 헤더 DOM 노드를 부모로 전달
+function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onShelfRef }) {
   const { mode, renderMode, setRenderMode } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
@@ -86,7 +87,7 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode }) {
         ))}
       </div>
 
-      <ModePanel />
+      <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} />
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
 
@@ -187,10 +188,48 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   panelHeightRef.current = panelHeight
   const contentRef = useRef(null)
   const innerRef = useRef(null)
+  const panelRef = useRef(null)
+
+  // ShelfMode 섹션 헤더 DOM 노드
+  const [spaceEl, setSpaceEl] = useState(null)  // 설치 가상 공간
+  const [shelfEl, setShelfEl] = useState(null)  // 선반 규격
+
+  // 탭 0(adjust→설치 가상 공간), 1(palette→선반 규격) Y 위치
+  const [tabTops, setTabTops] = useState({ adjust: 60, palette: 140 })
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
-  // 콘텐츠 크기 변경 시 패널 높이 자동 조절
+  // 섹션 헤더 위치 기반 탭 Y 재계산
+  const recomputeTabs = useCallback(() => {
+    const panelEl = panelRef.current
+    if (!panelEl) return
+    const panelRect = panelEl.getBoundingClientRect()
+
+    let adjustTop = 60
+    if (spaceEl) {
+      const r = spaceEl.getBoundingClientRect()
+      adjustTop = Math.max(14, r.top + r.height / 2 - panelRect.top - 19)
+    }
+
+    let paletteTop = adjustTop + 44
+    if (shelfEl) {
+      const r = shelfEl.getBoundingClientRect()
+      paletteTop = Math.max(adjustTop + 44, r.top + r.height / 2 - panelRect.top - 19)
+    }
+
+    setTabTops({ adjust: adjustTop, palette: paletteTop })
+  }, [spaceEl, shelfEl])
+
+  useEffect(() => { recomputeTabs() }, [recomputeTabs])
+
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    el.addEventListener('scroll', recomputeTabs)
+    return () => el.removeEventListener('scroll', recomputeTabs)
+  }, [recomputeTabs])
+
+  // 콘텐츠 크기 변경 시 패널 높이 자동 조절 + 탭 위치 재계산
   useEffect(() => {
     const el = innerRef.current
     if (!el) return
@@ -198,12 +237,13 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       const headerH = headerRef.current?.offsetHeight ?? 60
       const fitH = Math.min(window.innerHeight - 32, headerH + el.scrollHeight + 36)
       setPanelHeight(fitH)
+      recomputeTabs()
     }
     const ro = new ResizeObserver(fit)
     ro.observe(el)
     fit()
     return () => ro.disconnect()
-  }, [headerRef])
+  }, [headerRef, recomputeTabs])
 
   // 하단 리사이즈 핸들 드래그
   const onResizeMouseDown = useCallback((e) => {
@@ -211,7 +251,6 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     e.stopPropagation()
     const startY = e.clientY
     const startH = panelHeightRef.current
-
     function onMove(ev) {
       const newH = Math.max(200, Math.min(window.innerHeight - 80, startH + (ev.clientY - startY)))
       setPanelHeight(newH)
@@ -224,7 +263,6 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     document.addEventListener('mouseup', onUp)
   }, [])
 
-  // 더블클릭 → 내용 높이에 딱 맞게 강제 조절
   const onResizeDblClick = useCallback(() => {
     if (!innerRef.current) return
     const headerH = headerRef.current?.offsetHeight ?? 60
@@ -232,21 +270,41 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     setPanelHeight(fitH)
   }, [headerRef])
 
+  // 공통 탭 버튼 스타일 생성
+  const tabBtnStyle = (isActive) => ({
+    position: 'absolute',
+    width: 38,
+    height: 38,
+    background: isActive
+      ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
+      : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
+    border: '1px solid #4a5e72',
+    borderLeft: 'none',
+    borderRadius: '0 10px 10px 0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: isActive ? '#f97316' : 'rgba(255,255,255,0.4)',
+    transition: 'top 0.25s ease, color 0.2s, background 0.2s',
+    outline: 'none',
+    pointerEvents: 'auto',
+  })
+
   return (
     <div
+      ref={panelRef}
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
       style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
-      {/* 우측 견출 탭 버튼 — 하단 고정 (공간 시뮬레이션 버튼 옆) */}
-      <div style={{
-        position: 'absolute',
-        left: '100%',
-        bottom: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-      }}>
-        {OPTION_TABS.map((tab) => {
+      {/* 우측 견출 탭 레일 — 전체 높이 커버, 각 버튼 독립 배치 */}
+      <div style={{ position: 'absolute', left: '100%', top: 0, height: '100%', width: 38, pointerEvents: 'none' }}>
+        {/* adjust 탭 — 설치 가상 공간 헤더 옆 (동적) */}
+        {[
+          { tab: OPTION_TABS[0], placement: { top: tabTops.adjust } },
+          { tab: OPTION_TABS[1], placement: { top: tabTops.palette } },
+          { tab: OPTION_TABS[2], placement: { bottom: 20 } },
+        ].map(({ tab, placement }) => {
           const isActive = activeTab === tab.id
           return (
             <button
@@ -257,24 +315,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
                 setTooltip({ text: tab.tooltip, x: r.right + 10, y: r.top + r.height / 2 })
               }}
               onMouseLeave={() => setTooltip(null)}
-              style={{
-                width: 38,
-                height: 38,
-                background: isActive
-                  ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
-                  : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
-                border: '1px solid #4a5e72',
-                borderLeft: 'none',
-                borderRadius: '0 10px 10px 0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: isActive ? '#f97316' : 'rgba(255,255,255,0.4)',
-                transition: 'color 0.2s, background 0.2s',
-                outline: 'none',
-                flexShrink: 0,
-              }}
+              style={{ ...tabBtnStyle(isActive), left: 0, ...placement }}
             >
               {tab.icon}
             </button>
@@ -282,7 +323,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
         })}
       </div>
 
-      {/* 말풍선 툴팁 — createPortal로 body에 직접 렌더 (stacking context 우회) */}
+      {/* 말풍선 툴팁 */}
       {tooltip && createPortal(
         <div style={{
           position: 'fixed',
@@ -336,6 +377,8 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
               onCameraPreset={onCameraPreset}
               onScreenshot={onScreenshot}
               onArMode={onArMode}
+              onSpaceRef={setSpaceEl}
+              onShelfRef={setShelfEl}
             />
           )}
         </div>
@@ -345,14 +388,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       <div
         onMouseDown={onResizeMouseDown}
         onDoubleClick={onResizeDblClick}
-        style={{
-          height: 20,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'ns-resize',
-          flexShrink: 0,
-        }}
+        style={{ height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'ns-resize', flexShrink: 0 }}
       >
         <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
           {[0,1,2].map(i => (
