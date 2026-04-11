@@ -389,24 +389,14 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
 
-      {/* 우측 견출 탭 레일 — overflow:hidden + borderRadius로 코너 자동 클리핑 */}
+      {/* 우측 견출 탭 레일 — borderLeft로 세로선, borderRadius로 코너 클리핑 */}
       <div style={{
         position: 'absolute', left: '100%', top: 0, height: '100%', width: 38,
         pointerEvents: 'none',
-        overflow: 'hidden',
+        borderLeft: '1px solid #4a5e72',
         borderTopLeftRadius: 16,
         borderBottomLeftRadius: 16,
       }}>
-        {/* 세로선: top~bottom 전체, 코너는 부모의 overflow:hidden으로 자동 클리핑 */}
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 1,
-          background: '#4a5e72',
-          pointerEvents: 'none',
-        }} />
         {/* adjust 탭 — 설치 가상 공간 헤더 옆 (동적) */}
         {[
           { tab: OPTION_TABS[0], placement: { top: tabTops.adjust } },
