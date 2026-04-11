@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import useShelfStore from '../../store/useShelfStore.js'
 import { generateDimensionCanvas, downloadDimensionPNG } from '../../utils/dimensionDrawing.js'
@@ -66,7 +66,23 @@ function useIsMobile() {
 
 // 공통 패널 내용
 // onSpaceRef / onShelfRef: ShelfMode의 섹션 헤더 DOM 노드를 부모로 전달
-function DimPreviewModal({ onClose, onDownload, dataUrl }) {
+const LAYOUT_OPTIONS = [
+  { id: 'default',     label: '기본 2×2' },
+  { id: 'front-focus', label: '정면 강조' },
+  { id: 'iso-focus',   label: '등각 강조' },
+  { id: '3views',      label: '3면도' },
+]
+
+function DimPreviewModal({ onClose, params }) {
+  const [layout, setLayout] = useState('default')
+
+  const dataUrl = useMemo(() => {
+    const canvas = generateDimensionCanvas(params, layout)
+    return canvas.toDataURL('image/png')
+  }, [params, layout])
+
+  const handleDownload = () => downloadDimensionPNG(params, layout)
+
   return createPortal(
     <div
       onClick={onClose}
@@ -78,7 +94,7 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
         backdropFilter: 'blur(6px)',
       }}
     >
-      {/* Card — 화면 전체 활용 */}
+      {/* Card */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -87,20 +103,40 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
           borderRadius: 16,
           boxShadow: '0 16px 60px rgba(0,0,0,0.6)',
           display: 'flex', flexDirection: 'column',
-          width: '97vw', height: '95vh',   // 뷰포트 전체 활용
+          width: '97vw', height: '95vh',
           overflow: 'hidden',
         }}
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
           <span style={{ color: 'white', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>제품 칫수 작성</span>
+          {/* 레이아웃 선택 탭 */}
+          <div style={{ display: 'flex', gap: 4 }}>
+            {LAYOUT_OPTIONS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setLayout(id)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  border: layout === id ? '1px solid #f97316' : '1px solid rgba(255,255,255,0.2)',
+                  background: layout === id ? 'rgba(249,115,22,0.2)' : 'rgba(255,255,255,0.06)',
+                  color: layout === id ? '#f97316' : 'rgba(255,255,255,0.6)',
+                  fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
           >✕</button>
         </div>
 
-        {/* Preview — objectFit:contain 으로 전체 이미지 표시, 스크롤 없음 */}
+        {/* Preview */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 10, background: 'rgba(0,0,0,0.25)' }}>
           <img
             src={dataUrl}
@@ -116,10 +152,10 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
           />
         </div>
 
-        {/* Footer buttons */}
+        {/* Footer */}
         <div style={{ display: 'flex', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           <button
-            onClick={onDownload}
+            onClick={handleDownload}
             style={{
               flex: 1, padding: '9px 0',
               background: '#f97316', color: 'white',
@@ -150,17 +186,12 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
 
 function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const [arActive, setArActive] = useState(false)
-  const [dimPreview, setDimPreview] = useState(null)   // data URL or null
+  const [dimParams, setDimParams] = useState(null)   // null = 닫힘
   const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
   const openDimPreview = useCallback(() => {
-    const canvas = generateDimensionCanvas({ width, height, depth, shelfCount, shelfPositions, feetType })
-    setDimPreview(canvas.toDataURL('image/png'))
-  }, [width, height, depth, shelfCount, shelfPositions, feetType])
-
-  const handleDownload = useCallback(() => {
-    downloadDimensionPNG({ width, height, depth, shelfCount, shelfPositions, feetType })
+    setDimParams({ width, height, depth, shelfCount, shelfPositions, feetType })
   }, [width, height, depth, shelfCount, shelfPositions, feetType])
 
   return (
@@ -190,11 +221,10 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
         </button>
       </div>
 
-      {dimPreview && (
+      {dimParams && (
         <DimPreviewModal
-          dataUrl={dimPreview}
-          onClose={() => setDimPreview(null)}
-          onDownload={handleDownload}
+          params={dimParams}
+          onClose={() => setDimParams(null)}
         />
       )}
     </>
@@ -462,18 +492,17 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
           left: tooltip.x,
           top: tooltip.y,
           transform: 'translateY(-50%)',
-          background: 'rgba(8,12,24,0.95)',
-          border: '1px solid rgba(255,255,255,0.2)',
+          background: 'white',
+          border: '1px solid rgba(0,0,0,0.1)',
           borderRadius: 8,
           padding: '5px 12px',
-          color: 'rgba(255,255,255,0.92)',
+          color: '#1a1a1a',
           fontSize: 11,
           fontWeight: 500,
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
           zIndex: 99999,
-          boxShadow: '0 2px 14px rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
         }}>
           {tooltip.text}
           <span style={{
@@ -485,7 +514,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
             height: 0,
             borderTop: '5px solid transparent',
             borderBottom: '5px solid transparent',
-            borderRight: '6px solid rgba(8,12,24,0.95)',
+            borderRight: '6px solid white',
           }} />
         </div>,
         document.body

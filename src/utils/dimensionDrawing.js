@@ -472,9 +472,100 @@ function drawTitleBlock(ctx, params, bx, by, bw, bh) {
   ctx.restore()
 }
 
+// ─── layout engine ──────────────────────────────────────────────
+
+/**
+ * Returns { front, side, plan, iso } cell positions (relative to drawing area origin)
+ * and an array of divider lines { v: x } | { h: y, x1, x2 }.
+ * iso may be null for layouts that omit it.
+ */
+function getLayout(layout, drawH, cw) {
+  const p = 6  // inner padding per cell
+
+  switch (layout) {
+    case 'front-focus': {
+      // Left 60%: front full height | Right 40%: side / plan / iso stacked
+      const lW = Math.floor(cw * 0.60)
+      const rW = cw - lW
+      const rH = Math.floor(drawH / 3)
+      return {
+        cells: {
+          front: { x: p,          y: p,              w: lW - p * 2,       h: drawH - p * 2 },
+          side:  { x: lW + p,     y: p,              w: rW - p * 2,       h: rH - p * 2 },
+          plan:  { x: lW + p,     y: rH + p,         w: rW - p * 2,       h: rH - p * 2 },
+          iso:   { x: lW + p,     y: rH * 2 + p,     w: rW - p * 2,       h: drawH - rH * 2 - p * 2 },
+        },
+        divs: [
+          { v: lW,  y1: 0,    y2: drawH },
+          { h: rH,  x1: lW,   x2: cw },
+          { h: rH * 2, x1: lW, x2: cw },
+        ],
+      }
+    }
+    case 'iso-focus': {
+      // Left 38%: front / side / plan stacked | Right 62%: iso full height
+      const lW = Math.floor(cw * 0.38)
+      const rW = cw - lW
+      const rH = Math.floor(drawH / 3)
+      return {
+        cells: {
+          front: { x: p,       y: p,          w: lW - p * 2, h: rH - p * 2 },
+          side:  { x: p,       y: rH + p,     w: lW - p * 2, h: rH - p * 2 },
+          plan:  { x: p,       y: rH * 2 + p, w: lW - p * 2, h: drawH - rH * 2 - p * 2 },
+          iso:   { x: lW + p,  y: p,          w: rW - p * 2, h: drawH - p * 2 },
+        },
+        divs: [
+          { v: lW,     y1: 0,  y2: drawH },
+          { h: rH,     x1: 0,  x2: lW },
+          { h: rH * 2, x1: 0,  x2: lW },
+        ],
+      }
+    }
+    case '3views': {
+      // 3 equal columns: front | side | plan (iso omitted)
+      const w1 = Math.floor(cw * 0.40)
+      const w2 = Math.floor(cw * 0.22)
+      const w3 = cw - w1 - w2
+      return {
+        cells: {
+          front: { x: p,           y: p, w: w1 - p * 2,       h: drawH - p * 2 },
+          side:  { x: w1 + p,      y: p, w: w2 - p * 2,       h: drawH - p * 2 },
+          plan:  { x: w1 + w2 + p, y: p, w: w3 - p * 2,       h: drawH - p * 2 },
+          iso:   null,
+        },
+        divs: [
+          { v: w1,       y1: 0, y2: drawH },
+          { v: w1 + w2,  y1: 0, y2: drawH },
+        ],
+      }
+    }
+    default: {
+      // 'default': current 2×2 layout
+      const col1W = Math.floor(cw * 0.52)
+      const col2W = Math.floor(cw * 0.175)
+      const col3W = cw - col1W - col2W
+      const row1H = Math.floor(drawH * 0.72)
+      const row2H = drawH - row1H
+      return {
+        cells: {
+          front: { x: p,                    y: p,          w: col1W - p * 2,            h: row1H - p * 2 },
+          side:  { x: col1W + p,            y: p,          w: col2W - p * 2,            h: row1H - p * 2 },
+          plan:  { x: p,                    y: row1H + p,  w: col1W + col2W - p * 2,    h: row2H - p * 2 },
+          iso:   { x: col1W + col2W + p,    y: p,          w: col3W - p * 2,            h: drawH - p * 2 },
+        },
+        divs: [
+          { v: col1W,          y1: 0,     y2: drawH },
+          { v: col1W + col2W,  y1: 0,     y2: drawH },
+          { h: row1H,          x1: 0,     x2: col1W + col2W },
+        ],
+      }
+    }
+  }
+}
+
 // ─── main ───────────────────────────────────────────────────────
 
-function drawSheet(ctx, params) {
+function drawSheet(ctx, params, layout = 'default') {
   // Background
   ctx.fillStyle = '#f9f7f4'
   ctx.fillRect(0, 0, CW, CH)
@@ -497,44 +588,49 @@ function drawSheet(ctx, params) {
 
   // Drawing area
   const drawH = ch - TB_H - 6
-
-  const col1W = Math.floor(cw * 0.52)
-  const col2W = Math.floor(cw * 0.175)
-  const col3W = cw - col1W - col2W
-  const row1H = Math.floor(drawH * 0.72)
-  const row2H = drawH - row1H
+  const { cells, divs } = getLayout(layout, drawH, cw)
 
   // Dividers (light dashed)
+  ctx.save()
   ctx.strokeStyle = '#ccc'
   ctx.lineWidth = 0.8
   ctx.setLineDash([6, 4])
-  ctx.beginPath(); ctx.moveTo(cx + col1W, cy); ctx.lineTo(cx + col1W, cy + drawH); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(cx + col1W + col2W, cy); ctx.lineTo(cx + col1W + col2W, cy + drawH); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(cx, cy + row1H); ctx.lineTo(cx + col1W + col2W, cy + row1H); ctx.stroke()
+  for (const d of divs) {
+    ctx.beginPath()
+    if ('v' in d) {
+      ctx.moveTo(cx + d.v, cy + d.y1)
+      ctx.lineTo(cx + d.v, cy + d.y2)
+    } else {
+      ctx.moveTo(cx + d.x1, cy + d.h)
+      ctx.lineTo(cx + d.x2, cy + d.h)
+    }
+    ctx.stroke()
+  }
   ctx.setLineDash([])
+  ctx.restore()
 
-  const p = 6
-  drawFrontElevation(ctx, params, cx + p, cy + p, col1W - p * 2, row1H - p * 2)
-  drawSideElevation(ctx, params, cx + col1W + p, cy + p, col2W - p * 2, row1H - p * 2)
-  drawPlanView(ctx, params, cx + p, cy + row1H + p, col1W + col2W - p * 2, row2H - p * 2)
-  drawIsometric(ctx, params, cx + col1W + col2W + p, cy + p, col3W - p * 2, drawH - p * 2)
+  const { front, side, plan, iso } = cells
+  drawFrontElevation(ctx, params, cx + front.x, cy + front.y, front.w, front.h)
+  drawSideElevation(ctx, params,  cx + side.x,  cy + side.y,  side.w,  side.h)
+  drawPlanView(ctx, params,       cx + plan.x,  cy + plan.y,  plan.w,  plan.h)
+  if (iso) drawIsometric(ctx, params, cx + iso.x, cy + iso.y, iso.w, iso.h)
 }
 
 // ─── public API ─────────────────────────────────────────────────
 
 /** Returns an HTMLCanvasElement with the full A3 drawing */
-export function generateDimensionCanvas(params) {
+export function generateDimensionCanvas(params, layout = 'default') {
   const canvas = document.createElement('canvas')
   canvas.width = CW
   canvas.height = CH
   const ctx = canvas.getContext('2d')
-  drawSheet(ctx, params)
+  drawSheet(ctx, params, layout)
   return canvas
 }
 
 /** Generates and immediately triggers download as PNG */
-export function downloadDimensionPNG(params) {
-  const canvas = generateDimensionCanvas(params)
+export function downloadDimensionPNG(params, layout = 'default') {
+  const canvas = generateDimensionCanvas(params, layout)
   const { width, height, depth } = params
   const link = document.createElement('a')
   link.href = canvas.toDataURL('image/png')
