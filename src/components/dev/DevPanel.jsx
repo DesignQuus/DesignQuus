@@ -23,10 +23,13 @@ const PANEL_W = 210
 
 export default function DevPanel() {
   const selectedCount = useDevStore(s => s.selectedIds.length)
+  // Derive primaryId directly from store — avoids stale closure in callbacks
   const primaryId = useDevStore(s => s.selectedIds[s.selectedIds.length - 1] ?? null)
-  const selectedIds = useDevStore(s => s.selectedIds)
 
-  const storedOffset = useDevStore(s => primaryId ? s.offsets[primaryId] : null)
+  const storedOffset = useDevStore(s => {
+    const id = s.selectedIds[s.selectedIds.length - 1]
+    return id ? s.offsets[id] : null
+  })
   const cur = useMemo(
     () => (storedOffset ? { ...ZERO, ...storedOffset } : { ...ZERO }),
     [storedOffset]
@@ -99,6 +102,9 @@ export default function DevPanel() {
         </div>
       </div>
 
+      {/* ── Scrollable body ── */}
+      <div style={{ overflowY: 'auto', flex: 1, paddingTop: 4 }}>
+
       {/* ── Multi-select alignment grid ── */}
       {selectedCount >= 2 && (
         <div style={{ marginBottom: 8 }}>
@@ -154,9 +160,9 @@ export default function DevPanel() {
               label={label}
               value={cur[key]}
               step={step}
-              onMinus={() => stepFn(primaryId, key, -step)}
-              onPlus={() => stepFn(primaryId, key, step)}
-              onChange={v => setField(primaryId, key, v)}
+              onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
+              onPlus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, step) }}
+              onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
 
@@ -167,15 +173,15 @@ export default function DevPanel() {
               label={label}
               value={cur[key]}
               step={step}
-              onMinus={() => stepFn(primaryId, key, -step)}
-              onPlus={() => stepFn(primaryId, key, step)}
-              onChange={v => setField(primaryId, key, v)}
+              onMinus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, -step) }}
+              onPlus={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) stepFn(id, key, step) }}
+              onChange={v => { const id = useDevStore.getState().selectedIds.at(-1); if (id) setField(id, key, v) }}
             />
           ))}
 
           <div style={{ display: 'flex', gap: 4, marginTop: 10, flexWrap: 'wrap' }}>
-            <Btn color="#7f1d1d" onClick={() => resetPart(primaryId)}>리셋</Btn>
-            <Btn color="#1e3a5f" onClick={() => applyToSameType(primaryId)}>
+            <Btn color="#7f1d1d" onClick={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) resetPart(id) }}>리셋</Btn>
+            <Btn color="#1e3a5f" onClick={() => { const id = useDevStore.getState().selectedIds.at(-1); if (id) applyToSameType(id) }}>
               {type} 모두
             </Btn>
             <Btn color="#374151" onClick={clear}>해제</Btn>
@@ -183,7 +189,9 @@ export default function DevPanel() {
         </>
       )}
 
-      <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}>
+      </div>{/* end scrollable body */}
+
+      <div style={{ display: 'flex', gap: 4, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, flexShrink: 0 }}>
         <Btn color="#374151" onClick={copyJSON}>JSON 복사</Btn>
         <Btn color="#166534" onClick={handleSave}>파일 저장</Btn>
       </div>
@@ -238,6 +246,9 @@ const panelStyle = {
   borderRadius: 10,
   padding: '0 12px 10px',
   width: PANEL_W,
+  maxHeight: 'calc(100vh - 24px)',
+  display: 'flex',
+  flexDirection: 'column',
   backdropFilter: 'blur(12px)',
   zIndex: 2000,
   fontFamily: 'system-ui, -apple-system, sans-serif',
