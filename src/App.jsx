@@ -64,69 +64,60 @@ export default function App() {
           <PhotoARMode onClose={() => setArMode(false)} />
         )}
 
-        {/* 마우스 조작 안내 — 하단 중앙 */}
+        {/* 마우스 조작 안내 */}
         <div style={{
           position: 'fixed',
-          bottom: 19,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          alignItems: 'stretch',
           zIndex: 50,
           userSelect: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          // 접힘: 기즈모(margin=[120,120], size≈72px) 아래 — right 102 centers under gizmo
+          // 펼침: 하단 중앙
+          ...(hintsOpen
+            ? { bottom: 19, left: '50%', transform: 'translateX(-50%)' }
+            : { bottom: 14, right: 102 }
+          ),
+          transition: 'bottom 0.25s ease',
         }}>
-          {/* 토글 탭 버튼 — ConfigPanel 탭 레일의 좌우 대칭 */}
-          <div style={{
-            position: 'relative',
-            borderRight: '1px solid #4a5e72',
-            borderTopRightRadius: 10,
-            borderBottomRightRadius: 10,
-            pointerEvents: 'auto',
-          }}>
-            <button
-              onClick={() => setHintsOpen(v => !v)}
-              title={hintsOpen ? '조작 안내 접기' : '조작 안내 펼치기'}
-              style={{
-                background: hintsOpen
-                  ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
-                  : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
-                border: '1px solid #4a5e72',
-                borderRight: 'none',
-                borderRadius: '10px 0 0 10px',
-                width: 36,
-                height: '100%',
-                minHeight: 30,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-                color: hintsOpen ? '#f97316' : 'rgba(255,255,255,0.4)',
-                transition: 'color 0.2s, background 0.2s',
-                outline: 'none',
-              }}
-            >
-              {/* 키보드 라인 아이콘 */}
-              <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0.5" y="0.5" width="15" height="9" rx="1.5" stroke="currentColor" strokeWidth="1"/>
-                <rect x="2" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
-                <rect x="5" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
-                <rect x="8" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
-                <rect x="11" y="2" width="3" height="2" rx="0.4" fill="currentColor"/>
-                <rect x="2" y="6" width="12" height="2" rx="0.4" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
+          {/* 토글 버튼 — 4모서리 라운드 */}
+          <button
+            onClick={() => setHintsOpen(v => !v)}
+            title={hintsOpen ? '조작 안내 접기' : '조작 안내 펼치기'}
+            style={{
+              background: 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)',
+              border: '1px solid #4a5e72',
+              borderRadius: 10,
+              width: 36,
+              height: 30,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              color: hintsOpen ? '#f97316' : 'rgba(255,255,255,0.4)',
+              transition: 'color 0.2s, background 0.2s',
+              outline: 'none',
+              flexShrink: 0,
+            }}
+          >
+            {/* 마우스 라인 아이콘 */}
+            <svg width="11" height="16" viewBox="0 0 11 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="10" height="15" rx="5" stroke="currentColor" strokeWidth="1"/>
+              <line x1="5.5" y1="1" x2="5.5" y2="8" stroke="currentColor" strokeWidth="1"/>
+              <line x1="1" y1="8" x2="10" y2="8" stroke="currentColor" strokeWidth="1"/>
+              <rect x="4.5" y="3" width="2" height="4" rx="1" fill="currentColor"/>
+            </svg>
+          </button>
 
-          {/* 힌트 바 */}
+          {/* 힌트 바 — 4모서리 라운드 */}
           {hintsOpen && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
               background: 'linear-gradient(135deg, #1e2535 0%, #15192b 50%, #111827 100%)',
               border: '1px solid #4a5e72',
-              borderLeft: 'none',
-              borderRadius: '0 8px 8px 0',
+              borderRadius: 10,
               padding: '5px 0',
               fontSize: 11,
               color: 'rgba(255,255,255,0.65)',
