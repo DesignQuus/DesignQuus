@@ -135,6 +135,39 @@ const OPTION_TABS = [
   { id: 'layers', icon: <IconLayers /> },
 ]
 
+// 팔레트 탭 — 포스트 색상 선택
+function PaletteTabContent() {
+  const { postColor, setPostColor } = useShelfStore()
+  return (
+    <div>
+      <p className="text-xs font-semibold text-white/60 mb-3">색상 옵션</p>
+      <p className="text-xs font-medium text-white/90 mb-2">포스트 색상</p>
+      <div className="flex gap-3">
+        {[
+          { val: 'black', label: '검정', bg: '#1a1a1a' },
+          { val: 'white', label: '흰색', bg: '#e8e8e8' },
+        ].map(({ val, label, bg }) => (
+          <button
+            key={val}
+            onClick={() => setPostColor(val)}
+            title={label}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              background: bg,
+              border: postColor === val ? '2.5px solid #f97316' : '2px solid rgba(255,255,255,0.25)',
+              boxShadow: postColor === val ? '0 0 0 2px rgba(249,115,22,0.35)' : 'none',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // 데스크탑: 드래그 가능 플로팅 패널 + 하단 드래그 리사이즈
 function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -250,11 +283,15 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       {!collapsed && (
         <div ref={contentRef} className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
           <div ref={innerRef}>
-            <PanelContent
-              onCameraPreset={onCameraPreset}
-              onScreenshot={onScreenshot}
-              onArMode={onArMode}
-            />
+            {activeTab === 'palette' ? (
+              <PaletteTabContent />
+            ) : (
+              <PanelContent
+                onCameraPreset={onCameraPreset}
+                onScreenshot={onScreenshot}
+                onArMode={onArMode}
+              />
+            )}
           </div>
         </div>
       )}
