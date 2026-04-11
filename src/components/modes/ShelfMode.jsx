@@ -43,7 +43,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef }) {
           className="w-full flex justify-between items-center text-xs font-semibold mb-2"
           style={{ color: '#f97316' }}
         >
-          <span>📐 설치 가상 공간</span>
+          <span>설치 가상 공간</span>
           <IconLines open={spaceOpen} />
         </button>
         {spaceOpen && (
@@ -63,7 +63,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef }) {
           className="w-full flex justify-between items-center text-xs font-semibold mb-2"
           style={{ color: '#f97316' }}
         >
-          <span>🏗 선반 규격</span>
+          <span>선반 규격</span>
           <IconLines open={shelfOpen} />
         </button>
         {shelfOpen && (
