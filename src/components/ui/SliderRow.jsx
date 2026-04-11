@@ -16,12 +16,16 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
 
   const inc = () => onChange(Math.min(max, value + step))
   const dec = () => onChange(Math.max(min, value - step))
+  // 장시간 누름 반복은 1단위씩 (슬라이더 step과 무관하게 1mm 단위)
+  const incBy1 = () => onChange(Math.min(max, value + 1))
+  const decBy1 = () => onChange(Math.max(min, value - 1))
 
   const repeatRef = useRef(null)
-  const startRepeat = (fn) => {
-    fn()
+  // initFn: 첫 클릭 (step 단위), repeatFn: 장시간 반복 (1 단위)
+  const startRepeat = (initFn, repeatFn) => {
+    initFn()
     repeatRef.current = setTimeout(() => {
-      repeatRef.current = setInterval(fn, 80)
+      repeatRef.current = setInterval(repeatFn, 80)
     }, 350)
   }
   const stopRepeat = () => {
@@ -98,7 +102,7 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
             <div style={{ display: 'flex', flexDirection: 'column', marginRight: 5, gap: 1 }}>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); startRepeat(inc) }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(inc, incBy1) }}
                 onMouseUp={stopRepeat}
                 onMouseLeave={stopRepeat}
                 style={{
@@ -109,7 +113,7 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
               >▲</button>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); startRepeat(dec) }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(dec, decBy1) }}
                 onMouseUp={stopRepeat}
                 onMouseLeave={stopRepeat}
                 style={{
