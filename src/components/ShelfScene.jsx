@@ -12,16 +12,19 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
   const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode } = useShelfStore()
 
+  // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=22.5mm)
+  const shelfZOffset = (depth / 2 + 22.5) / 100
+
   // Expose camera preset handler
   cameraRef.current = useCallback((pos) => {
     camera.position.set(...pos)
-    const target = new THREE.Vector3(0, height / 200, 0)
+    const target = new THREE.Vector3(0, height / 200, shelfZOffset)
     camera.lookAt(target)
     if (controlsRef.current) {
       controlsRef.current.target.copy(target)
       controlsRef.current.update()
     }
-  }, [camera, height])
+  }, [camera, height, shelfZOffset])
 
   // ISO 모드 전환 시 카메라 앵글 자동 변경
   const prevRenderMode = useRef(renderMode)
@@ -32,7 +35,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       // ISO 등축 앵글 (45° 수평, 35° 수직)
       const d = 20
       camera.position.set(d, d * 0.7, d)
-      const target = new THREE.Vector3(0, height / 200, 0)
+      const target = new THREE.Vector3(0, height / 200, shelfZOffset)
       camera.lookAt(target)
       if (controlsRef.current) {
         controlsRef.current.target.copy(target)
@@ -106,7 +109,7 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         maxPolarAngle={Math.PI / 2}
         minDistance={3}
         maxDistance={50}
-        target={[0, height / 200, 0]}
+        target={[0, height / 200, shelfZOffset]}
       />
 
       {/* ViewCube gizmo */}

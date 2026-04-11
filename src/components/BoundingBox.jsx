@@ -16,7 +16,7 @@ export default function BoundingBox({ width, height, depth }) {
   return (
     <lineSegments
       geometry={edges}
-      position={[0, h / 2, 0]}
+      position={[0, h / 2, d / 2]}
     >
       <lineDashedMaterial
         color="#88aaff"

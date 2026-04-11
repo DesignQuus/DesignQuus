@@ -84,8 +84,11 @@ export default function ShelfModel() {
     }
   }, [camera, gl, controls, height, raycaster, dragPlane, dragTarget, setShelfPosition])
 
+  // 뒷면(포스트 끝)을 z=0 그리드 굵은 선에 정렬
+  const zOffset = (halfD + POST_EXT) / 100
+
   return (
-    <group>
+    <group position={[0, 0, zOffset]}>
       {/* Angle posts */}
       {corners.map((pos, i) => (
         <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} />
