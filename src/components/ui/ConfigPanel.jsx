@@ -176,7 +176,7 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
           onClick={openDimPreview}
           className="flex-1 py-2 bg-orange-500/80 hover:bg-orange-500 text-white text-xs font-medium rounded-lg transition-all"
         >
-          📋 도면 작성
+          도면 작성
         </button>
         <button
           onClick={() => { setArActive(v => !v); onArMode?.() }}
