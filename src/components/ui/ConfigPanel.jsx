@@ -92,12 +92,21 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
 
-      <button
-        onClick={onArMode}
-        className="w-full mt-3 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-medium rounded-lg transition-all"
-      >
-        📷 공간 사진으로 시뮬레이션
-      </button>
+      {/* 스크린샷 + 공간 시뮬레이션 — 2열 */}
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={onScreenshot}
+          className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-all"
+        >
+          📷 스크린샷
+        </button>
+        <button
+          onClick={onArMode}
+          className="flex-1 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-medium rounded-lg transition-all"
+        >
+          공간 시뮬레이션
+        </button>
+      </div>
     </>
   )
 }
@@ -173,7 +182,6 @@ function PaletteTabContent() {
 
 // 데스크탑: 드래그 가능 플로팅 패널 + 하단 드래그 리사이즈
 function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
-  const [collapsed, setCollapsed] = useState(false)
   const [activeTab, setActiveTab] = useState(null)
   // tooltip: { text, x, y } | null
   const [tooltip, setTooltip] = useState(null)
@@ -220,8 +228,8 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     setTabTops({ adjust: ADJUST_TOP, palette: paletteTop, layers: layersTop })
   }, [spaceEl, shelfEl])
 
-  // 섹션 요소 변경 또는 패널 접힘/펼침 시 재계산
-  useEffect(() => { recomputeTabs() }, [recomputeTabs, collapsed])
+  // 섹션 요소 변경 시 재계산
+  useEffect(() => { recomputeTabs() }, [recomputeTabs])
 
   // 스크롤 시 재계산 (스크롤되면 섹션 헤더 위치가 변함)
   useEffect(() => {
@@ -245,7 +253,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     ro.observe(el)
     fit()
     return () => ro.disconnect()
-  }, [collapsed, headerRef, recomputeTabs])
+  }, [headerRef, recomputeTabs])
 
   // 하단 리사이즈 핸들 드래그
   const onResizeMouseDown = useCallback((e) => {
@@ -280,7 +288,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     <div
       ref={panelRef}
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
-      style={{ left: pos.x, top: pos.y, height: collapsed ? 'auto' : panelHeight }}
+      style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
       {/* 우측 견출 탭 버튼 — 각 섹션 헤더 위치에 동적으로 따라붙음 */}
       <div style={{
@@ -374,54 +382,44 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
         className="flex justify-between items-center mb-3 cursor-grab active:cursor-grabbing px-4 pt-4 flex-shrink-0"
       >
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
-        <div className="flex gap-2 items-center" style={{ cursor: 'inherit' }}>
-          <button onClick={onScreenshot} title="스크린샷" className="text-white/70 hover:text-white text-xs" style={{ cursor: 'inherit' }}>📷</button>
-          <button onClick={() => setCollapsed(v => !v)} className="text-white/70 hover:text-white text-xs" style={{ cursor: 'inherit' }}>
-            {collapsed ? '▼' : '▲'}
-          </button>
-        </div>
       </div>
 
       {/* 스크롤 가능한 내용 */}
-      {!collapsed && (
-        <div ref={contentRef} className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
-          <div ref={innerRef}>
-            {activeTab === 'palette' ? (
-              <PaletteTabContent />
-            ) : (
-              <PanelContent
-                onCameraPreset={onCameraPreset}
-                onScreenshot={onScreenshot}
-                onArMode={onArMode}
-                onSpaceRef={setSpaceEl}
-                onShelfRef={setShelfEl}
-              />
-            )}
-          </div>
+      <div ref={contentRef} className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
+        <div ref={innerRef}>
+          {activeTab === 'palette' ? (
+            <PaletteTabContent />
+          ) : (
+            <PanelContent
+              onCameraPreset={onCameraPreset}
+              onScreenshot={onScreenshot}
+              onArMode={onArMode}
+              onSpaceRef={setSpaceEl}
+              onShelfRef={setShelfEl}
+            />
+          )}
         </div>
-      )}
+      </div>
 
       {/* 하단 리사이즈 핸들 */}
-      {!collapsed && (
-        <div
-          onMouseDown={onResizeMouseDown}
-          onDoubleClick={onResizeDblClick}
-          style={{
-            height: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'ns-resize',
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
-            {[0,1,2].map(i => (
-              <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'inline-block' }} />
-            ))}
-          </span>
-        </div>
-      )}
+      <div
+        onMouseDown={onResizeMouseDown}
+        onDoubleClick={onResizeDblClick}
+        style={{
+          height: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'ns-resize',
+          flexShrink: 0,
+        }}
+      >
+        <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
+          {[0,1,2].map(i => (
+            <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'inline-block' }} />
+          ))}
+        </span>
+      </div>
     </div>
   )
 }
