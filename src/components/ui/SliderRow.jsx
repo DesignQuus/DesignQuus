@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 // badge prop: 파생값 표시용 읽기 전용 (단/칸 수 등)
 // 나머지는 숫자 입력 + 상하 꺽쇠 증감
@@ -16,6 +16,19 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
 
   const inc = () => onChange(Math.min(max, value + step))
   const dec = () => onChange(Math.max(min, value - step))
+
+  const repeatRef = useRef(null)
+  const startRepeat = (fn) => {
+    fn()
+    repeatRef.current = setTimeout(() => {
+      repeatRef.current = setInterval(fn, 80)
+    }, 350)
+  }
+  const stopRepeat = () => {
+    clearTimeout(repeatRef.current)
+    clearInterval(repeatRef.current)
+    repeatRef.current = null
+  }
 
   return (
     <div className="mb-3">
@@ -85,7 +98,9 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
             <div style={{ display: 'flex', flexDirection: 'column', marginRight: 5, gap: 1 }}>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); inc() }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(inc) }}
+                onMouseUp={stopRepeat}
+                onMouseLeave={stopRepeat}
                 style={{
                   background: 'none', border: 'none', padding: 0,
                   color: 'rgba(255,255,255,0.65)', fontSize: 8, lineHeight: 1,
@@ -94,7 +109,9 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
               >▲</button>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); dec() }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(dec) }}
+                onMouseUp={stopRepeat}
+                onMouseLeave={stopRepeat}
                 style={{
                   background: 'none', border: 'none', padding: 0,
                   color: 'rgba(255,255,255,0.65)', fontSize: 8, lineHeight: 1,
