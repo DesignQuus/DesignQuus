@@ -301,18 +301,8 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     <div
       ref={panelRef}
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
-      style={{ left: pos.x, top: pos.y, height: panelHeight, borderRight: 'none' }}
+      style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
-      {/* 우측 구분선 — 패널 border-radius(16px) 끝단에서 시작·종료하여 모서리 호와 연결 */}
-      <div style={{
-        position: 'absolute',
-        right: 0,
-        top: 16,
-        bottom: 16,
-        width: 1,
-        background: '#4a5e72',
-        pointerEvents: 'none',
-      }} />
 
       {/* 우측 견출 탭 레일 — 전체 높이 커버, 각 버튼 독립 배치 */}
       <div style={{ position: 'absolute', left: '100%', top: 0, height: '100%', width: 38, pointerEvents: 'none' }}>
