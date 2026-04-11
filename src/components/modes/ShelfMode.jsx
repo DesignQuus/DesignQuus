@@ -72,7 +72,13 @@ export default function ShelfMode({ onSpaceRef, onShelfRef }) {
             <SliderRow label="너비" value={width}  min={300} max={1800} step={50}  onChange={setWidth} />
             <SliderRow label="높이" value={height} min={600} max={2400} step={100} onChange={setHeight} />
             <SliderRow label="깊이" value={depth}  min={300} max={900}  step={50}  onChange={setDepth} />
-            <SliderRow label="선반 수" value={shelfCount} min={1} max={10} step={1} unit="단" onChange={setShelfCount} />
+            <SliderRow
+              label="단 / 칸 수"
+              value={shelfCount}
+              min={1} max={10} step={1}
+              badge={`${shelfCount + 1}단 / ${shelfCount + 2}칸`}
+              onChange={setShelfCount}
+            />
             <div className="mt-3">
               <span className="text-xs font-medium text-white/90 block mb-2">바닥 발</span>
               <div className="flex gap-2">

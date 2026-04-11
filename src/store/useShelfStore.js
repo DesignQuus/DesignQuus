@@ -31,7 +31,13 @@ const useShelfStore = create((set, get) => ({
   spaceHeight: urlParams.spaceHeight || 2600,
   spaceDepth:  urlParams.spaceDepth  || 650,
 
-  // shelf count (between bottom and top board)
+  // 단 / 칸 수 정의 (2026-04-11)
+  // ┌─────────────────────────────────────────────────────────────┐
+  // │  shelfCount  = 중간 선반판 수 (내부 슬라이더 값)              │
+  // │  단 (단수)   = shelfCount + 1  (중간판 + 상단 또는 하단 1개) │
+  // │  칸 (칸수)   = shelfCount + 2  (단 사이 열린 공간 수)        │
+  // │  예시: shelfCount=2 → 3단 / 4칸                             │
+  // └─────────────────────────────────────────────────────────────┘
   shelfCount: urlParams.shelfCount || 4,
 
   // shelf Y positions as pitch indices (27.5mm each)
