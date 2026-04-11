@@ -304,6 +304,29 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
 }
 
 function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, onPlus, onChange }) {
+  // draft !== null → user is actively editing; hold raw string so "12." or "-5" don't snap
+  const [draft, setDraft] = useState(null)
+
+  const commit = (raw) => {
+    const num = parseFloat(raw)
+    if (!isNaN(num)) onChange(num)
+    setDraft(null)
+  }
+
+  const handleFocus = (e) => {
+    setDraft(String(value))
+    e.target.select()
+  }
+
+  const handleChange = (e) => setDraft(e.target.value)
+
+  const handleBlur = () => commit(draft ?? String(value))
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') { commit(draft ?? String(value)); e.target.blur() }
+    if (e.key === 'Escape') { setDraft(null); e.target.blur() }
+  }
+
   const btnStyle = {
     ...smallBtn,
     color,
@@ -321,10 +344,13 @@ function FieldRow({ label, color = '#9ca3af', value, step, shiftStep, onMinus, o
         title={shiftStep ? `Shift: ${shiftStep > 1 ? shiftStep + (shiftStep >= 10 ? '°' : 'mm') : shiftStep + 'mm'}` : undefined}
       >−</button>
       <input
-        type="number"
-        step={step}
-        value={value}
-        onChange={e => onChange(e.target.value)}
+        type="text"
+        inputMode="decimal"
+        value={draft !== null ? draft : String(value)}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
         style={{ ...inputStyle, borderColor: `${color}44` }}
       />
       <button
