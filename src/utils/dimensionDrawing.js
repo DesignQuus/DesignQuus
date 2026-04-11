@@ -137,6 +137,9 @@ function getYs(params) {
 // ─── views ───────────────────────────────────────────────────────
 
 function drawFrontElevation(ctx, params, bx, by, bw, bh) {
+  ctx.save()
+  ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
+
   const { width, height } = params
   const { topY, midYs, allYs } = getYs(params)
 
@@ -211,9 +214,13 @@ function drawFrontElevation(ctx, params, bx, by, bw, bh) {
   }
 
   viewLabel(ctx, '정 면 도  FRONT ELEVATION', bx + bw / 2, by + bh - 26)
+  ctx.restore()
 }
 
 function drawSideElevation(ctx, params, bx, by, bw, bh) {
+  ctx.save()
+  ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
+
   const { height, depth } = params
   const { allYs } = getYs(params)
 
@@ -253,9 +260,13 @@ function drawSideElevation(ctx, params, bx, by, bw, bh) {
   dimV(ctx, oy, oy + sh, ox, -48, `${height}mm`, 18)
 
   viewLabel(ctx, '측 면 도  SIDE ELEVATION', bx + bw / 2, by + bh - 26)
+  ctx.restore()
 }
 
 function drawPlanView(ctx, params, bx, by, bw, bh) {
+  ctx.save()
+  ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
+
   const { width, depth } = params
 
   const DIM_L = 65
@@ -304,9 +315,13 @@ function drawPlanView(ctx, params, bx, by, bw, bh) {
   dimV(ctx, oy, oy + sd, ox, -46, `${depth}mm`, 18)
 
   viewLabel(ctx, '평 면 도  TOP PLAN', bx + bw / 2, by + bh - 26)
+  ctx.restore()
 }
 
 function drawIsometric(ctx, params, bx, by, bw, bh) {
+  ctx.save()
+  ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
+
   const { width, height, depth } = params
   const { allYs } = getYs(params)
 
@@ -395,6 +410,7 @@ function drawIsometric(ctx, params, bx, by, bw, bh) {
   ctx.restore()
 
   viewLabel(ctx, '등 각 도  ISOMETRIC', bx + bw / 2, by + bh - 26)
+  ctx.restore()
 }
 
 function drawTitleBlock(ctx, params, bx, by, bw, bh) {

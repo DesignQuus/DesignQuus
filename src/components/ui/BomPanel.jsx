@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import { calculateBOM } from '../../utils/bomCalculator.js'
+import CameraPresetButtons from './CameraPresets.jsx'
 
-export default function BomPanel() {
+export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive }) {
   const { mode, width, height, depth, shelfCount, feetType } = useShelfStore()
   const [open, setOpen] = useState(false)
 
@@ -68,6 +69,30 @@ export default function BomPanel() {
               견적 문의
             </a>
           </div>
+
+          {/* 카메라 프리셋 + 도면/AR 도구 */}
+          {onCameraPreset && <CameraPresetButtons onPreset={onCameraPreset} />}
+
+          {onDim && (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={onDim}
+                className="flex-1 py-2 bg-orange-500/80 hover:bg-orange-500 text-white text-xs font-medium rounded-lg transition-all"
+              >
+                도면 작성
+              </button>
+              <button
+                onClick={() => setArActive?.(v => !v)}
+                className={`flex-1 py-2 text-white text-xs font-medium rounded-lg transition-all ${
+                  arActive
+                    ? 'bg-orange-500 hover:bg-orange-400'
+                    : 'bg-white/10 hover:bg-white/20'
+                }`}
+              >
+                공간 시뮬레이션
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -186,7 +186,7 @@ function DimPreviewModal({ onClose, params }) {
 
 function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const [arActive, setArActive] = useState(false)
-  const [dimParams, setDimParams] = useState(null)   // null = 닫힘
+  const [dimParams, setDimParams] = useState(null)
   const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
@@ -198,28 +198,13 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
     <>
       <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} spaceOpen={spaceOpen} setSpaceOpen={setSpaceOpen} shelfOpen={shelfOpen} setShelfOpen={setShelfOpen} />
 
-      <BomPanel />
-      <CameraPresetButtons onPreset={onCameraPreset} />
-
-      {/* 도면 작성 + 공간 시뮬레이션 — 2열 */}
-      <div className="flex gap-2 mt-3">
-        <button
-          onClick={openDimPreview}
-          className="flex-1 py-2 bg-orange-500/80 hover:bg-orange-500 text-white text-xs font-medium rounded-lg transition-all"
-        >
-          도면 작성
-        </button>
-        <button
-          onClick={() => { setArActive(v => !v); onArMode?.() }}
-          className={`flex-1 py-2 text-white text-xs font-medium rounded-lg transition-all ${
-            arActive
-              ? 'bg-orange-500 hover:bg-orange-400'
-              : 'bg-white/10 hover:bg-white/20'
-          }`}
-        >
-          공간 시뮬레이션
-        </button>
-      </div>
+      {/* BomPanel에 카메라/도면/AR 도구 통합 — 열었을 때만 표시 */}
+      <BomPanel
+        onCameraPreset={onCameraPreset}
+        onDim={openDimPreview}
+        arActive={arActive}
+        setArActive={setArActive}
+      />
 
       {dimParams && (
         <DimPreviewModal
@@ -255,13 +240,14 @@ function IconSpace() {
     </svg>
   )
 }
-function IconPalette() {
+function IconShelf() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10 1.1 0 2-.9 2-2 0-.53-.2-1-.53-1.36-.32-.35-.5-.82-.5-1.3 0-1.1.9-2 2-2h2.36C19.73 15.34 22 13.24 22 10.67 22 5.95 17.52 2 12 2z"/>
-      <circle cx="8" cy="9" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="12" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="16" cy="9" r="1.5" fill="currentColor" stroke="none"/>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <line x1="4" y1="3" x2="4" y2="21"/>
+      <line x1="20" y1="3" x2="20" y2="21"/>
+      <line x1="4" y1="8" x2="20" y2="8"/>
+      <line x1="4" y1="14" x2="20" y2="14"/>
+      <line x1="4" y1="21" x2="20" y2="21"/>
     </svg>
   )
 }
@@ -276,9 +262,9 @@ function IconLayers() {
 }
 
 const OPTION_TABS = [
-  { id: 'adjust',  icon: <IconSpace />,   tooltip: '설치 가상 공간' },
-  { id: 'palette', icon: <IconPalette />,  tooltip: '컬러를 선택합니다.' },
-  { id: 'layers',  icon: <IconLayers />,   tooltip: '선반규격' },
+  { id: 'adjust',  icon: <IconSpace />,  tooltip: '설치 가상 공간' },
+  { id: 'palette', icon: <IconShelf />,  tooltip: '선반 규격' },
+  { id: 'layers',  icon: <IconLayers />, tooltip: '색상 옵션' },
 ]
 
 // 팔레트 탭 — 포스트 색상 선택
@@ -338,8 +324,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   spaceOpenRef.current = spaceOpen
   shelfOpenRef.current = shelfOpen
 
-  // 탭 Y 위치
-  const [tabTops, setTabTops] = useState({ adjust: 60, palette: 140 })
+  // tabTops 제거 — 탭 균등 배치로 전환
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
@@ -372,7 +357,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       paletteTop = Math.max(adjustTop + 44, computed)
     }
 
-    setTabTops({ adjust: adjustTop, palette: paletteTop })
+    // 탭 위치는 균등 배치로 고정 — 자동 접힘만 처리
   }, [spaceEl, shelfEl])
 
   useEffect(() => { recomputeTabs() }, [recomputeTabs])
@@ -425,9 +410,8 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     setPanelHeight(fitH)
   }, [headerRef])
 
-  // 공통 탭 버튼 스타일 생성
+  // 공통 탭 버튼 스타일 (균등 배치 — position absolute 제거)
   const tabBtnStyle = (isActive) => ({
-    position: 'absolute',
     width: 38,
     height: 38,
     background: isActive
@@ -441,9 +425,10 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     justifyContent: 'center',
     cursor: 'pointer',
     color: isActive ? '#f97316' : 'rgba(255,255,255,0.4)',
-    transition: 'top 0.25s ease, color 0.2s, background 0.2s',
+    transition: 'color 0.2s, background 0.2s',
     outline: 'none',
     pointerEvents: 'auto',
+    flexShrink: 0,
   })
 
   return (
@@ -453,20 +438,21 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
 
-      {/* 우측 견출 탭 레일 — borderLeft로 세로선, borderRadius로 코너 클리핑 */}
+      {/* 우측 견출 탭 레일 — 균등 배치 */}
       <div style={{
         position: 'absolute', left: '100%', top: 0, height: '100%', width: 38,
         pointerEvents: 'none',
         borderLeft: '1px solid #4a5e72',
         borderTopLeftRadius: 16,
         borderBottomLeftRadius: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-evenly',
+        alignItems: 'flex-start',
+        paddingTop: 12,
+        paddingBottom: 12,
       }}>
-        {/* adjust 탭 — 설치 가상 공간 헤더 옆 (동적) */}
-        {[
-          { tab: OPTION_TABS[0], placement: { top: tabTops.adjust } },
-          { tab: OPTION_TABS[1], placement: { top: tabTops.palette } },
-          { tab: OPTION_TABS[2], placement: { bottom: 20 } },
-        ].map(({ tab, placement }) => {
+        {OPTION_TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <button
@@ -477,7 +463,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
                 setTooltip({ text: tab.tooltip, x: r.right + 10, y: r.top + r.height / 2 })
               }}
               onMouseLeave={() => setTooltip(null)}
-              style={{ ...tabBtnStyle(isActive), left: 0, ...placement }}
+              style={tabBtnStyle(isActive)}
             >
               {tab.icon}
             </button>
