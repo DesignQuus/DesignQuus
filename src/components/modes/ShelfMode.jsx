@@ -2,6 +2,17 @@ import { useState } from 'react'
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
+// 3선 토글 아이콘
+function IconLines({ open }) {
+  return (
+    <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+      <rect x="0" y="0"   width="14" height="1.8" rx="0.9"/>
+      <rect x={open ? "2" : "0"} y="5.1" width={open ? "12" : "14"} height="1.8" rx="0.9"/>
+      <rect x="0" y="10.2" width="14" height="1.8" rx="0.9"/>
+    </svg>
+  )
+}
+
 export default function ShelfMode() {
   const [spaceOpen, setSpaceOpen] = useState(true)
   const [shelfOpen, setShelfOpen] = useState(false)
@@ -27,7 +38,7 @@ export default function ShelfMode() {
           className="w-full flex justify-between items-center text-xs font-semibold text-white/60 mb-2"
         >
           <span>📐 설치 가상 공간</span>
-          <span>{spaceOpen ? '▲' : '▼'}</span>
+          <IconLines open={spaceOpen} />
         </button>
         {spaceOpen && (
           <>
@@ -45,7 +56,7 @@ export default function ShelfMode() {
           className="w-full flex justify-between items-center text-xs font-semibold text-white/60 mb-2"
         >
           <span>🏗 선반 규격</span>
-          <span>{shelfOpen ? '▲' : '▼'}</span>
+          <IconLines open={shelfOpen} />
         </button>
         {shelfOpen && (
           <>

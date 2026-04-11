@@ -23,7 +23,11 @@ export default function BomPanel() {
         className="w-full flex justify-between items-center text-xs font-semibold text-white/90"
       >
         <span>부품 목록 (BOM)</span>
-        <span>{open ? '▲' : '▼'}</span>
+        <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">
+          <rect x="0" y="0"   width="14" height="1.8" rx="0.9"/>
+          <rect x={open ? "2" : "0"} y="5.1" width={open ? "12" : "14"} height="1.8" rx="0.9"/>
+          <rect x="0" y="10.2" width="14" height="1.8" rx="0.9"/>
+        </svg>
       </button>
 
       {open && (
