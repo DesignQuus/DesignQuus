@@ -135,7 +135,7 @@ function IconLayers() {
 const OPTION_TABS = [
   { id: 'adjust',  icon: <IconSliders />,  tooltip: '배치를 조절합니다.' },
   { id: 'palette', icon: <IconPalette />,  tooltip: '컬러를 선택합니다.' },
-  { id: 'layers',  icon: <IconLayers />,   tooltip: '레이어를 설정합니다.' },
+  { id: 'layers',  icon: <IconLayers />,   tooltip: '선반규격' },
 ]
 
 // 팔레트 탭 — 포스트 색상 선택
