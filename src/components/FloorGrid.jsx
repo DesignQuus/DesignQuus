@@ -42,7 +42,7 @@ export default function FloorGrid() {
       <SharpGrid
         size={400}
         divisions={20}
-        color="#7aaecc"
+        color="#4a7a96"
         yOffset={0.002}
       />
     </>
