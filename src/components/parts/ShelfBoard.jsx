@@ -31,15 +31,14 @@ export default function ShelfBoard({
     [storedOffset]
   )
 
-  const selectedId = useDevStore(s => s.selectedId)
-  const select = useDevStore(s => s.select)
+  const isDevSelected = useDevStore(s => isDev && partId ? s.selectedIds.includes(partId) : false)
+  const toggleSelect = useDevStore(s => s.toggleSelect)
   const registerPart = useDevStore(s => s.registerPart)
   const unregisterPart = useDevStore(s => s.unregisterPart)
-  const isDevSelected = isDev && partId && selectedId === partId
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId)
+      registerPart(partId, { x: 0, y: yMm, z: 0 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -50,7 +49,7 @@ export default function ShelfBoard({
   }, [color, renderMode])
 
   const handleClick = isDev && partId
-    ? (e) => { e.stopPropagation(); select(partId); onClick?.() }
+    ? (e) => { e.stopPropagation(); toggleSelect(partId, e.shiftKey); onClick?.() }
     : onClick
 
   return (

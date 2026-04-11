@@ -16,15 +16,14 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
     [storedOffset]
   )
 
-  const selectedId = useDevStore(s => s.selectedId)
-  const select = useDevStore(s => s.select)
+  const isDevSelected = useDevStore(s => isDev && partId ? s.selectedIds.includes(partId) : false)
+  const toggleSelect = useDevStore(s => s.toggleSelect)
   const registerPart = useDevStore(s => s.registerPart)
   const unregisterPart = useDevStore(s => s.unregisterPart)
-  const isDevSelected = isDev && partId && selectedId === partId
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId)
+      registerPart(partId, { x: positionMm[0], y: 0, z: positionMm[1] })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -40,7 +39,7 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
   }, [renderMode])
 
   const handleClick = isDev && partId
-    ? (e) => { e.stopPropagation(); select(partId) }
+    ? (e) => { e.stopPropagation(); toggleSelect(partId, e.shiftKey) }
     : undefined
 
   return (

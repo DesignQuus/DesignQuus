@@ -82,15 +82,14 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     [storedOffset]
   )
 
-  const selectedId = useDevStore(s => s.selectedId)
-  const select = useDevStore(s => s.select)
+  const isSelected = useDevStore(s => isDev && partId ? s.selectedIds.includes(partId) : false)
+  const toggleSelect = useDevStore(s => s.toggleSelect)
   const registerPart = useDevStore(s => s.registerPart)
   const unregisterPart = useDevStore(s => s.unregisterPart)
-  const isSelected = isDev && partId && selectedId === partId
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId)
+      registerPart(partId, { x: positionMm[0], y: yOffsetMm, z: positionMm[1] })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -107,7 +106,7 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
   if (!postGeo) return null
 
   const handleClick = isDev && partId
-    ? (e) => { e.stopPropagation(); select(partId) }
+    ? (e) => { e.stopPropagation(); toggleSelect(partId, e.shiftKey) }
     : undefined
 
   // scale=[-signX, 1, signZ] orients L arms outward from each shelf corner
