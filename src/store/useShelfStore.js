@@ -47,7 +47,7 @@ const useShelfStore = create((set, get) => ({
   feetType: urlParams.feetType || 'level',
 
   // post color
-  postColor: 'black',
+  postColor: 'white',
 
   // render mode
   renderMode: 'realistic', // 'realistic' | 'technical'
