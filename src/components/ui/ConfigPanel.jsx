@@ -391,12 +391,12 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
 
       {/* 우측 견출 탭 레일 — 전체 높이 커버, 각 버튼 독립 배치 */}
       <div style={{ position: 'absolute', left: '100%', top: 0, height: '100%', width: 38, pointerEvents: 'none' }}>
-        {/* 패널 우측 전체 높이 세로선 */}
+        {/* 패널 우측 세로선 — border-radius(16px) 안쪽에서만 표시 */}
         <div style={{
           position: 'absolute',
           left: 0,
-          top: 0,
-          bottom: 0,
+          top: 16,
+          bottom: 16,
           width: 1,
           background: '#4a5e72',
           pointerEvents: 'none',
