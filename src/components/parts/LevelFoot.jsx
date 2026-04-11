@@ -29,7 +29,8 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId, { x: positionMm[0], y: 0, z: positionMm[1] })
+      registerPart(partId, { x: positionMm[0], y: 0, z: positionMm[1] },
+        { minX: -25, minY: 0, minZ: -25, maxX: 25, maxY: 46, maxZ: 25 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps

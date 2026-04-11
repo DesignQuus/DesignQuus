@@ -38,7 +38,8 @@ export default function ShelfBoard({
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId, { x: 0, y: yMm, z: 0 })
+      registerPart(partId, { x: 0, y: yMm, z: 0 },
+        { minX: -widthMm / 2, minY: 0, minZ: -depthMm / 2, maxX: widthMm / 2, maxY: 25, maxZ: depthMm / 2 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps

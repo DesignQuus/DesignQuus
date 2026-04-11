@@ -89,7 +89,8 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId, { x: positionMm[0], y: yOffsetMm, z: positionMm[1] })
+      registerPart(partId, { x: positionMm[0], y: yOffsetMm, z: positionMm[1] },
+        { minX: -17.5, minY: 0, minZ: -17.5, maxX: 17.5, maxY: heightMm, maxZ: 17.5 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps

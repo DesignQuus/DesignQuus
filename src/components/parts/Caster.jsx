@@ -23,7 +23,8 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
 
   useEffect(() => {
     if (isDev && partId) {
-      registerPart(partId, { x: positionMm[0], y: 0, z: positionMm[1] })
+      registerPart(partId, { x: positionMm[0], y: 0, z: positionMm[1] },
+        { minX: -35, minY: 0, minZ: -30, maxX: 35, maxY: 100, maxZ: 30 })
       return () => unregisterPart(partId)
     }
   }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps

@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useCallback } from 'react'
 import useDevStore, { ZERO } from '../../store/useDevStore.js'
+import { getEffBbox, computeGaps } from './DevMeasure.jsx'
 
 const AXIS_COLOR = { x: '#ef4444', y: '#22c55e', z: '#3b82f6' }
 
@@ -47,6 +48,15 @@ export default function DevPanel() {
   const align = useDevStore(s => s.align)
 
   const type = primaryId ? primaryId.replace(/_[^_]+$/, '') : ''
+
+  // ── Edge-to-edge measurements (2 selected) ──────────────────────────────────
+  const gaps = useDevStore(s => {
+    if (s.selectedIds.length !== 2) return null
+    const bA = getEffBbox(s.selectedIds[0], s.basePosMap, s.bboxRelMap, s.offsets)
+    const bB = getEffBbox(s.selectedIds[1], s.basePosMap, s.bboxRelMap, s.offsets)
+    if (!bA || !bB) return null
+    return computeGaps(bA, bB)
+  })
 
   // ── Drag state ──────────────────────────────────────────
   const [pos, setPos] = useState({ x: 14, y: 70 })
@@ -144,6 +154,24 @@ export default function DevPanel() {
               </div>
             )
           })}
+          {/* Edge-to-edge measurement table */}
+          {gaps && (
+            <div style={{ marginTop: 6, borderRadius: 5, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              {[['x','#ef4444'],['y','#22c55e'],['z','#3b82f6']].map(([ax, c]) => (
+                <div key={ax} style={{ display: 'flex', alignItems: 'center', gap: 0, background: `${c}0d` }}>
+                  <span style={{ color: c, fontWeight: 700, fontSize: 10, width: 28, textAlign: 'center', flexShrink: 0, borderRight: `1px solid ${c}33` }}>
+                    {ax.toUpperCase()}
+                  </span>
+                  <span style={{ color: gaps[ax] < 0 ? '#f59e0b' : '#e2e8f0', fontSize: 10, fontFamily: 'monospace', padding: '3px 8px', flex: 1 }}>
+                    {gaps[ax] < 0
+                      ? `겹침 ${Math.abs(gaps[ax])} mm`
+                      : `${gaps[ax]} mm`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 8, marginBottom: 6 }} />
           <div style={{ color: '#9ca3af', fontSize: 10, marginBottom: 4 }}>
             개별 조절: {primaryId ?? '—'}

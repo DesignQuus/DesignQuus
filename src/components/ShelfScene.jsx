@@ -7,6 +7,7 @@ import BoundingBox from './BoundingBox.jsx'
 import ShelfModel from './ShelfModel.jsx'
 import useShelfStore from '../store/useShelfStore.js'
 import useDevStore, { isDev } from '../store/useDevStore.js'
+import DevMeasure from './dev/DevMeasure.jsx'
 
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
@@ -99,6 +100,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       <Suspense fallback={null}>
         <ShelfModel />
       </Suspense>
+
+      {/* DEV: edge-to-edge measurement lines */}
+      {isDev && <DevMeasure />}
 
       {/* Orbit controls */}
       <OrbitControls

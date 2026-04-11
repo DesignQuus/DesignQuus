@@ -10,6 +10,7 @@ const useDevStore = create((set, get) => ({
   offsets: { ...savedOffsets },
   registeredIds: new Set(),
   basePosMap: {},    // { partId: { x, y, z } } in mm — for alignment math
+  bboxRelMap: {},    // { partId: { minX,minY,minZ, maxX,maxY,maxZ } } in mm relative to basePos
 
   // ── Selection ──────────────────────────────────────────────────────────────
   toggleSelect: (id, shiftKey = false) => set(s => {
@@ -32,10 +33,11 @@ const useDevStore = create((set, get) => ({
   clear: () => set({ selectedIds: [] }),
 
   // ── Registration ────────────────────────────────────────────────────────────
-  registerPart: (id, basePos) =>
+  registerPart: (id, basePos, bboxRel) =>
     set(s => ({
       registeredIds: new Set([...s.registeredIds, id]),
       basePosMap: { ...s.basePosMap, [id]: basePos },
+      ...(bboxRel ? { bboxRelMap: { ...s.bboxRelMap, [id]: bboxRel } } : {}),
     })),
 
   unregisterPart: (id) =>
@@ -44,7 +46,9 @@ const useDevStore = create((set, get) => ({
       ids.delete(id)
       const basePosMap = { ...s.basePosMap }
       delete basePosMap[id]
-      return { registeredIds: ids, basePosMap }
+      const bboxRelMap = { ...s.bboxRelMap }
+      delete bboxRelMap[id]
+      return { registeredIds: ids, basePosMap, bboxRelMap }
     }),
 
   // ── Offset editing ─────────────────────────────────────────────────────────
