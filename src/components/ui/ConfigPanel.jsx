@@ -170,13 +170,13 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
 
-      {/* 치수 PNG + 공간 시뮬레이션 — 2열 */}
+      {/* 도면 작성 + 공간 시뮬레이션 — 2열 */}
       <div className="flex gap-2 mt-3">
         <button
           onClick={openDimPreview}
-          className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-all"
+          className="flex-1 py-2 bg-orange-500/80 hover:bg-orange-500 text-white text-xs font-medium rounded-lg transition-all"
         >
-          치수 PNG
+          📋 도면 작성
         </button>
         <button
           onClick={() => { setArActive(v => !v); onArMode?.() }}
