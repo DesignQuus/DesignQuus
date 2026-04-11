@@ -98,9 +98,46 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode }) {
   )
 }
 
+// 견출 탭 SVG 아이콘 (라인 타입)
+function IconSliders() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="6" x2="20" y2="6"/><circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/>
+      <line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/>
+      <line x1="4" y1="18" x2="20" y2="18"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
+function IconPalette() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10 1.1 0 2-.9 2-2 0-.53-.2-1-.53-1.36-.32-.35-.5-.82-.5-1.3 0-1.1.9-2 2-2h2.36C19.73 15.34 22 13.24 22 10.67 22 5.95 17.52 2 12 2z"/>
+      <circle cx="8" cy="9" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="9" r="1.5" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
+function IconLayers() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+      <polyline points="2 17 12 22 22 17"/>
+      <polyline points="2 12 12 17 22 12"/>
+    </svg>
+  )
+}
+
+const OPTION_TABS = [
+  { id: 'adjust', icon: <IconSliders /> },
+  { id: 'palette', icon: <IconPalette /> },
+  { id: 'layers', icon: <IconLayers /> },
+]
+
 // 데스크탑: 드래그 가능 플로팅 패널 + 하단 드래그 리사이즈
 function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [activeTab, setActiveTab] = useState(null)
   const [panelHeight, setPanelHeight] = useState(480)
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
@@ -159,6 +196,41 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
       style={{ left: pos.x, top: pos.y, height: collapsed ? 'auto' : panelHeight }}
     >
+      {/* 우측 견출 탭 버튼 */}
+      <div style={{ position: 'absolute', left: '100%', top: 14, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 1 }}>
+        {OPTION_TABS.map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(isActive ? null : tab.id)}
+              style={{
+                width: 38,
+                height: 38,
+                background: isActive
+                  ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
+                  : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
+                border: '1px solid #4a5e72',
+                borderLeft: 'none',
+                borderRadius: '0 10px 10px 0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: isActive ? '#f97316' : 'rgba(255,255,255,0.4)',
+                transition: 'color 0.2s, background 0.2s',
+                outline: 'none',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
+            >
+              {tab.icon}
+            </button>
+          )
+        })}
+      </div>
+
       {/* 헤더 — 드래그 이동 */}
       <div
         ref={headerRef}
