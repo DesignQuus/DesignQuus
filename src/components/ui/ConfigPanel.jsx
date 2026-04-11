@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import useShelfStore from '../../store/useShelfStore.js'
+import { generateDimensionCanvas, downloadDimensionPNG } from '../../utils/dimensionDrawing.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
 import DressroomMode from '../modes/DressroomMode.jsx'
@@ -65,10 +66,101 @@ function useIsMobile() {
 
 // 공통 패널 내용
 // onSpaceRef / onShelfRef: ShelfMode의 섹션 헤더 DOM 노드를 부모로 전달
-function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onShelfRef }) {
+function DimPreviewModal({ onClose, onDownload, dataUrl }) {
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 99999,
+        background: 'rgba(0,0,0,0.78)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      {/* Card */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)',
+          border: '1px solid #4a5e72',
+          borderRadius: 16,
+          boxShadow: '0 16px 60px rgba(0,0,0,0.6)',
+          display: 'flex', flexDirection: 'column',
+          maxWidth: '92vw', maxHeight: '88vh',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+          <span style={{ color: 'white', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>치수 도면 미리보기</span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
+          >✕</button>
+        </div>
+
+        {/* Preview image (scrollable) */}
+        <div style={{ overflow: 'auto', flex: 1, padding: 16 }}>
+          <img
+            src={dataUrl}
+            alt="치수 도면"
+            style={{
+              display: 'block',
+              maxWidth: '100%',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 6,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            }}
+          />
+        </div>
+
+        {/* Footer buttons */}
+        <div style={{ display: 'flex', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+          <button
+            onClick={onDownload}
+            style={{
+              flex: 1, padding: '9px 0',
+              background: '#f97316', color: 'white',
+              border: 'none', borderRadius: 10,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              letterSpacing: '0.03em',
+            }}
+          >
+            PNG 다운로드
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1, padding: '9px 0',
+              background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)',
+              border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10,
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef }) {
   const [arActive, setArActive] = useState(false)
-  const { mode } = useShelfStore()
+  const [dimPreview, setDimPreview] = useState(null)   // data URL or null
+  const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
+
+  const openDimPreview = useCallback(() => {
+    const canvas = generateDimensionCanvas({ width, height, depth, shelfCount, shelfPositions, feetType })
+    setDimPreview(canvas.toDataURL('image/png'))
+  }, [width, height, depth, shelfCount, shelfPositions, feetType])
+
+  const handleDownload = useCallback(() => {
+    downloadDimensionPNG({ width, height, depth, shelfCount, shelfPositions, feetType })
+  }, [width, height, depth, shelfCount, shelfPositions, feetType])
 
   return (
     <>
@@ -77,13 +169,13 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
       <BomPanel />
       <CameraPresetButtons onPreset={onCameraPreset} />
 
-      {/* 스크린샷 + 공간 시뮬레이션 — 2열 */}
+      {/* 치수 PNG + 공간 시뮬레이션 — 2열 */}
       <div className="flex gap-2 mt-3">
         <button
-          onClick={onScreenshot}
+          onClick={openDimPreview}
           className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-all"
         >
-          스크린샷
+          치수 PNG
         </button>
         <button
           onClick={() => { setArActive(v => !v); onArMode?.() }}
@@ -96,6 +188,14 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
           공간 시뮬레이션
         </button>
       </div>
+
+      {dimPreview && (
+        <DimPreviewModal
+          dataUrl={dimPreview}
+          onClose={() => setDimPreview(null)}
+          onDownload={handleDownload}
+        />
+      )}
     </>
   )
 }
@@ -170,7 +270,7 @@ function PaletteTabContent() {
 }
 
 // 데스크탑: 드래그 가능 플로팅 패널 + 하단 드래그 리사이즈
-function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
+function DesktopPanel({ onCameraPreset, onArMode }) {
   const [activeTab, setActiveTab] = useState(null)
   const [tooltip, setTooltip] = useState(null)
   const [panelHeight, setPanelHeight] = useState(480)
@@ -381,7 +481,6 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
           ) : (
             <PanelContent
               onCameraPreset={onCameraPreset}
-              onScreenshot={onScreenshot}
               onArMode={onArMode}
               onSpaceRef={setSpaceEl}
               onShelfRef={setShelfEl}
@@ -407,7 +506,7 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
 }
 
 // 모바일: 하단 슬라이드업 시트
-function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
+function MobilePanel({ onCameraPreset, onArMode }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -433,14 +532,10 @@ function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
         <div className="p-4">
           <div className="flex justify-between items-center mb-3">
             <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
-            <div className="flex gap-2">
-              <button onClick={onScreenshot} className="text-white/70 hover:text-white text-xs">📷</button>
-              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
-            </div>
+            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
           </div>
           <PanelContent
             onCameraPreset={onCameraPreset}
-            onScreenshot={onScreenshot}
             onArMode={onArMode}
           />
         </div>
@@ -449,9 +544,9 @@ function MobilePanel({ onCameraPreset, onScreenshot, onArMode }) {
   )
 }
 
-export default function ConfigPanel({ onCameraPreset, onScreenshot, onArMode }) {
+export default function ConfigPanel({ onCameraPreset, onArMode }) {
   const isMobile = useIsMobile()
   return isMobile
     ? <MobilePanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
-    : <DesktopPanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
+    : <DesktopPanel onCameraPreset={onCameraPreset} onArMode={onArMode} />
 }
