@@ -303,12 +303,12 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
       style={{ left: pos.x, top: pos.y, height: panelHeight, borderRight: 'none' }}
     >
-      {/* 탭 버튼 영역에만 표시되는 우측 구분선 (adjust 상단 ~ layers 하단) */}
+      {/* 우측 구분선 — 패널 border-radius(16px) 끝단에서 시작·종료하여 모서리 호와 연결 */}
       <div style={{
         position: 'absolute',
         right: 0,
-        top: tabTops.adjust,
-        bottom: 20,
+        top: 16,
+        bottom: 16,
         width: 1,
         background: '#4a5e72',
         pointerEvents: 'none',
