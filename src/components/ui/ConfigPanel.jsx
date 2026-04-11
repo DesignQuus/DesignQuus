@@ -93,7 +93,7 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
-          <span style={{ color: 'white', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>치수 도면 미리보기</span>
+          <span style={{ color: 'white', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>제품 칫수 작성</span>
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
