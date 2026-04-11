@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
@@ -13,7 +13,8 @@ function IconLines({ open }) {
   )
 }
 
-export default function ShelfMode() {
+// onSpaceRef / onShelfRef: DesktopPanel이 섹션 헤더 버튼 DOM 노드를 추적하기 위한 callback ref
+export default function ShelfMode({ onSpaceRef, onShelfRef }) {
   const [spaceOpen, setSpaceOpen] = useState(false)
   const [shelfOpen, setShelfOpen] = useState(true)
 
@@ -28,11 +29,16 @@ export default function ShelfMode() {
     spaceDepth, setSpaceDepth,
   } = useShelfStore()
 
+  // callback ref — 노드가 마운트/언마운트 될 때 부모에 알림
+  const spaceHeaderRef = useCallback(node => { onSpaceRef?.(node) }, [onSpaceRef])
+  const shelfHeaderRef = useCallback(node => { onShelfRef?.(node) }, [onShelfRef])
+
   return (
     <>
       {/* 설치 가상 공간 */}
       <div className="mb-1">
         <button
+          ref={spaceHeaderRef}
           onClick={() => setSpaceOpen(v => !v)}
           className="w-full flex justify-between items-center text-xs font-semibold mb-2"
           style={{ color: '#f97316' }}
@@ -52,6 +58,7 @@ export default function ShelfMode() {
       {/* 선반 규격 */}
       <div className="border-t border-white/20 pt-3 mt-1">
         <button
+          ref={shelfHeaderRef}
           onClick={() => setShelfOpen(v => !v)}
           className="w-full flex justify-between items-center text-xs font-semibold mb-2"
           style={{ color: '#f97316' }}
@@ -83,7 +90,6 @@ export default function ShelfMode() {
                 ))}
               </div>
             </div>
-
           </>
         )}
       </div>
