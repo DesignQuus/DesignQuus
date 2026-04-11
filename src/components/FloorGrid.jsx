@@ -17,7 +17,7 @@ export default function FloorGrid() {
         cellThickness={0.6}
         cellColor="#4a5e72"
         sectionSize={20}
-        sectionThickness={1.2}
+        sectionThickness={0.6}
         sectionColor="#6b8299"
         fadeDistance={200}
         fadeStrength={1.2}
