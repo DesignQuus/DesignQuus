@@ -29,6 +29,7 @@ export default function App() {
   const cameraRef = useRef(() => {})
   const controlsRef = useRef(null)
   const screenshotRef = useRef(() => {})
+  const [hintsOpen, setHintsOpen] = useState(true)
 
   const handleCameraPreset = useCallback((pos) => {
     cameraRef.current?.(pos)
@@ -70,33 +71,74 @@ export default function App() {
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          background: 'rgba(21, 25, 43, 0.78)',
-          border: '1px solid rgba(74, 94, 114, 0.55)',
-          borderRadius: 8,
-          padding: '5px 0',
-          fontSize: 11,
-          color: 'rgba(255,255,255,0.65)',
-          boxShadow: '0 2px 14px rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(10px)',
-          userSelect: 'none',
+          gap: 4,
           zIndex: 50,
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
+          userSelect: 'none',
         }}>
-          {[
-            '좌클릭 드래그: 회전',
-            '우클릭 드래그: 이동',
-            '스크롤: 줌',
-            'Shift+좌클릭: 이동',
-          ].map((hint, i, arr) => (
-            <React.Fragment key={i}>
-              <span style={{ padding: '0 14px' }}>{hint}</span>
-              {i < arr.length - 1 && (
-                <span style={{ color: 'rgba(74,94,114,0.8)', fontSize: 14, lineHeight: 1 }}>│</span>
-              )}
-            </React.Fragment>
-          ))}
+          {/* 토글 아이콘 버튼 */}
+          <button
+            onClick={() => setHintsOpen(v => !v)}
+            title={hintsOpen ? '조작 안내 접기' : '조작 안내 펼치기'}
+            style={{
+              background: 'none',
+              border: '1px solid rgba(74,94,114,0.7)',
+              borderRadius: 6,
+              width: 28,
+              height: 20,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              color: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(8px)',
+              backgroundColor: 'rgba(21,25,43,0.6)',
+            }}
+          >
+            {/* 키보드 라인 아이콘 */}
+            <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0.5" y="0.5" width="15" height="9" rx="1.5" stroke="currentColor" strokeWidth="1"/>
+              <rect x="2" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
+              <rect x="5" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
+              <rect x="8" y="2" width="2" height="2" rx="0.4" fill="currentColor"/>
+              <rect x="11" y="2" width="3" height="2" rx="0.4" fill="currentColor"/>
+              <rect x="2" y="6" width="12" height="2" rx="0.4" fill="currentColor"/>
+            </svg>
+          </button>
+
+          {/* 힌트 바 */}
+          {hintsOpen && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(21, 25, 43, 0.78)',
+              border: '1px solid rgba(74, 94, 114, 0.55)',
+              borderRadius: 8,
+              padding: '5px 0',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              boxShadow: '0 2px 14px rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(10px)',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+            }}>
+              {[
+                '좌클릭 드래그: 회전',
+                '우클릭 드래그: 이동',
+                '스크롤: 줌',
+                'Shift+좌클릭: 이동',
+              ].map((hint, i, arr) => (
+                <React.Fragment key={i}>
+                  <span style={{ padding: '0 14px' }}>{hint}</span>
+                  {i < arr.length - 1 && (
+                    <span style={{ color: 'rgba(74,94,114,0.8)', fontSize: 14, lineHeight: 1 }}>│</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Hidden DEV mode trigger — 5 rapid clicks in top-left corner */}
