@@ -97,7 +97,7 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
           onClick={onScreenshot}
           className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-all"
         >
-          📷 스크린샷
+          스크린샷
         </button>
         <button
           onClick={onArMode}
