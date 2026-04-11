@@ -75,8 +75,8 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     [postGeo] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  // Use stable selector — avoids infinite re-render caused by object creation in selector
-  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  // partOffsets.json 오프셋은 DEV/consumer 양쪽 모두에 적용; DEV UI(선택·하이라이트)는 isDev 때만
+  const storedOffset = useDevStore(s => partId ? s.offsets[partId] : null)
   const devOff = useMemo(
     () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
     [storedOffset]

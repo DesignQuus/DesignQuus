@@ -16,7 +16,7 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
   const { scene } = useGLTF('/models/level-foot.glb')
 
   // Stable selector — avoids infinite re-render
-  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const storedOffset = useDevStore(s => partId ? s.offsets[partId] : null)
   const devOff = useMemo(
     () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
     [storedOffset]

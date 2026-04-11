@@ -10,7 +10,7 @@ export default function Caster({ positionMm = [0, 0], renderMode = 'realistic', 
   const z = positionMm[1] * SCALE
 
   // Stable selector — avoids infinite re-render
-  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const storedOffset = useDevStore(s => partId ? s.offsets[partId] : null)
   const devOff = useMemo(
     () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
     [storedOffset]

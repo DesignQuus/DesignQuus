@@ -25,7 +25,7 @@ export default function ShelfBoard({
   const color = selected ? '#fbbf24' : (type === 'middle' ? '#e8e0d0' : '#ddd8c8')
 
   // Stable selector — avoids infinite re-render
-  const storedOffset = useDevStore(s => (isDev && partId) ? s.offsets[partId] : null)
+  const storedOffset = useDevStore(s => partId ? s.offsets[partId] : null)
   const devOff = useMemo(
     () => (storedOffset ? { ...ZERO, ...storedOffset } : ZERO),
     [storedOffset]
