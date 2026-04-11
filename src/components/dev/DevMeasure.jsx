@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import useDevStore, { ZERO } from '../../store/useDevStore.js'
@@ -30,19 +30,17 @@ export function computeGaps(bA, bB) {
   return result
 }
 
-// Lightweight line segment — geometry mutated imperatively to avoid GC pressure
+// Lightweight line segment — geometry built in useMemo so it's valid on first render
 function SegLine({ points, color }) {
-  const geoRef = useRef()
-  useEffect(() => {
-    if (!geoRef.current) return
-    const arr = new Float32Array(points.flat())
-    const attr = new THREE.BufferAttribute(arr, 3)
-    geoRef.current.setAttribute('position', attr)
-    geoRef.current.computeBoundingSphere()
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(points.flat()), 3))
+    g.computeBoundingSphere()
+    return g
   }, [points])
+  useEffect(() => () => geo.dispose(), [geo])
   return (
-    <lineSegments>
-      <bufferGeometry ref={geoRef} />
+    <lineSegments geometry={geo}>
       <lineBasicMaterial color={color} />
     </lineSegments>
   )

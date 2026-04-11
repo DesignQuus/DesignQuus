@@ -1,20 +1,19 @@
-import { useRef, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import useShelfStore from '../../store/useShelfStore.js'
 
-// ─── Thin line segment (imperative geometry update to avoid GC pressure) ──────
+// ─── Thin line segment — geometry built in useMemo so it's valid on first render ──
 function SegLine({ p1, p2, color }) {
-  const geoRef = useRef()
-  useEffect(() => {
-    if (!geoRef.current) return
-    const arr = new Float32Array([...p1, ...p2])
-    geoRef.current.setAttribute('position', new THREE.BufferAttribute(arr, 3))
-    geoRef.current.computeBoundingSphere()
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([...p1, ...p2]), 3))
+    g.computeBoundingSphere()
+    return g
   }, [p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => geo.dispose(), [geo])
   return (
-    <lineSegments>
-      <bufferGeometry ref={geoRef} />
+    <lineSegments geometry={geo}>
       <lineBasicMaterial color={color} />
     </lineSegments>
   )
