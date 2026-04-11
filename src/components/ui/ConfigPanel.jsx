@@ -66,6 +66,7 @@ function useIsMobile() {
 // 공통 패널 내용
 // onSpaceRef / onShelfRef: ShelfMode의 섹션 헤더 DOM 노드를 부모로 전달
 function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onShelfRef }) {
+  const [arActive, setArActive] = useState(false)
   const { mode, renderMode, setRenderMode } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
@@ -101,8 +102,12 @@ function PanelContent({ onCameraPreset, onScreenshot, onArMode, onSpaceRef, onSh
           스크린샷
         </button>
         <button
-          onClick={onArMode}
-          className="flex-1 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-medium rounded-lg transition-all"
+          onClick={() => { setArActive(v => !v); onArMode?.() }}
+          className={`flex-1 py-2 text-white text-xs font-medium rounded-lg transition-all ${
+            arActive
+              ? 'bg-orange-500 hover:bg-orange-400'
+              : 'bg-white/10 hover:bg-white/20'
+          }`}
         >
           공간 시뮬레이션
         </button>
@@ -296,8 +301,19 @@ function DesktopPanel({ onCameraPreset, onScreenshot, onArMode }) {
     <div
       ref={panelRef}
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
-      style={{ left: pos.x, top: pos.y, height: panelHeight }}
+      style={{ left: pos.x, top: pos.y, height: panelHeight, borderRight: 'none' }}
     >
+      {/* 탭 버튼 영역에만 표시되는 우측 구분선 (adjust 상단 ~ layers 하단) */}
+      <div style={{
+        position: 'absolute',
+        right: 0,
+        top: tabTops.adjust,
+        bottom: 20,
+        width: 1,
+        background: '#4a5e72',
+        pointerEvents: 'none',
+      }} />
+
       {/* 우측 견출 탭 레일 — 전체 높이 커버, 각 버튼 독립 배치 */}
       <div style={{ position: 'absolute', left: '100%', top: 0, height: '100%', width: 38, pointerEvents: 'none' }}>
         {/* adjust 탭 — 설치 가상 공간 헤더 옆 (동적) */}
