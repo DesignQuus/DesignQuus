@@ -20,7 +20,8 @@ export default function BomPanel() {
     <div className="mt-3 border-t border-white/20 pt-3">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex justify-between items-center text-xs font-semibold text-white/90"
+        className="w-full flex justify-between items-center text-xs font-semibold"
+        style={{ color: '#f97316' }}
       >
         <span>부품 목록 (BOM)</span>
         <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor">

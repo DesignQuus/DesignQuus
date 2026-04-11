@@ -34,7 +34,8 @@ export default function ShelfMode() {
       <div className="mb-1">
         <button
           onClick={() => setSpaceOpen(v => !v)}
-          className="w-full flex justify-between items-center text-xs font-semibold text-white/60 mb-2"
+          className="w-full flex justify-between items-center text-xs font-semibold mb-2"
+          style={{ color: '#f97316' }}
         >
           <span>📐 설치 가상 공간</span>
           <IconLines open={spaceOpen} />
@@ -52,7 +53,8 @@ export default function ShelfMode() {
       <div className="border-t border-white/20 pt-3 mt-1">
         <button
           onClick={() => setShelfOpen(v => !v)}
-          className="w-full flex justify-between items-center text-xs font-semibold text-white/60 mb-2"
+          className="w-full flex justify-between items-center text-xs font-semibold mb-2"
+          style={{ color: '#f97316' }}
         >
           <span>🏗 선반 규격</span>
           <IconLines open={shelfOpen} />
