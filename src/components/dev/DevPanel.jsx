@@ -24,7 +24,7 @@ const ALIGN_AXES = [
 
 const PANEL_W = 210
 
-export default function DevPanel() {
+export default function DevPanel({ screenshotRef, cameraRef }) {
   const selectedCount = useDevStore(s => s.selectedIds.length)
   // Derive primaryId directly from store — avoids stale closure in callbacks
   const primaryId = useDevStore(s => s.selectedIds[s.selectedIds.length - 1] ?? null)
@@ -96,6 +96,33 @@ export default function DevPanel() {
     const ok = await saveToFile()
     alert(ok ? '✅ partOffsets.json 저장 완료' : '❌ 저장 실패 (Vite dev 서버 확인)')
   }
+
+  // Dimension drawing export: switch to ISO view, enable dims, screenshot, restore
+  const handleDimExport = useCallback(() => {
+    const store = useDevStore.getState()
+    const prevOverall = store.showOverallDims
+    const prevSpacing = store.showSpacingDims
+
+    // Enable both dimension overlays
+    if (!prevOverall) store.toggleOverallDims()
+    if (!prevSpacing) store.toggleSpacingDims()
+
+    // Move camera to ISO view
+    if (cameraRef?.current) {
+      cameraRef.current([12, 10, 18])
+    }
+
+    // Wait two animation frames for Three.js to re-render with the new state
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        screenshotRef?.current?.()
+
+        // Restore previous state
+        if (!prevOverall) store.toggleOverallDims()
+        if (!prevSpacing) store.toggleSpacingDims()
+      })
+    })
+  }, [screenshotRef, cameraRef])
 
   return (
     <div style={{ ...panelStyle, left: pos.x, top: pos.y }}>
@@ -261,6 +288,7 @@ export default function DevPanel() {
         </button>
         <Btn color="#374151" onClick={copyJSON}>JSON 복사</Btn>
         <Btn color="#166534" onClick={handleSave}>파일 저장</Btn>
+        <Btn color="#4c1d95" onClick={handleDimExport}>치수 PNG</Btn>
       </div>
     </div>
   )

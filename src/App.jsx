@@ -50,7 +50,7 @@ export default function App() {
       <DevTrigger />
 
       {/* DEV panel — only visible with ?dev=1 */}
-      {isDev && <DevPanel />}
+      {isDev && <DevPanel screenshotRef={screenshotRef} cameraRef={cameraRef} />}
     </div>
   )
 }
