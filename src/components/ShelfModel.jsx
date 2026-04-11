@@ -91,14 +91,14 @@ export default function ShelfModel() {
     <group position={[0, 0, zOffset]}>
       {/* Angle posts */}
       {corners.map((pos, i) => (
-        <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} />
+        <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} partId={`AnglePost_${i}`} />
       ))}
 
       {/* Bottom board */}
-      <ShelfBoard widthMm={width} depthMm={depth} yMm={BOTTOM_Y} type="bottom" renderMode={renderMode} />
+      <ShelfBoard widthMm={width} depthMm={depth} yMm={BOTTOM_Y} type="bottom" renderMode={renderMode} partId="ShelfBoard_bottom" />
 
       {/* Top board */}
-      <ShelfBoard widthMm={width} depthMm={depth} yMm={topY} type="top" renderMode={renderMode} />
+      <ShelfBoard widthMm={width} depthMm={depth} yMm={topY} type="top" renderMode={renderMode} partId="ShelfBoard_top" />
 
       {/* Middle shelf boards — draggable */}
       {middleYs.map((yMm, i) => (
@@ -110,6 +110,7 @@ export default function ShelfModel() {
           type="middle"
           selected={selectedShelfIdx === i}
           renderMode={renderMode}
+          partId={`ShelfBoard_${i}`}
           onClick={() => setSelectedShelfIdx(selectedShelfIdx === i ? -1 : i)}
           onPointerDown={(e) => startDrag(i, e)}
           onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = dragIdxRef.current >= 0 ? 'grabbing' : 'grab' }}
@@ -120,8 +121,8 @@ export default function ShelfModel() {
       {/* Feet */}
       {corners.map((pos, i) => (
         feetType === 'level'
-          ? <LevelFoot key={i} positionMm={pos} renderMode={renderMode} />
-          : <Caster key={i} positionMm={pos} renderMode={renderMode} />
+          ? <LevelFoot key={i} positionMm={pos} renderMode={renderMode} partId={`LevelFoot_${i}`} />
+          : <Caster key={i} positionMm={pos} renderMode={renderMode} partId={`Caster_${i}`} />
       ))}
 
       {/* Dimension labels */}

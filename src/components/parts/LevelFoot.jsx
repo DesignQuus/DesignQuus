@@ -1,18 +1,37 @@
 import { useGLTF } from '@react-three/drei'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
+import useDevStore, { isDev, ZERO } from '../../store/useDevStore.js'
 
 const MM = 1 / 100
+const DEG = Math.PI / 180
 // Level foot total height = 46mm in Three.js units
 const TOTAL_HEIGHT_MM = 46
 
 useGLTF.preload('/models/level-foot.glb')
 
-export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic' }) {
+export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic', partId = null }) {
   const x = positionMm[0] * MM
   const z = positionMm[1] * MM
 
   const { scene } = useGLTF('/models/level-foot.glb')
+
+  // DEV store
+  const devOff = useDevStore(s =>
+    isDev && partId ? { ...ZERO, ...(s.offsets[partId] || {}) } : ZERO
+  )
+  const selectedId = useDevStore(s => s.selectedId)
+  const select = useDevStore(s => s.select)
+  const registerPart = useDevStore(s => s.registerPart)
+  const unregisterPart = useDevStore(s => s.unregisterPart)
+  const isDevSelected = isDev && partId && selectedId === partId
+
+  useEffect(() => {
+    if (isDev && partId) {
+      registerPart(partId)
+      return () => unregisterPart(partId)
+    }
+  }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const model = useMemo(() => {
     const clone = scene.clone(true)
@@ -45,9 +64,35 @@ export default function LevelFoot({ positionMm = [0, 0], renderMode = 'realistic
     return clone
   }, [scene, renderMode])
 
+  // DEV: bounding box for selection highlight
+  const devBBox = useMemo(() => {
+    if (!isDev || !partId) return null
+    const box = new THREE.Box3().setFromObject(model)
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    const center = box.getCenter(new THREE.Vector3())
+    return { size, center }
+  }, [model]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleClick = isDev && partId
+    ? (e) => { e.stopPropagation(); select(partId) }
+    : undefined
+
   return (
-    <group position={[x, 0, z]}>
+    <group
+      position={[x + devOff.dx / 100, devOff.dy / 100, z + devOff.dz / 100]}
+      rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
+      onClick={handleClick}
+    >
       <primitive object={model} castShadow receiveShadow />
+
+      {/* DEV selection highlight box */}
+      {isDevSelected && devBBox && (
+        <lineSegments position={devBBox.center.toArray()}>
+          <edgesGeometry args={[new THREE.BoxGeometry(devBBox.size.x, devBBox.size.y, devBBox.size.z)]} />
+          <lineBasicMaterial color="#f97316" />
+        </lineSegments>
+      )}
     </group>
   )
 }

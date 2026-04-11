@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import useShelfStore from '../../store/useShelfStore.js'
+import useDevStore, { isDev, ZERO } from '../../store/useDevStore.js'
 
 // SVG cross-section paths from Illustrator (viewBox 0 0 127.38 128)
 // Outer corner (top-right of L) is at SVG coords (113.12, 14.38)
@@ -14,6 +15,8 @@ const CORNER_X = 113.12   // outer corner X in SVG units
 const CORNER_Y = 14.38    // outer corner Y in SVG units
 const SVG_SPAN = 99.2     // SVG units representing 35mm
 const SVG_SCALE = 0.35 / SVG_SPAN  // Three.js units per SVG unit (35mm = 0.35)
+
+const DEG = Math.PI / 180
 
 function parsePath(d) {
   const loader = new SVGLoader()
@@ -61,7 +64,7 @@ const POST_COLORS = {
   white: { realistic: { color: '#e0e0e0', metalness: 0.5, roughness: 0.25 }, technical: '#d8d8d8' },
 }
 
-export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffsetMm = 0, renderMode = 'realistic' }) {
+export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffsetMm = 0, renderMode = 'realistic', partId = null }) {
   const postColor = useShelfStore(s => s.postColor)
   const h = heightMm / 100
   const x = positionMm[0] / 100
@@ -78,6 +81,30 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
     [postGeo, renderMode]
   )
 
+  // DEV mode: highlight edges (always built when isDev)
+  const devEdgeGeo = useMemo(
+    () => (isDev && partId && postGeo ? new THREE.EdgesGeometry(postGeo, 15) : null),
+    [postGeo] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  // DEV store subscriptions
+  const devOff = useDevStore(s =>
+    isDev && partId ? { ...ZERO, ...(s.offsets[partId] || {}) } : ZERO
+  )
+  const selectedId = useDevStore(s => s.selectedId)
+  const select = useDevStore(s => s.select)
+  const registerPart = useDevStore(s => s.registerPart)
+  const unregisterPart = useDevStore(s => s.unregisterPart)
+  const isSelected = isDev && partId && selectedId === partId
+
+  // Register / unregister this part
+  useEffect(() => {
+    if (isDev && partId) {
+      registerPart(partId)
+      return () => unregisterPart(partId)
+    }
+  }, [partId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const palette = POST_COLORS[postColor] ?? POST_COLORS.black
   const mat = useMemo(() => {
     if (renderMode === 'technical') {
@@ -89,18 +116,40 @@ export default function AnglePost({ heightMm = 2400, positionMm = [0, 0], yOffse
 
   if (!postGeo) return null
 
+  const handleClick = isDev && partId
+    ? (e) => { e.stopPropagation(); select(partId) }
+    : undefined
+
   // scale=[-signX, 1, signZ] orients the L arms outward from each shelf corner
   // Base geometry: arms in +X and -Z
   // rear-left  (-1,1, 1): -X, -Z ✓  rear-right  (1,1, 1): +X, -Z ✓
   // front-left (-1,1,-1): -X, +Z ✓  front-right (1,1,-1): +X, +Z ✓
   return (
-    <group position={[x, yOffset, z]} scale={[-signX, 1, signZ]}>
-      <mesh geometry={postGeo} material={mat} castShadow receiveShadow />
-      {edgeGeo && (
-        <lineSegments geometry={edgeGeo}>
-          <lineBasicMaterial color="#222222" />
-        </lineSegments>
-      )}
+    <group
+      position={[x + devOff.dx / 100, yOffset + devOff.dy / 100, z + devOff.dz / 100]}
+      rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
+    >
+      <group scale={[-signX, 1, signZ]}>
+        <mesh
+          geometry={postGeo}
+          material={mat}
+          castShadow
+          receiveShadow
+          onClick={handleClick}
+        />
+        {/* DEV selection highlight */}
+        {isSelected && devEdgeGeo && (
+          <lineSegments geometry={devEdgeGeo}>
+            <lineBasicMaterial color="#f97316" />
+          </lineSegments>
+        )}
+        {/* Technical mode edge lines */}
+        {edgeGeo && !isSelected && (
+          <lineSegments geometry={edgeGeo}>
+            <lineBasicMaterial color="#222222" />
+          </lineSegments>
+        )}
+      </group>
     </group>
   )
 }

@@ -6,14 +6,16 @@ import FloorGrid from './FloorGrid.jsx'
 import BoundingBox from './BoundingBox.jsx'
 import ShelfModel from './ShelfModel.jsx'
 import useShelfStore from '../store/useShelfStore.js'
+import { isDev } from '../store/useDevStore.js'
+import DevPanel from './dev/DevPanel.jsx'
 
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
   const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode } = useShelfStore()
 
-  // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=22.5mm)
-  const shelfZOffset = (depth / 2 + 22.5) / 100
+  // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=0)
+  const shelfZOffset = depth / 200
 
   // Expose camera preset handler
   cameraRef.current = useCallback((pos) => {
@@ -134,6 +136,8 @@ export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
   const { height } = useShelfStore()
 
   return (
+    <>
+    {isDev && <DevPanel />}
     <Canvas
       shadows
       orthographic
@@ -152,5 +156,6 @@ export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
         screenshotRef={screenshotRef}
       />
     </Canvas>
+    </>
   )
 }
