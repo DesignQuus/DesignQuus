@@ -19,7 +19,7 @@ export default function ShelfBoard({
   const SCALE = 1 / 100
   const w = widthMm * SCALE
   const d = depthMm * SCALE
-  const thick = 0.010
+  const thick = 10 * SCALE   // 10mm
   const y = yMm * SCALE
 
   const color = selected ? '#fbbf24' : (type === 'middle' ? '#e8e0d0' : '#ddd8c8')
