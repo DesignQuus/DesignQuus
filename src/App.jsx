@@ -4,6 +4,7 @@ import ConfigPanel from './components/ui/ConfigPanel.jsx'
 import ShelfScene from './components/ShelfScene.jsx'
 import PhotoARMode from './components/ar/PhotoARMode.jsx'
 import useShelfStore from './store/useShelfStore.js'
+import DevTrigger from './components/dev/DevTrigger.jsx'
 
 export default function App() {
   const { arMode, setArMode } = useShelfStore()
@@ -42,6 +43,9 @@ export default function App() {
       {arMode && (
         <PhotoARMode onClose={() => setArMode(false)} />
       )}
+
+      {/* Hidden DEV mode trigger — 5 rapid clicks in top-left corner */}
+      <DevTrigger />
     </div>
   )
 }
