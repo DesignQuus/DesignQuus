@@ -78,7 +78,7 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
         backdropFilter: 'blur(6px)',
       }}
     >
-      {/* Card */}
+      {/* Card — 화면 전체 활용 */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -87,12 +87,12 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
           borderRadius: 16,
           boxShadow: '0 16px 60px rgba(0,0,0,0.6)',
           display: 'flex', flexDirection: 'column',
-          maxWidth: '92vw', maxHeight: '88vh',
+          width: '97vw', height: '95vh',   // 뷰포트 전체 활용
           overflow: 'hidden',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
           <span style={{ color: 'white', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>치수 도면 미리보기</span>
           <button
             onClick={onClose}
@@ -100,17 +100,18 @@ function DimPreviewModal({ onClose, onDownload, dataUrl }) {
           >✕</button>
         </div>
 
-        {/* Preview image (scrollable) */}
-        <div style={{ overflow: 'auto', flex: 1, padding: 16 }}>
+        {/* Preview — objectFit:contain 으로 전체 이미지 표시, 스크롤 없음 */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 10, background: 'rgba(0,0,0,0.25)' }}>
           <img
             src={dataUrl}
             alt="치수 도면"
             style={{
               display: 'block',
               maxWidth: '100%',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              borderRadius: 4,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
             }}
           />
         </div>

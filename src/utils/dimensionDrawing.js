@@ -140,14 +140,18 @@ function drawFrontElevation(ctx, params, bx, by, bw, bh) {
   const { width, height } = params
   const { topY, midYs, allYs } = getYs(params)
 
-  const DIM = 105
-  const availW = bw - DIM * 2
-  const availH = bh - DIM * 2 - 30
+  const DIM_L = 80   // left: height dim
+  const DIM_T = 60   // top: width dim
+  const DIM_R = 110  // right: shelf-gap dims (wider)
+  const DIM_B = 40   // bottom: label
+  const availW = bw - DIM_L - DIM_R
+  const availH = bh - DIM_T - DIM_B - 30
   const sc = Math.min(availW / width, availH / height)
   const sw = width * sc
   const sh = height * sc
-  const ox = bx + DIM + (availW - sw) / 2
-  const oy = by + DIM + (availH - sh) / 2
+  // 좌측 정렬
+  const ox = bx + DIM_L
+  const oy = by + DIM_T + (availH - sh) / 2
 
   ctx.save()
 
@@ -192,8 +196,8 @@ function drawFrontElevation(ctx, params, bx, by, bw, bh) {
   ctx.restore()
 
   // Dimensions
-  dimH(ctx, ox, ox + sw, oy, -58, `${width}mm`)
-  dimV(ctx, oy, oy + sh, ox, -68, `${height}mm`)
+  dimH(ctx, ox, ox + sw, oy, -42, `${width}mm`)
+  dimV(ctx, oy, oy + sh, ox, -52, `${height}mm`)
 
   // Shelf-gap dimensions on right side
   const sortedYs = [BOTTOM_Y_MM, ...midYs.sort((a, b) => a - b), topY]
@@ -213,14 +217,18 @@ function drawSideElevation(ctx, params, bx, by, bw, bh) {
   const { height, depth } = params
   const { allYs } = getYs(params)
 
-  const DIM = 82
-  const availW = bw - DIM * 2
-  const availH = bh - DIM * 2 - 30
+  const DIM_L = 70
+  const DIM_T = 55
+  const DIM_R = 60
+  const DIM_B = 40
+  const availW = bw - DIM_L - DIM_R
+  const availH = bh - DIM_T - DIM_B - 30
   const sc = Math.min(availW / depth, availH / height)
   const sw = depth * sc
   const sh = height * sc
-  const ox = bx + DIM + (availW - sw) / 2
-  const oy = by + DIM + (availH - sh) / 2
+  // 좌측 정렬
+  const ox = bx + DIM_L
+  const oy = by + DIM_T + (availH - sh) / 2
 
   ctx.save()
   ctx.strokeStyle = '#333'
@@ -241,8 +249,8 @@ function drawSideElevation(ctx, params, bx, by, bw, bh) {
   ctx.strokeRect(ox, oy, sw, sh)
   ctx.restore()
 
-  dimH(ctx, ox, ox + sw, oy, -46, `${depth}mm`, 18)
-  dimV(ctx, oy, oy + sh, ox + sw, 48, `${height}mm`, 18)
+  dimH(ctx, ox, ox + sw, oy, -38, `${depth}mm`, 18)
+  dimV(ctx, oy, oy + sh, ox, -48, `${height}mm`, 18)
 
   viewLabel(ctx, '측 면 도  SIDE ELEVATION', bx + bw / 2, by + bh - 26)
 }
@@ -250,14 +258,18 @@ function drawSideElevation(ctx, params, bx, by, bw, bh) {
 function drawPlanView(ctx, params, bx, by, bw, bh) {
   const { width, depth } = params
 
-  const DIM = 78
-  const availW = bw - DIM * 2
-  const availH = bh - DIM * 2 - 30
+  const DIM_L = 65
+  const DIM_T = 52
+  const DIM_R = 30
+  const DIM_B = 40
+  const availW = bw - DIM_L - DIM_R
+  const availH = bh - DIM_T - DIM_B - 30
   const sc = Math.min(availW / width, availH / depth)
   const sw = width * sc
   const sd = depth * sc
-  const ox = bx + DIM + (availW - sw) / 2
-  const oy = by + DIM + (availH - sd) / 2
+  // 좌측 정렬
+  const ox = bx + DIM_L
+  const oy = by + DIM_T + (availH - sd) / 2
 
   ctx.save()
   // Board area
@@ -288,8 +300,8 @@ function drawPlanView(ctx, params, bx, by, bw, bh) {
   ctx.strokeRect(ox, oy, sw, sd)
   ctx.restore()
 
-  dimH(ctx, ox, ox + sw, oy, -46, `${width}mm`, 18)
-  dimV(ctx, oy, oy + sd, ox, -52, `${depth}mm`, 18)
+  dimH(ctx, ox, ox + sw, oy, -38, `${width}mm`, 18)
+  dimV(ctx, oy, oy + sd, ox, -46, `${depth}mm`, 18)
 
   viewLabel(ctx, '평 면 도  TOP PLAN', bx + bw / 2, by + bh - 26)
 }
