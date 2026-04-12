@@ -3,9 +3,14 @@ import useShelfStore from '../../store/useShelfStore.js'
 import { calculateBOM } from '../../utils/bomCalculator.js'
 import CameraPresetButtons from './CameraPresets.jsx'
 
-export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive, onBomRef }) {
+// open/onToggle 을 전달하면 외부에서 제어(아코디언), 없으면 자체 상태로 동작
+export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive, onBomRef, open: openProp, onToggle }) {
   const { mode, width, height, depth, shelfCount, feetType } = useShelfStore()
-  const [open, setOpen] = useState(false)
+  const [openInternal, setOpenInternal] = useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : openInternal
+  const handleToggle = isControlled ? onToggle : () => setOpenInternal(v => !v)
+
   const headerRef = useCallback(node => { onBomRef?.(node) }, [onBomRef])
 
   const bom = useMemo(
@@ -22,7 +27,7 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
     <div className="mt-3 border-t border-white/20 pt-3">
       <button
         ref={headerRef}
-        onClick={() => setOpen(v => !v)}
+        onClick={handleToggle}
         className="w-full flex justify-between items-center text-xs font-semibold"
         style={{ color: '#f97316' }}
       >
@@ -34,7 +39,8 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
         </svg>
       </button>
 
-      {open && (
+      {/* 아코디언 슬라이드 애니메이션 */}
+      <div style={{ overflow: 'hidden', maxHeight: open ? '520px' : '0', transition: 'max-height 0.22s ease' }}>
         <div className="mt-2">
           <table className="bom-table w-full text-white/90">
             <thead>
@@ -96,7 +102,7 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

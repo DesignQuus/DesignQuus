@@ -184,7 +184,7 @@ function DimPreviewModal({ onClose, params }) {
   )
 }
 
-function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
+function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen, bomOpen, onBomToggle }) {
   const [arActive, setArActive] = useState(false)
   const [dimParams, setDimParams] = useState(null)
   const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
@@ -198,13 +198,15 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomR
     <>
       <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} spaceOpen={spaceOpen} setSpaceOpen={setSpaceOpen} shelfOpen={shelfOpen} setShelfOpen={setShelfOpen} />
 
-      {/* BomPanel에 카메라/도면/AR 도구 통합 — 열었을 때만 표시 */}
+      {/* BomPanel에 카메라/도면/AR 도구 통합 — 아코디언 제어 */}
       <BomPanel
         onCameraPreset={onCameraPreset}
         onDim={openDimPreview}
         arActive={arActive}
         setArActive={setArActive}
         onBomRef={onBomRef}
+        open={bomOpen}
+        onToggle={onBomToggle}
       />
 
       {dimParams && (
@@ -320,16 +322,22 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   // 각 섹션 헤더 우측에 맞춰 표시되는 탭 버튼 Y 위치
   const [tabTops, setTabTops] = useState([55, 99, 143])
 
-  // 섹션 열림 상태 — DesktopPanel에서 관리 (자동 접힘 인터랙션)
-  const [spaceOpen, setSpaceOpen] = useState(false)
-  const [shelfOpen, setShelfOpen] = useState(false)
-  // ref로 최신값 유지 (스크롤 핸들러가 클로저 문제 없이 읽을 수 있도록)
+  // 아코디언 — 한 섹션만 열림 ('space' | 'shelf' | 'bom' | null)
+  const [activeSection, setActiveSection] = useState(null)
+  const spaceOpen = activeSection === 'space'
+  const shelfOpen = activeSection === 'shelf'
+  const bomOpen   = activeSection === 'bom'
+
+  // 각 섹션 토글 (같은 섹션 클릭 시 접힘)
+  const setSpaceOpen = (v) => setActiveSection(v ? 'space' : null)
+  const setShelfOpen = (v) => setActiveSection(v ? 'shelf' : null)
+  const toggleBom = () => setActiveSection(prev => prev === 'bom' ? null : 'bom')
+
+  // ref로 최신값 유지 (recomputeTabs 스크롤 핸들러용)
   const spaceOpenRef = useRef(spaceOpen)
   const shelfOpenRef = useRef(shelfOpen)
   spaceOpenRef.current = spaceOpen
   shelfOpenRef.current = shelfOpen
-
-  // tabTops 제거 — 탭 균등 배치로 전환
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
@@ -350,10 +358,10 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     }
 
     let t0 = Math.max(COLLAPSE_THRESHOLD, headerTop(spaceEl, 60))
-    if (spaceOpenRef.current && headerTop(spaceEl, 60) < COLLAPSE_THRESHOLD) setSpaceOpen(false)
+    if (spaceOpenRef.current && headerTop(spaceEl, 60) < COLLAPSE_THRESHOLD) setActiveSection(null)
 
     let t1 = Math.max(t0 + MIN_SPACING, headerTop(shelfEl, t0 + MIN_SPACING))
-    if (shelfOpenRef.current && headerTop(shelfEl, t0 + MIN_SPACING) < t0 + MIN_SPACING) setShelfOpen(false)
+    if (shelfOpenRef.current && headerTop(shelfEl, t0 + MIN_SPACING) < t0 + MIN_SPACING) setActiveSection(null)
 
     let t2 = Math.max(t1 + MIN_SPACING, headerTop(bomEl, t1 + MIN_SPACING))
 
@@ -529,6 +537,8 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
               setSpaceOpen={setSpaceOpen}
               shelfOpen={shelfOpen}
               setShelfOpen={setShelfOpen}
+              bomOpen={bomOpen}
+              onBomToggle={toggleBom}
             />
           )}
         </div>
