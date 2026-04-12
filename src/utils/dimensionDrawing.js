@@ -35,7 +35,7 @@ function arrowHead(ctx, x, y, angle, size = 9) {
  * offset  : perpendicular distance — negative = above, positive = below
  * label   : dimension text (without unit; caller adds 'mm')
  */
-function dimH(ctx, x1, x2, refY, offset, label, fs = 20) {
+function dimH(ctx, x1, x2, refY, offset, label, fs = 28) {
   const lineY = refY + offset
   const sign = offset < 0 ? -1 : 1
   ctx.save()
@@ -78,7 +78,7 @@ function dimH(ctx, x1, x2, refY, offset, label, fs = 20) {
  * refX   : feature x
  * offset : negative = left, positive = right
  */
-function dimV(ctx, y1, y2, refX, offset, label, fs = 20) {
+function dimV(ctx, y1, y2, refX, offset, label, fs = 28) {
   const lineX = refX + offset
   const sign = offset < 0 ? -1 : 1
   ctx.save()
@@ -119,7 +119,7 @@ function dimV(ctx, y1, y2, refX, offset, label, fs = 20) {
 
 function viewLabel(ctx, text, cx, y) {
   ctx.save()
-  ctx.font = 'bold 22px Arial, sans-serif'
+  ctx.font = 'bold 30px Arial, sans-serif'
   ctx.fillStyle = '#444'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
@@ -715,21 +715,24 @@ function drawSheet(ctx, data, layout = 'default') {
 
 // ─── public API ─────────────────────────────────────────────────
 
-/** Returns an HTMLCanvasElement with the full A3 drawing.
- *  data = { shelves: [...], shelfGap: number, mode: string }
+/**
+ * Returns an HTMLCanvasElement with the full A3 drawing.
+ * data   = { shelves: [...], shelfGap: number, mode: string }
+ * scale  = pixel multiplier — 1 = 150 DPI preview, 2 = 300 DPI print quality
  */
-export function generateDimensionCanvas(data, layout = 'default') {
+export function generateDimensionCanvas(data, layout = 'default', scale = 1) {
   const canvas = document.createElement('canvas')
-  canvas.width = CW
-  canvas.height = CH
+  canvas.width  = CW * scale
+  canvas.height = CH * scale
   const ctx = canvas.getContext('2d')
+  if (scale !== 1) ctx.scale(scale, scale)
   drawSheet(ctx, data, layout)
   return canvas
 }
 
-/** Generates and immediately triggers download as PNG */
+/** Generates and immediately triggers PNG download at 300 DPI (2× canvas). */
 export function downloadDimensionPNG(data, layout = 'default') {
-  const canvas = generateDimensionCanvas(data, layout)
+  const canvas = generateDimensionCanvas(data, layout, 2)   // 300 DPI
   const shelves = data.shelves || [data]
   const first = shelves[0]
   const tag = shelves.length > 1 ? `_x${shelves.length}` : ''
@@ -737,4 +740,26 @@ export function downloadDimensionPNG(data, layout = 'default') {
   link.href = canvas.toDataURL('image/png')
   link.download = `DEKIRI_치수도_W${first.width}H${first.height}D${first.depth}${tag}.png`
   link.click()
+}
+
+/**
+ * Generates an A3 PDF (landscape) with the drawing at 300 DPI embedded as a
+ * high-resolution image.  Text and lines are rendered at 2× pixel density so
+ * they remain sharp when the PDF is viewed at up to 3–4× zoom or printed.
+ */
+export async function downloadDimensionPDF(data, layout = 'default') {
+  const { jsPDF } = await import('jspdf')
+
+  // 300 DPI canvas (scale=2)
+  const canvas = generateDimensionCanvas(data, layout, 2)
+  const imgData = canvas.toDataURL('image/jpeg', 0.97)  // JPEG keeps file small
+
+  // A3 landscape: 420 × 297 mm
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' })
+  doc.addImage(imgData, 'JPEG', 0, 0, 420, 297)
+
+  const shelves = data.shelves || [data]
+  const first = shelves[0]
+  const tag = shelves.length > 1 ? `_x${shelves.length}` : ''
+  doc.save(`DEKIRI_치수도_W${first.width}H${first.height}D${first.depth}${tag}.pdf`)
 }

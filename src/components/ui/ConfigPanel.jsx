@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import useShelfStore from '../../store/useShelfStore.js'
-import { generateDimensionCanvas, downloadDimensionPNG } from '../../utils/dimensionDrawing.js'
+import { generateDimensionCanvas, downloadDimensionPNG, downloadDimensionPDF } from '../../utils/dimensionDrawing.js'
 import ShelfMode from '../modes/ShelfMode.jsx'
 import WasherMode from '../modes/WasherMode.jsx'
 import DressroomMode from '../modes/DressroomMode.jsx'
@@ -82,6 +82,11 @@ function DimPreviewModal({ onClose, params }) {
   }, [params, layout])
 
   const handleDownload = () => downloadDimensionPNG(params, layout)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const handlePdf = async () => {
+    setPdfLoading(true)
+    try { await downloadDimensionPDF(params, layout) } finally { setPdfLoading(false) }
+  }
 
   return createPortal(
     <div
@@ -164,7 +169,20 @@ function DimPreviewModal({ onClose, params }) {
               letterSpacing: '0.03em',
             }}
           >
-            PNG 다운로드
+            PNG 저장 (300 DPI)
+          </button>
+          <button
+            onClick={handlePdf}
+            disabled={pdfLoading}
+            style={{
+              flex: 1, padding: '9px 0',
+              background: pdfLoading ? '#555' : '#2563eb', color: 'white',
+              border: 'none', borderRadius: 10,
+              fontSize: 13, fontWeight: 700, cursor: pdfLoading ? 'wait' : 'pointer',
+              letterSpacing: '0.03em',
+            }}
+          >
+            {pdfLoading ? 'PDF 생성 중…' : 'PDF 저장 (A3)'}
           </button>
           <button
             onClick={onClose}
