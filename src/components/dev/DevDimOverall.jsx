@@ -57,42 +57,50 @@ function DimLine({ p1, p2, label, color, capAxis }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function DevDimOverall() {
-  const { width, height, depth } = useShelfStore()
+  const { height, depth, shelves, shelfGap } = useShelfStore(s => ({
+    height: s.height, depth: s.depth, shelves: s.shelves, shelfGap: s.shelfGap,
+  }))
 
   const dims = useMemo(() => {
-    const hw   = width  / 200   // half-width  (Three.js units, 1 unit = 100 mm)
-    const H    = height / 100   // full height
-    const D    = depth  / 100   // full depth
-    const dz   = depth  / 200   // depth centre (world Z midpoint of shelf)
+    // Total span = sum of all shelf widths + gaps between them
+    const totalWidth = shelves.reduce((sum, s) => sum + s.width, 0)
+      + Math.max(0, shelves.length - 1) * shelfGap
+    const maxDepth = Math.max(...shelves.map(s => s.depth), depth)
+    const maxHeight = Math.max(...shelves.map(s => s.height), height)
 
-    const OUT_SIDE  = hw + 0.45  // right of shelf for height line
-    const OUT_SIDE2 = hw + 0.75  // further right for depth line
-    const OUT_BOT   = -0.38      // below shelf for width line
+    const hw   = totalWidth / 200   // half total width (Three.js units)
+    const H    = maxHeight  / 100
+    const D    = maxDepth   / 100
+    const dz   = maxDepth   / 200   // depth center (world Z)
+
+    const OUT_SIDE  = hw + 0.45   // right of rightmost shelf for height line
+    const OUT_SIDE2 = hw + 0.75   // further right for depth line
+    const OUT_BOT   = -0.38       // below shelf for width line
 
     return [
-      // ── Width (X, red) ── horizontal, below shelf
+      // ── Width (X, red) ── horizontal, below shelf — full combined span
       {
-        key: 'width', label: `너비  ${width} mm`, color: '#ef4444',
+        key: 'width', label: `너비  ${totalWidth} mm`, color: '#ef4444',
         p1: [-hw, OUT_BOT, dz],
         p2: [ hw, OUT_BOT, dz],
         capAxis: 1,  // Y-direction caps
       },
       // ── Height (Y, green) ── vertical, to the right of shelf
       {
-        key: 'height', label: `높이  ${height} mm`, color: '#22c55e',
+        key: 'height', label: `높이  ${maxHeight} mm`, color: '#22c55e',
         p1: [OUT_SIDE, 0, dz],
         p2: [OUT_SIDE, H, dz],
         capAxis: 0,  // X-direction caps
       },
       // ── Depth (Z, blue) ── depth direction, further right at mid-height
       {
-        key: 'depth', label: `깊이  ${depth} mm`, color: '#3b82f6',
+        key: 'depth', label: `깊이  ${maxDepth} mm`, color: '#3b82f6',
         p1: [OUT_SIDE2, H / 2, 0],
         p2: [OUT_SIDE2, H / 2, D],
         capAxis: 0,  // X-direction caps
       },
     ]
-  }, [width, height, depth])
+  }, [shelves, shelfGap, height, depth])
 
   return (
     <>

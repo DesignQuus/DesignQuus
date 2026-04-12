@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useCallback } from 'react'
 import useDevStore, { ZERO } from '../../store/useDevStore.js'
+import useShelfStore from '../../store/useShelfStore.js'
 import { getEffBbox, computeGaps } from './DevMeasure.jsx'
 
 const AXIS_COLOR = { x: '#ef4444', y: '#22c55e', z: '#3b82f6' }
@@ -52,6 +53,31 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
   const toggleSpacingDims = useDevStore(s => s.toggleSpacingDims)
 
   const type = primaryId ? primaryId.replace(/_[^_]+$/, '') : ''
+
+  // ── Shelf unit position (useShelfStore) ──────────────────────────────────────
+  const shelves = useShelfStore(s => s.shelves)
+  const setShelfOffset = useShelfStore(s => s.setShelfOffset)
+
+  const alignShelvesZ = useCallback((mode) => {
+    // front edge world Z = offsetZ (depth-independent because group z = depth/200 + offsetZ/100)
+    if (mode === 'back') {
+      // align all back faces to Z=0 (default): reset offsetZ = 0
+      shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, 0))
+    } else if (mode === 'front') {
+      // align all front faces at the same Z — use the max front edge
+      const frontZs = shelves.map(s => (s.depth) + (s.offsetZ || 0))
+      const target = Math.max(...frontZs)
+      shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, target - s.depth))
+    } else if (mode === 'center') {
+      const centerZs = shelves.map(s => (s.offsetZ || 0))
+      const avg = centerZs.reduce((a, b) => a + b, 0) / centerZs.length
+      shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, avg))
+    }
+  }, [shelves, setShelfOffset])
+
+  const resetAllShelfOffsets = useCallback(() => {
+    shelves.forEach(s => setShelfOffset(s.id, 0, 0))
+  }, [shelves, setShelfOffset])
 
   // ── Edge-to-edge measurements (2 selected) ──────────────────────────────────
   // Use primitive selectors so Zustand can do stable reference comparison.
@@ -130,6 +156,63 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
 
       {/* ── Scrollable body ── */}
       <div style={{ overflowY: 'auto', flex: 1, paddingTop: 4 }}>
+
+      {/* ── 선반 유닛 위치 (Shelf Unit Positions) ── */}
+      {shelves.length > 0 && (
+        <div style={{ marginBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={sectionLabel}>선반 유닛 위치</span>
+            <button
+              onClick={resetAllShelfOffsets}
+              style={{ ...smallBtn, fontSize: 9, padding: '1px 7px', color: '#fca5a5', borderColor: 'rgba(252,165,165,0.3)' }}
+              title="모든 선반 오프셋을 0으로 초기화"
+            >전체 초기화</button>
+          </div>
+
+          {shelves.map(shelf => (
+            <div key={shelf.id} style={{ marginBottom: 6, background: 'rgba(255,255,255,0.04)', borderRadius: 5, padding: '5px 6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ color: '#f97316', fontSize: 10, fontWeight: 700 }}>{shelf.label}</span>
+                <button
+                  onClick={() => setShelfOffset(shelf.id, 0, 0)}
+                  style={{ ...smallBtn, fontSize: 9, padding: '0px 5px', color: '#fca5a5', borderColor: 'rgba(252,165,165,0.25)' }}
+                >리셋</button>
+              </div>
+              <ShelfOffsetRow
+                label="X" color={AXIS_COLOR.x}
+                value={shelf.offsetX || 0}
+                onStep={delta => setShelfOffset(shelf.id, Math.round(((shelf.offsetX||0) + delta) * 10)/10, shelf.offsetZ || 0)}
+                onChange={v => setShelfOffset(shelf.id, v, shelf.offsetZ || 0)}
+              />
+              <ShelfOffsetRow
+                label="Z" color={AXIS_COLOR.z}
+                value={shelf.offsetZ || 0}
+                onStep={delta => setShelfOffset(shelf.id, shelf.offsetX || 0, Math.round(((shelf.offsetZ||0) + delta) * 10)/10)}
+                onChange={v => setShelfOffset(shelf.id, shelf.offsetX || 0, v)}
+              />
+            </div>
+          ))}
+
+          {/* Z-axis (depth) alignment */}
+          {shelves.length > 1 && (
+            <div style={{ marginTop: 4 }}>
+              <span style={{ ...sectionLabel, display: 'block', marginBottom: 3 }}>깊이 정렬 (Z)</span>
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[
+                  { mode: 'back',   label: '뒷면', title: '모든 선반 뒷면을 Z=0에 정렬' },
+                  { mode: 'center', label: '중앙', title: '모든 선반 Z오프셋을 평균값으로 맞춤' },
+                  { mode: 'front',  label: '앞면', title: '모든 선반 앞면을 같은 Z에 정렬' },
+                ].map(({ mode, label, title }) => (
+                  <button key={mode} onClick={() => alignShelvesZ(mode)} title={title}
+                    style={{ ...alignBtn, flex: 1, fontSize: 10 }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Multi-select alignment grid ── */}
       {selectedCount >= 2 && (
@@ -272,6 +355,37 @@ export default function DevPanel({ screenshotRef, cameraRef }) {
         <Btn color="#374151" onClick={copyJSON}>JSON 복사</Btn>
         <Btn color="#166534" onClick={handleSave}>파일 저장</Btn>
       </div>
+    </div>
+  )
+}
+
+// Simple ±1mm row for shelf unit offsets
+function ShelfOffsetRow({ label, color, value, onStep, onChange }) {
+  const [draft, setDraft] = useState(null)
+  const commit = (raw) => {
+    const num = parseFloat(raw)
+    if (!isNaN(num)) onChange(Math.round(num * 10) / 10)
+    setDraft(null)
+  }
+  const btnStyle = { ...smallBtn, color, borderColor: `${color}55`, background: `${color}18` }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2, borderLeft: `2px solid ${color}`, paddingLeft: 4 }}>
+      <span style={{ color, fontSize: 10, fontWeight: 700, width: 14, flexShrink: 0 }}>{label}</span>
+      <button onClick={e => onStep(e.shiftKey ? -10 : -1)} style={btnStyle}>−</button>
+      <input
+        type="text" inputMode="decimal"
+        value={draft !== null ? draft : String(value)}
+        onChange={e => setDraft(e.target.value)}
+        onFocus={e => { setDraft(String(value)); e.target.select() }}
+        onBlur={() => commit(draft ?? String(value))}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { commit(draft ?? String(value)); e.target.blur() }
+          if (e.key === 'Escape') { setDraft(null); e.target.blur() }
+        }}
+        style={{ ...inputStyle, borderColor: `${color}44`, width: 52 }}
+      />
+      <span style={{ color: '#6b7280', fontSize: 9, flex: 1 }}>mm</span>
+      <button onClick={e => onStep(e.shiftKey ? 10 : 1)} style={btnStyle}>+</button>
     </div>
   )
 }
