@@ -64,7 +64,9 @@ const useShelfStore = create((set, get) => ({
   selectedShelfIdx: -1,
   arMode: false,
   notification: null,  // { message, id } — 토스트 메시지
-  shelfGap: 0,         // 선반 간 간격 (mm) — SliderRow로 조절
+  shelfGap: 0,         // 선반 간 시각적 간격 (mm) — 0이면 포스트 외면이 맞닿음
+  groupOffsetX: 0,     // 선반 전체 그룹 좌우 위치 (mm)
+  groupOffsetZ: 0,     // 선반 전체 그룹 앞뒤 위치 (mm)
 
   // ── 다중 선반 인스턴스 ────────────────────────────────────────────
   shelves: [firstShelf],
@@ -251,6 +253,8 @@ const useShelfStore = create((set, get) => ({
 
   setRenderMode:      (renderMode)      => set({ renderMode }),
   setSelectedShelfIdx:(idx)             => set({ selectedShelfIdx: idx }),
+  setGroupOffsetX:    (v) => { set({ groupOffsetX: v }); syncToUrl(get()) },
+  setGroupOffsetZ:    (v) => { set({ groupOffsetZ: v }); syncToUrl(get()) },
   setArMode:          (arMode)          => set({ arMode }),
   setPostColor:       (v)               => set({ postColor: v }),
 

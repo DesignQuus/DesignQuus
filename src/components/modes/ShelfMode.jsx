@@ -46,6 +46,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
     renderMode, setRenderMode,
     shelves, activeShelfId, addShelf, removeShelf, setActiveShelf,
     shelfGap, setShelfGap,
+    groupOffsetX, setGroupOffsetX, groupOffsetZ, setGroupOffsetZ,
   } = useShelfStore()
 
   const handleModeSelect = (val) => {
@@ -101,10 +102,15 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
               ))}
             </div>
 
-            <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
-            <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
-            <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
-            <SliderRow label="선반 간격" value={shelfGap}    min={0}   max={500}  step={25}   onChange={setShelfGap} />
+            <SliderRow label="공간 너비" value={spaceWidth}    min={300}   max={3000} step={50}  onChange={setSpaceWidth} />
+            <SliderRow label="공간 높이" value={spaceHeight}   min={600}   max={3000} step={100} onChange={setSpaceHeight} />
+            <SliderRow label="공간 깊이" value={spaceDepth}    min={300}   max={1500} step={50}  onChange={setSpaceDepth} />
+            <SliderRow label="선반 간격" value={shelfGap}      min={0}     max={500}  step={25}  onChange={setShelfGap} />
+            <div className="mt-2 border-t border-white/10 pt-2">
+              <span className="text-xs font-medium text-white/50 block mb-1">전체 선반 위치</span>
+              <SliderRow label="좌우" value={groupOffsetX} min={-1500} max={1500} step={25} onChange={setGroupOffsetX} />
+              <SliderRow label="앞뒤" value={groupOffsetZ} min={-500}  max={500}  step={25} onChange={setGroupOffsetZ} />
+            </div>
           </div>
         </div>
       </div>

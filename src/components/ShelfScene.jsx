@@ -13,7 +13,7 @@ import DevDimOverall from './dev/DevDimOverall.jsx'
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
-  const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode, shelves, activeShelfId, setActiveShelf, shelfGap } = useShelfStore()
+  const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode, shelves, activeShelfId, setActiveShelf, shelfGap, groupOffsetX, groupOffsetZ } = useShelfStore()
   const showOverallDims = useDevStore(s => s.showOverallDims)
 
   // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=0)
@@ -98,26 +98,31 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Bounding box */}
       <BoundingBox width={spaceWidth} height={spaceHeight} depth={spaceDepth} />
 
-      {/* 다중 선반 — X축으로 나란히 배치, 전체 중심이 원점 */}
+      {/* 다중 선반 — 그룹 오프셋 적용 후 X축 나란히 배치 */}
       {(() => {
-        const GAP = shelfGap  // store의 shelfGap (mm) 사용
-        // 각 선반의 X 시작 좌표 계산
+        // L형 포스트 플랜지 폭(35mm): GAP=0일 때 인접 포스트 외면이 맞닿도록 보정
+        const POST_BORDER = 35
+        const actualGap = shelfGap + POST_BORDER * 2
         let cur = 0
-        const starts = shelves.map(s => { const x = cur; cur += s.width + GAP; return x })
-        const totalSpan = cur - GAP
+        const starts = shelves.map(s => { const x = cur; cur += s.width + actualGap; return x })
+        const totalSpan = cur - actualGap
         const centerOffset = -totalSpan / 2
-        return shelves.map((shelf, i) => {
-          const posX = centerOffset + starts[i] + shelf.width / 2
-          return (
-            <Suspense key={shelf.id} fallback={null}>
-              <ShelfModel
-                shelfConfig={shelf}
-                isActive={shelf.id === activeShelfId}
-                posX={posX}
-              />
-            </Suspense>
-          )
-        })
+        return (
+          <group position={[groupOffsetX / 100, 0, groupOffsetZ / 100]}>
+            {shelves.map((shelf, i) => {
+              const posX = centerOffset + starts[i] + shelf.width / 2
+              return (
+                <Suspense key={shelf.id} fallback={null}>
+                  <ShelfModel
+                    shelfConfig={shelf}
+                    isActive={shelf.id === activeShelfId}
+                    posX={posX}
+                  />
+                </Suspense>
+              )
+            })}
+          </group>
+        )
       })()}
 
       {/* DEV: edge-to-edge measurement lines */}
