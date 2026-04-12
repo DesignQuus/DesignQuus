@@ -570,9 +570,9 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       {tooltip && createPortal(
         <div style={{
           position: 'fixed',
-          left: tooltip.x,
-          top: tooltip.y,
-          transform: 'translateY(-50%)',
+          left: tooltip.center ? tooltip.x : tooltip.x,
+          top: tooltip.center ? tooltip.y : tooltip.y,
+          transform: tooltip.center ? 'translate(-50%, -100%)' : 'translateY(-50%)',
           background: 'white',
           border: '1px solid rgba(0,0,0,0.1)',
           borderRadius: 8,
@@ -587,17 +587,31 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
           boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
         }}>
           {tooltip.text}
-          <span style={{
-            position: 'absolute',
-            right: '100%',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 0,
-            height: 0,
-            borderTop: '5px solid transparent',
-            borderBottom: '5px solid transparent',
-            borderRight: '6px solid white',
-          }} />
+          {tooltip.center ? (
+            /* 하단 화살표 (핸들 툴팁용) */
+            <span style={{
+              position: 'absolute',
+              left: '50%',
+              top: '100%',
+              transform: 'translateX(-50%)',
+              width: 0, height: 0,
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '6px solid white',
+            }} />
+          ) : (
+            /* 좌측 화살표 (탭 툴팁용) */
+            <span style={{
+              position: 'absolute',
+              right: '100%',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0, height: 0,
+              borderTop: '5px solid transparent',
+              borderBottom: '5px solid transparent',
+              borderRight: '6px solid white',
+            }} />
+          )}
         </div>,
         document.body
       )}
@@ -645,6 +659,11 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
         onMouseDown={panelMode !== 'compact' ? onResizeMouseDown : undefined}
         onClick={handleDotsClick}
         onDoubleClick={handleDotsDblClick}
+        onMouseEnter={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          setTooltip({ text: '조정창 확대 축소', x: r.left + r.width / 2, y: r.top - 8, center: true })
+        }}
+        onMouseLeave={() => setTooltip(null)}
         style={{ height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: panelMode === 'compact' ? 'pointer' : 'ns-resize', flexShrink: 0 }}
       >
         <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
