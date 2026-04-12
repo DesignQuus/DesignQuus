@@ -139,10 +139,14 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
         )}
       </div>
 
+      {/* step={1} 로 thumb 를 1단위로 부드럽게 이동, onChange에서 step 단위로 snap */}
       <input
         type="range"
-        min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
+        min={min} max={max} step={1} value={value}
+        onChange={e => {
+          const snapped = Math.round(Number(e.target.value) / step) * step
+          onChange(Math.max(min, Math.min(max, snapped)))
+        }}
       />
     </div>
   )

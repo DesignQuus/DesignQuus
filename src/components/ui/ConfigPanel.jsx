@@ -318,7 +318,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const [bomEl,   setBomEl]   = useState(null)
 
   // 각 섹션 헤더 우측에 맞춰 표시되는 탭 버튼 Y 위치
-  const [tabTops, setTabTops] = useState([60, 104, 148])
+  const [tabTops, setTabTops] = useState([55, 99, 143])
 
   // 섹션 열림 상태 — DesktopPanel에서 관리 (자동 접힘 인터랙션)
   const [spaceOpen, setSpaceOpen] = useState(false)
@@ -346,7 +346,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     function headerTop(el, fallback) {
       if (!el) return fallback
       const r = el.getBoundingClientRect()
-      return r.top + r.height / 2 - panelRect.top - 19  // -19 = 버튼 높이(38) / 2
+      return r.top + r.height / 2 - panelRect.top - 24  // -19(버튼중심) - 5(위로 5px)
     }
 
     let t0 = Math.max(COLLAPSE_THRESHOLD, headerTop(spaceEl, 60))
