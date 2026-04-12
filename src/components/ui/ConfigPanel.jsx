@@ -335,6 +335,10 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const [panelHeight, setPanelHeight] = useState(480)
   const panelHeightRef = useRef(panelHeight)
   panelHeightRef.current = panelHeight
+  const [panelMode, setPanelMode] = useState('normal') // 'normal' | 'compact' | 'maximized'
+  const [expandAll, setExpandAll] = useState(false)
+  const panelModeRef = useRef('normal')
+  panelModeRef.current = panelMode
   const contentRef = useRef(null)
   const innerRef = useRef(null)
   const panelRef = useRef(null)
@@ -348,15 +352,16 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const [tabTops, setTabTops] = useState([55, 99, 143])
 
   // 아코디언 — 한 섹션만 열림 ('space' | 'shelf' | 'bom' | null)
+  // expandAll=true 이면 모든 섹션 동시 열림 (maximized 모드)
   const [activeSection, setActiveSection] = useState(null)
-  const spaceOpen = activeSection === 'space'
-  const shelfOpen = activeSection === 'shelf'
-  const bomOpen   = activeSection === 'bom'
+  const spaceOpen = expandAll || activeSection === 'space'
+  const shelfOpen = expandAll || activeSection === 'shelf'
+  const bomOpen   = expandAll || activeSection === 'bom'
 
-  // 각 섹션 토글 (같은 섹션 클릭 시 접힘)
-  const setSpaceOpen = (v) => setActiveSection(v ? 'space' : null)
-  const setShelfOpen = (v) => setActiveSection(v ? 'shelf' : null)
-  const toggleBom = () => setActiveSection(prev => prev === 'bom' ? null : 'bom')
+  // 각 섹션 토글 (같은 섹션 클릭 시 접힘) — 수동 조작 시 normal 모드로 복귀
+  const setSpaceOpen = (v) => { setExpandAll(false); setPanelMode('normal'); setActiveSection(v ? 'space' : null) }
+  const setShelfOpen = (v) => { setExpandAll(false); setPanelMode('normal'); setActiveSection(v ? 'shelf' : null) }
+  const toggleBom = () => { setExpandAll(false); setPanelMode('normal'); setActiveSection(prev => prev === 'bom' ? null : 'bom') }
 
   // ref로 최신값 유지 (recomputeTabs 스크롤 핸들러용)
   const spaceOpenRef = useRef(spaceOpen)
@@ -365,6 +370,49 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   shelfOpenRef.current = shelfOpen
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
+
+  // compact: 모든 섹션 접기 + 패널 최소 높이
+  const goCompact = useCallback(() => {
+    setExpandAll(false)
+    setActiveSection(null)
+    setPanelMode('compact')
+    // 아코디언 닫힘 애니메이션(220ms) 대기 후 높이 측정
+    setTimeout(() => {
+      if (!innerRef.current || !headerRef.current) return
+      const headerH = headerRef.current.offsetHeight
+      setPanelHeight(headerH + innerRef.current.scrollHeight + 24)
+    }, 280)
+  }, [headerRef])
+
+  // maximized: 모든 섹션 열기 + 패널 최대 높이
+  const goMaximized = useCallback(() => {
+    setPanelMode('maximized')
+    setExpandAll(true)
+    setActiveSection(null)
+    setPanelHeight(Math.max(300, window.innerHeight - pos.y - 16))
+  }, [pos.y])
+
+  // 3점 단일클릭: compact ↔ maximized 토글
+  // 3점 더블클릭: 내용 높이에 맞게 피팅 (normal 모드)
+  const dotsClickTimer = useRef(null)
+  const handleDotsClick = useCallback(() => {
+    if (dotsClickTimer.current) return  // 더블클릭 진행 중 — 무시
+    dotsClickTimer.current = setTimeout(() => {
+      dotsClickTimer.current = null
+      if (panelModeRef.current === 'compact') goMaximized()
+      else goCompact()
+    }, 220)
+  }, [goCompact, goMaximized])
+
+  const handleDotsDblClick = useCallback(() => {
+    if (dotsClickTimer.current) { clearTimeout(dotsClickTimer.current); dotsClickTimer.current = null }
+    if (!innerRef.current || !headerRef.current) return
+    const headerH = headerRef.current.offsetHeight
+    const fitH = Math.min(window.innerHeight - 32, headerH + innerRef.current.scrollHeight + 36)
+    setPanelMode('normal')
+    setExpandAll(false)
+    setPanelHeight(fitH)
+  }, [headerRef])
 
   // 섹션 헤더 위치 기반 탭 Y 재계산 + 자동 접힘
   const recomputeTabs = useCallback(() => {
@@ -407,6 +455,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     const el = innerRef.current
     if (!el) return
     const fit = () => {
+      if (panelModeRef.current !== 'normal') return
       const headerH = headerRef.current?.offsetHeight ?? 60
       const fitH = Math.min(window.innerHeight - 32, headerH + el.scrollHeight + 36)
       setPanelHeight(fitH)
@@ -470,7 +519,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     <div
       ref={panelRef}
       className="config-panel fixed z-10 w-72 select-none flex flex-col"
-      style={{ left: pos.x, top: pos.y, height: panelHeight }}
+      style={{ left: pos.x, top: pos.y, height: panelHeight, transition: panelMode !== 'normal' ? 'height 0.3s ease' : 'none' }}
     >
 
       {/* 우측 견출 탭 레일 — 섹션 헤더 위치에 정렬 */}
@@ -574,15 +623,16 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
         </div>
       </div>
 
-      {/* 하단 리사이즈 핸들 */}
+      {/* 하단 핸들: 단일클릭=compact↔maximized 토글, 더블클릭=높이 피팅, 드래그=리사이즈(normal/maximized) */}
       <div
-        onMouseDown={onResizeMouseDown}
-        onDoubleClick={onResizeDblClick}
-        style={{ height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'ns-resize', flexShrink: 0 }}
+        onMouseDown={panelMode !== 'compact' ? onResizeMouseDown : undefined}
+        onClick={handleDotsClick}
+        onDoubleClick={handleDotsDblClick}
+        style={{ height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: panelMode === 'compact' ? 'pointer' : 'ns-resize', flexShrink: 0 }}
       >
         <span style={{ display: 'flex', gap: 4, userSelect: 'none' }}>
           {[0,1,2].map(i => (
-            <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.45)', display: 'inline-block' }} />
+            <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: panelMode === 'compact' ? '#f97316' : 'rgba(255,255,255,0.45)', display: 'inline-block' }} />
           ))}
         </span>
       </div>
