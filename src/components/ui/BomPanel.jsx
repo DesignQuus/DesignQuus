@@ -40,7 +40,8 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
       </button>
 
       {/* 아코디언 슬라이드 애니메이션 */}
-      <div style={{ overflow: 'hidden', maxHeight: open ? '520px' : '0', transition: 'max-height 0.22s ease' }}>
+      <div style={{ display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 0.22s ease' }}>
+      <div style={{ overflow: 'hidden', minHeight: 0 }}>
         <div className="mt-2">
           <table className="bom-table w-full text-white/90">
             <thead>
@@ -102,6 +103,7 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

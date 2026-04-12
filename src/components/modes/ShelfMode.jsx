@@ -13,12 +13,14 @@ function IconLines({ open }) {
   )
 }
 
-// 아코디언 — 섹션 열림/닫힘 시 부드러운 슬라이드 애니메이션
-const sectionAnim = (open, maxH = '360px') => ({
-  overflow: 'hidden',
-  maxHeight: open ? maxH : '0',
-  transition: 'max-height 0.22s ease',
+// grid-template-rows 전환: 실제 컨텐츠 높이에 맞게 자동 애니메이션
+// max-height 방식과 달리 임의 상한값 불필요 → 모든 섹션 동일한 속도감
+const outerGrid = (open) => ({
+  display: 'grid',
+  gridTemplateRows: open ? '1fr' : '0fr',
+  transition: 'grid-template-rows 0.22s ease',
 })
+const innerClip = { overflow: 'hidden', minHeight: 0 }
 
 export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const {
@@ -44,10 +46,12 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
           <span>설치 가상 공간</span>
           <IconLines open={spaceOpen} />
         </button>
-        <div style={sectionAnim(spaceOpen, '280px')}>
-          <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
-          <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
-          <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
+        <div style={outerGrid(spaceOpen)}>
+          <div style={innerClip}>
+            <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
+            <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
+            <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
+          </div>
         </div>
       </div>
 
@@ -62,51 +66,53 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
           <span>선반 규격</span>
           <IconLines open={shelfOpen} />
         </button>
-        <div style={sectionAnim(shelfOpen, '600px')}>
-          <SliderRow label="너비" value={width}  min={300} max={1800} step={50}  onChange={setWidth} />
-          <SliderRow label="높이" value={height} min={600} max={2400} step={100} onChange={setHeight} />
-          <SliderRow label="깊이" value={depth}  min={300} max={900}  step={50}  onChange={setDepth} />
-          <SliderRow
-            label="단 / 칸 수"
-            value={shelfCount}
-            min={1} max={10} step={1}
-            badge={`${shelfCount + 1}단 / ${shelfCount + 2}칸`}
-            onChange={setShelfCount}
-          />
-          <div className="mt-3">
-            <span className="text-xs font-medium text-white/90 block mb-2">바닥 발</span>
-            <div className="flex gap-2">
-              {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
-                <button
-                  key={val}
-                  onClick={() => setFeetType(val)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-                    ${feetType === val
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'bg-white/20 text-white/80 hover:bg-white/30'
-                    }`}
-                >
-                  {lbl}
-                </button>
-              ))}
+        <div style={outerGrid(shelfOpen)}>
+          <div style={innerClip}>
+            <SliderRow label="너비" value={width}  min={300} max={1800} step={50}  onChange={setWidth} />
+            <SliderRow label="높이" value={height} min={600} max={2400} step={100} onChange={setHeight} />
+            <SliderRow label="깊이" value={depth}  min={300} max={900}  step={50}  onChange={setDepth} />
+            <SliderRow
+              label="단 / 칸 수"
+              value={shelfCount}
+              min={1} max={10} step={1}
+              badge={`${shelfCount + 1}단 / ${shelfCount + 2}칸`}
+              onChange={setShelfCount}
+            />
+            <div className="mt-3">
+              <span className="text-xs font-medium text-white/90 block mb-2">바닥 발</span>
+              <div className="flex gap-2">
+                {[['level', '수평발'], ['caster', '캐스터']].map(([val, lbl]) => (
+                  <button
+                    key={val}
+                    onClick={() => setFeetType(val)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
+                      ${feetType === val
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-white/20 text-white/80 hover:bg-white/30'
+                      }`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="mt-2">
-            <span className="text-xs font-medium text-white/90 block mb-2">렌더 모드</span>
-            <div className="flex gap-2">
-              {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
-                <button
-                  key={val}
-                  onClick={() => setRenderMode(val)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-                    ${renderMode === val
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'bg-white/20 text-white/80 hover:bg-white/30'
-                    }`}
-                >
-                  {lbl}
-                </button>
-              ))}
+            <div className="mt-2">
+              <span className="text-xs font-medium text-white/90 block mb-2">렌더 모드</span>
+              <div className="flex gap-2">
+                {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
+                  <button
+                    key={val}
+                    onClick={() => setRenderMode(val)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
+                      ${renderMode === val
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-white/20 text-white/80 hover:bg-white/30'
+                      }`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -422,6 +422,8 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const tabBtnStyle = (isActive) => ({
     width: 38,
     height: 38,
+    padding: 0,
+    boxSizing: 'border-box',
     background: isActive
       ? 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)'
       : 'linear-gradient(135deg, #141828 0%, #0e1220 100%)',
