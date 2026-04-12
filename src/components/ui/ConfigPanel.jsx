@@ -371,43 +371,46 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
+  // goCompact 내부 setTimeout 취소용 ref
+  const compactTimer = useRef(null)
+
   // compact: 모든 섹션 접기 + 패널 최소 높이
+  // ※ scrollHeight 는 overflow:hidden 무시 → offsetHeight 사용 (실제 렌더 높이)
   const goCompact = useCallback(() => {
     setExpandAll(false)
     setActiveSection(null)
     setPanelMode('compact')
-    // 아코디언 닫힘 애니메이션(220ms) 대기 후 높이 측정
-    setTimeout(() => {
+    // 아코디언 닫힘 애니메이션(220ms) 대기 후 실제 렌더 높이 측정
+    compactTimer.current = setTimeout(() => {
+      compactTimer.current = null
       if (!innerRef.current || !headerRef.current) return
       const headerH = headerRef.current.offsetHeight
-      setPanelHeight(headerH + innerRef.current.scrollHeight + 24)
+      setPanelHeight(headerH + innerRef.current.offsetHeight + 24)
     }, 280)
   }, [headerRef])
 
   // maximized: 모든 섹션 열기 + 패널 최대 높이
   const goMaximized = useCallback(() => {
+    if (compactTimer.current) { clearTimeout(compactTimer.current); compactTimer.current = null }
     setPanelMode('maximized')
     setExpandAll(true)
     setActiveSection(null)
     setPanelHeight(Math.max(300, window.innerHeight - pos.y - 16))
   }, [pos.y])
 
-  // 3점 단일클릭: compact ↔ maximized 토글
-  // 3점 더블클릭: 내용 높이에 맞게 피팅 (normal 모드)
-  const dotsClickTimer = useRef(null)
-  const handleDotsClick = useCallback(() => {
-    if (dotsClickTimer.current) return  // 더블클릭 진행 중 — 무시
-    dotsClickTimer.current = setTimeout(() => {
-      dotsClickTimer.current = null
-      if (panelModeRef.current === 'compact') goMaximized()
-      else goCompact()
-    }, 220)
+  // 단일클릭: compact ↔ maximized 즉시 토글 (e.detail≥2 → 더블클릭에 위임)
+  // 더블클릭: 내용 높이에 맞게 피팅 (normal 모드)
+  const handleDotsClick = useCallback((e) => {
+    if (e.detail >= 2) return  // 더블클릭 이벤트가 처리
+    if (panelModeRef.current === 'compact') goMaximized()
+    else goCompact()
   }, [goCompact, goMaximized])
 
   const handleDotsDblClick = useCallback(() => {
-    if (dotsClickTimer.current) { clearTimeout(dotsClickTimer.current); dotsClickTimer.current = null }
+    if (compactTimer.current) { clearTimeout(compactTimer.current); compactTimer.current = null }
     if (!innerRef.current || !headerRef.current) return
     const headerH = headerRef.current.offsetHeight
+    // 피팅 시에는 전체 스크롤 가능 높이 기준 (열려있는 콘텐츠 포함)
     const fitH = Math.min(window.innerHeight - 32, headerH + innerRef.current.scrollHeight + 36)
     setPanelMode('normal')
     setExpandAll(false)
