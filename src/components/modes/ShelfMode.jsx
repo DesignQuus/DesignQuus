@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import SliderRow from '../ui/SliderRow.jsx'
 import useShelfStore from '../../store/useShelfStore.js'
 
@@ -29,6 +29,13 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
     spaceWidth, setSpaceWidth, spaceHeight, setSpaceHeight, spaceDepth, setSpaceDepth,
     renderMode, setRenderMode,
   } = useShelfStore()
+
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   const spaceHeaderRef = useCallback(node => { onSpaceRef?.(node) }, [onSpaceRef])
   const shelfHeaderRef = useCallback(node => { onShelfRef?.(node) }, [onShelfRef])
@@ -96,6 +103,13 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
                 ))}
               </div>
             </div>
+
+            <button
+              onClick={handleCopy}
+              className="w-full mt-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white/20 text-white/80 hover:bg-white/30"
+            >
+              {copied ? '복사됨!' : '규격 복제 (URL 복사)'}
+            </button>
           </div>
         </div>
       </div>
