@@ -490,8 +490,10 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     e.stopPropagation()
     const startY = e.clientY
     const startH = panelHeightRef.current
+    // 현재 콘텐츠가 모두 보이는 최소 높이 — 드래그 시 이 값 이하로 축소 불가
+    const minH = (headerRef.current?.offsetHeight ?? 60) + (innerRef.current?.scrollHeight ?? 80) + 28 + 20
     function onMove(ev) {
-      const newH = Math.max(200, Math.min(window.innerHeight - 80, startH + (ev.clientY - startY)))
+      const newH = Math.max(minH, Math.min(window.innerHeight - 80, startH + (ev.clientY - startY)))
       setPanelHeight(newH)
     }
     function onUp() {

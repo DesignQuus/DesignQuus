@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
+import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useShallow } from 'zustand/shallow'
 import AnglePost from './parts/AnglePost.jsx'
@@ -36,6 +37,15 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
   const { renderMode, mode, selectedShelfIdx, setSelectedShelfIdx, setShelfPosition, setActiveShelf } = store
 
   const showSpacingDims = useDevStore(s => isDev ? s.showSpacingDims : true)
+  const shelvesCount = useShelfStore(s => s.shelves.length)
+
+  // 활성 선반 오렌지 아웃라인 geometry (다중 선반일 때만 생성)
+  const outlineGeo = useMemo(
+    () => isActive && shelvesCount > 1
+      ? new THREE.EdgesGeometry(new THREE.BoxGeometry(width / 100 + 0.01, height / 100 + 0.01, depth / 100 + 0.01))
+      : null,
+    [isActive, shelvesCount, width, height, depth]
+  )
 
   const halfW = width / 2
   const halfD = depth / 2
@@ -151,6 +161,43 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
       {/* Snap guide — horizontal yellow plane during drag */}
       {snapYMm !== null && (
         <SnapGuide yMm={snapYMm} widthMm={width} depthMm={depth} />
+      )}
+
+      {/* 다중 선반: 선반 번호 라벨 + 활성 선반 오렌지 아웃라인 */}
+      {shelvesCount > 1 && (
+        <>
+          {/* C: 선반 번호 라벨 */}
+          <Html
+            position={[0, height / 100 + 0.12, 0]}
+            center
+            zIndexRange={[100, 0]}
+            style={{ pointerEvents: 'none' }}
+          >
+            <div style={{
+              background: isActive ? '#f97316' : 'rgba(0,0,0,0.55)',
+              color: 'white',
+              fontSize: 11,
+              fontFamily: 'Arial, sans-serif',
+              padding: '2px 8px',
+              borderRadius: 4,
+              whiteSpace: 'nowrap',
+              userSelect: 'none',
+              fontWeight: 700,
+              border: isActive ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.15)',
+            }}>
+              {shelfConfig?.label ?? '선반'}
+            </div>
+          </Html>
+
+          {/* A: 활성 선반 오렌지 아웃라인 */}
+          {outlineGeo && (
+            <group position={[0, height / 200, 0]}>
+              <lineSegments geometry={outlineGeo}>
+                <lineBasicMaterial color="#f97316" />
+              </lineSegments>
+            </group>
+          )}
+        </>
       )}
 
       {/* Dimension labels */}
