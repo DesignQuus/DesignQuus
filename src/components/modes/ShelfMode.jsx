@@ -44,17 +44,18 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
     shelfCount, setShelfCount, feetType, setFeetType,
     spaceWidth, setSpaceWidth, spaceHeight, setSpaceHeight, spaceDepth, setSpaceDepth,
     renderMode, setRenderMode,
+    shelves, activeShelfId, addShelf, removeShelf, setActiveShelf,
   } = useShelfStore()
 
   const handleModeSelect = (val) => {
     setMode(val)
     const p = PRESETS[val]
     if (!p) return
-    if (p.width     != null) setWidth(p.width)
-    if (p.height    != null) setHeight(p.height)
-    if (p.depth     != null) setDepth(p.depth)
+    if (p.width      != null) setWidth(p.width)
+    if (p.height     != null) setHeight(p.height)
+    if (p.depth      != null) setDepth(p.depth)
     if (p.shelfCount != null) setShelfCount(p.shelfCount)
-    if (p.feetType  != null) setFeetType(p.feetType)
+    if (p.feetType   != null) setFeetType(p.feetType)
   }
 
   const [copied, setCopied] = useState(false)
@@ -148,12 +149,53 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
               </div>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="w-full mt-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white/20 text-white/80 hover:bg-white/30"
-            >
-              {copied ? '복사됨!' : '규격 복제 (URL 복사)'}
-            </button>
+            {/* 선반 인스턴스 탭 */}
+            <div className="mt-3">
+              <span className="text-xs font-medium text-white/60 block mb-1.5">선반 목록</span>
+              <div className="flex flex-wrap gap-1">
+                {shelves.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveShelf(s.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '3px 8px 3px 10px',
+                      borderRadius: 8,
+                      fontSize: 11, fontWeight: 600,
+                      background: s.id === activeShelfId ? '#f97316' : 'rgba(255,255,255,0.18)',
+                      color: s.id === activeShelfId ? 'white' : 'rgba(255,255,255,0.75)',
+                      transition: 'all 0.15s',
+                      border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    {s.label}
+                    {shelves.length > 1 && (
+                      <span
+                        onClick={e => { e.stopPropagation(); removeShelf(s.id) }}
+                        style={{
+                          fontSize: 12, lineHeight: 1, opacity: 0.7,
+                          padding: '0 2px', borderRadius: 3,
+                          cursor: 'pointer',
+                        }}
+                      >×</span>
+                    )}
+                  </button>
+                ))}
+                {/* 복제 버튼 */}
+                <button
+                  onClick={addShelf}
+                  style={{
+                    padding: '3px 10px', borderRadius: 8,
+                    fontSize: 11, fontWeight: 700,
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'rgba(255,255,255,0.6)',
+                    border: '1px dashed rgba(255,255,255,0.3)',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                  title="현재 선반 복제"
+                >+ 복제</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

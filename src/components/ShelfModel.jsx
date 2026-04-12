@@ -14,16 +14,25 @@ const BOARD_THICK = 10
 const FOOT_HEIGHT_MM = 46                     // 수평발 총 높이
 const BOTTOM_Y = FOOT_HEIGHT_MM + PITCH_MM   // 46 + 27.5 = 73.5mm
 
-export default function ShelfModel() {
+// shelfConfig: 비활성 선반 렌더 시 전달 (없으면 store 활성값 사용)
+// isActive: false 이면 드래그/선택 비활성
+// posX: 3D X축 오프셋 (mm)
+export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
   const { camera, gl, controls } = useThree()
-  const {
-    width, height, depth,
-    shelfPositions,
-    feetType, renderMode,
-    selectedShelfIdx, setSelectedShelfIdx,
-    setShelfPosition,
-    mode,
-  } = useShelfStore()
+  const store = useShelfStore(s => ({
+    width: s.width, height: s.height, depth: s.depth,
+    shelfPositions: s.shelfPositions, feetType: s.feetType,
+    renderMode: s.renderMode, mode: s.mode,
+    selectedShelfIdx: s.selectedShelfIdx,
+    setSelectedShelfIdx: s.setSelectedShelfIdx,
+    setShelfPosition: s.setShelfPosition,
+  }))
+
+  // 비활성 선반은 shelfConfig 값 사용, 활성 선반은 store 값 사용
+  const cfg = (!isActive && shelfConfig) ? shelfConfig : store
+  const { width, height, depth, shelfPositions, feetType } = cfg
+  const { renderMode, mode, selectedShelfIdx, setSelectedShelfIdx, setShelfPosition } = store
+
   const showSpacingDims = useDevStore(s => isDev ? s.showSpacingDims : true)
 
   const halfW = width / 2
@@ -49,6 +58,7 @@ export default function ShelfModel() {
   const [snapYMm, setSnapYMm] = useState(null)
 
   const startDrag = useCallback((i, e) => {
+    if (!isActive) return
     e.stopPropagation()
     dragIdxRef.current = i
     setSelectedShelfIdx(i)
@@ -94,7 +104,7 @@ export default function ShelfModel() {
   const zOffset = (halfD + POST_EXT) / 100
 
   return (
-    <group position={[0, 0, zOffset]}>
+    <group position={[posX / 100, 0, zOffset]}>
       {/* Angle posts */}
       {corners.map((pos, i) => (
         <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} partId={`AnglePost_${i}`} />
