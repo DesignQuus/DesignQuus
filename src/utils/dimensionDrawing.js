@@ -136,82 +136,111 @@ function getYs(params) {
 
 // ─── views ───────────────────────────────────────────────────────
 
-function drawFrontElevation(ctx, params, bx, by, bw, bh) {
+function drawFrontElevation(ctx, data, bx, by, bw, bh) {
   ctx.save()
   ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
 
-  const { width, height } = params
-  const { topY, midYs, allYs } = getYs(params)
+  const shelves = data.shelves || [data]
+  const gap = data.shelfGap || 0
+  const multi = shelves.length > 1
 
-  const DIM_L = 80   // left: height dim
-  const DIM_T = 60   // top: width dim
-  const DIM_R = 110  // right: shelf-gap dims (wider)
-  const DIM_B = 40   // bottom: label
+  const totalWidth = shelves.reduce((s, sh) => s + sh.width, 0) + (shelves.length - 1) * gap
+  const maxHeight = Math.max(...shelves.map(s => s.height))
+
+  const DIM_L = 80
+  const DIM_T = multi ? 100 : 60
+  const DIM_R = 110
+  const DIM_B = 40
   const availW = bw - DIM_L - DIM_R
   const availH = bh - DIM_T - DIM_B - 30
-  const sc = Math.min(availW / width, availH / height)
-  const sw = width * sc
-  const sh = height * sc
-  // 좌측 정렬
+  const sc = Math.min(availW / totalWidth, availH / maxHeight)
+  const maxSH = maxHeight * sc
   const ox = bx + DIM_L
-  const oy = by + DIM_T + (availH - sh) / 2
+  const oy = by + DIM_T + (availH - maxSH) / 2
 
-  ctx.save()
+  // ── 각 선반 그리기 ──
+  let curX = 0
+  shelves.forEach((shelf, idx) => {
+    const { width, height } = shelf
+    const { topY, midYs, allYs } = getYs(shelf)
+    const sw = width * sc
+    const sh = height * sc
+    const sx = ox + curX * sc
+    const sy = oy + maxSH - sh   // 바닥 정렬
 
-  // Posts (grey filled L-simplified)
-  ctx.fillStyle = '#b0b0b0'
-  ctx.strokeStyle = '#333'
-  ctx.lineWidth = 1.5
-  ;[[ox, oy], [ox + sw - POST_F * sc, oy]].forEach(([px, py]) => {
-    ctx.fillRect(px, py, POST_F * sc, sh)
-    ctx.strokeRect(px, py, POST_F * sc, sh)
+    ctx.save()
+
+    // Posts
+    ctx.fillStyle = '#b0b0b0'
+    ctx.strokeStyle = '#333'
+    ctx.lineWidth = 1.5
+    ;[[sx, sy], [sx + sw - POST_F * sc, sy]].forEach(([px, py]) => {
+      ctx.fillRect(px, py, POST_F * sc, sh)
+      ctx.strokeRect(px, py, POST_F * sc, sh)
+    })
+
+    // Boards
+    ctx.fillStyle = '#e0d8c8'
+    allYs.forEach(yMm => {
+      const bt = sy + sh - (yMm + BOARD_T) * sc
+      ctx.fillRect(sx, bt, sw, BOARD_T * sc)
+      ctx.strokeRect(sx, bt, sw, BOARD_T * sc)
+    })
+
+    // Outline
+    ctx.lineWidth = 2.5
+    ctx.strokeStyle = '#333'
+    ctx.strokeRect(sx, sy, sw, sh)
+
+    // Feet
+    ctx.lineWidth = 0.8
+    ctx.setLineDash([5, 3])
+    ctx.strokeStyle = '#888'
+    const footPx = FOOT_H_MM * sc
+    ;[sx + POST_F * 0.5 * sc, sx + sw - POST_F * 0.5 * sc].forEach(px => {
+      ctx.beginPath(); ctx.moveTo(px, sy + sh); ctx.lineTo(px, sy + sh + footPx); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(px - 14, sy + sh + footPx); ctx.lineTo(px + 14, sy + sh + footPx); ctx.stroke()
+    })
+    ctx.setLineDash([])
+    ctx.restore()
+
+    // 개별 너비 치수
+    dimH(ctx, sx, sx + sw, sy, -42, `${width}mm`)
+
+    // 선반 라벨 (다중일 때)
+    if (multi) {
+      ctx.save()
+      ctx.font = 'bold 16px Arial, sans-serif'
+      ctx.fillStyle = '#f97316'
+      ctx.textAlign = 'center'
+      ctx.fillText(`선반 ${idx + 1}`, sx + sw / 2, sy + 18)
+      ctx.restore()
+    }
+
+    // 선반판 간격 치수 (우측) — 마지막 선반에만
+    if (idx === shelves.length - 1) {
+      const sortedYs = [BOTTOM_Y_MM, ...midYs.sort((a, b) => a - b), topY]
+      for (let i = 0; i + 1 < sortedYs.length; i++) {
+        const gapMm = sortedYs[i + 1] - sortedYs[i] - BOARD_T
+        if (gapMm < 20) continue
+        const py1 = sy + sh - sortedYs[i + 1] * sc
+        const py2 = sy + sh - (sortedYs[i] + BOARD_T) * sc
+        const xOff = 48 + (i % 2) * 46
+        dimV(ctx, py1, py2, sx + sw, xOff, `${Math.round(gapMm)}`, 16)
+      }
+    }
+
+    curX += width + gap
   })
 
-  // Board fills
-  ctx.fillStyle = '#e0d8c8'
-  allYs.forEach(yMm => {
-    const bt = oy + sh - (yMm + BOARD_T) * sc
-    const bth = BOARD_T * sc
-    ctx.fillRect(ox, bt, sw, bth)
-    ctx.strokeRect(ox, bt, sw, bth)
-  })
-
-  // Shelf outline
-  ctx.lineWidth = 2.5
-  ctx.strokeRect(ox, oy, sw, sh)
-
-  // Feet hidden lines
-  ctx.lineWidth = 0.8
-  ctx.setLineDash([5, 3])
-  ctx.strokeStyle = '#888'
-  const footPx = FOOT_H_MM * sc
-  ;[ox + POST_F * 0.5 * sc, ox + sw - POST_F * 0.5 * sc].forEach(px => {
-    ctx.beginPath()
-    ctx.moveTo(px, oy + sh)
-    ctx.lineTo(px, oy + sh + footPx)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(px - 14, oy + sh + footPx)
-    ctx.lineTo(px + 14, oy + sh + footPx)
-    ctx.stroke()
-  })
-  ctx.setLineDash([])
-  ctx.restore()
-
-  // Dimensions
-  dimH(ctx, ox, ox + sw, oy, -42, `${width}mm`)
-  dimV(ctx, oy, oy + sh, ox, -52, `${height}mm`)
-
-  // Shelf-gap dimensions on right side
-  const sortedYs = [BOTTOM_Y_MM, ...midYs.sort((a, b) => a - b), topY]
-  for (let i = 0; i + 1 < sortedYs.length; i++) {
-    const gapMm = sortedYs[i + 1] - sortedYs[i] - BOARD_T
-    if (gapMm < 20) continue
-    const py1 = oy + sh - sortedYs[i + 1] * sc
-    const py2 = oy + sh - (sortedYs[i] + BOARD_T) * sc
-    const xOff = 48 + (i % 2) * 46
-    dimV(ctx, py1, py2, ox + sw, xOff, `${Math.round(gapMm)}`, 16)
+  // 전체 폭 치수 (다중일 때)
+  const totalSW = totalWidth * sc
+  if (multi) {
+    dimH(ctx, ox, ox + totalSW, oy, -78, `전체 ${totalWidth}mm`, 18)
   }
+
+  // 높이 치수 (좌측, 가장 높은 선반)
+  dimV(ctx, oy, oy + maxSH, ox, -52, `${maxHeight}mm`)
 
   viewLabel(ctx, '정 면 도  FRONT ELEVATION', bx + bw / 2, by + bh - 26)
   ctx.restore()
@@ -263,87 +292,100 @@ function drawSideElevation(ctx, params, bx, by, bw, bh) {
   ctx.restore()
 }
 
-function drawPlanView(ctx, params, bx, by, bw, bh) {
+function drawPlanView(ctx, data, bx, by, bw, bh) {
   ctx.save()
   ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
 
-  const { width, depth } = params
+  const shelves = data.shelves || [data]
+  const gap = data.shelfGap || 0
+  const multi = shelves.length > 1
+
+  const totalWidth = shelves.reduce((s, sh) => s + sh.width, 0) + (shelves.length - 1) * gap
+  const maxDepth = Math.max(...shelves.map(s => s.depth))
 
   const DIM_L = 65
-  const DIM_T = 52
+  const DIM_T = multi ? 72 : 52
   const DIM_R = 30
   const DIM_B = 40
   const availW = bw - DIM_L - DIM_R
   const availH = bh - DIM_T - DIM_B - 30
-  const sc = Math.min(availW / width, availH / depth)
-  const sw = width * sc
-  const sd = depth * sc
-  // 좌측 정렬
+  const sc = Math.min(availW / totalWidth, availH / maxDepth)
+  const maxSD = maxDepth * sc
   const ox = bx + DIM_L
-  const oy = by + DIM_T + (availH - sd) / 2
+  const oy = by + DIM_T + (availH - maxSD) / 2
 
-  ctx.save()
-  // Board area
-  ctx.fillStyle = '#e0d8c8'
-  ctx.strokeStyle = '#333'
-  ctx.lineWidth = 1.5
-  ctx.fillRect(ox, oy, sw, sd)
-  ctx.strokeRect(ox, oy, sw, sd)
+  let curX = 0
+  shelves.forEach((shelf) => {
+    const { width, depth } = shelf
+    const sw = width * sc
+    const sd = depth * sc
+    const sx = ox + curX * sc
+    const sy = oy + (maxSD - sd) / 2   // 깊이 중앙 정렬
 
-  // 4 corner posts
-  ctx.fillStyle = '#aaa'
-  ;[[ox, oy], [ox + sw - POST_F * sc, oy], [ox, oy + sd - POST_F * sc], [ox + sw - POST_F * sc, oy + sd - POST_F * sc]].forEach(([px, py]) => {
-    ctx.fillRect(px, py, POST_F * sc, POST_F * sc)
-    ctx.strokeRect(px, py, POST_F * sc, POST_F * sc)
+    ctx.save()
+    // Board area
+    ctx.fillStyle = '#e0d8c8'
+    ctx.strokeStyle = '#333'
+    ctx.lineWidth = 1.5
+    ctx.fillRect(sx, sy, sw, sd)
+    ctx.strokeRect(sx, sy, sw, sd)
+
+    // 4 corner posts
+    ctx.fillStyle = '#aaa'
+    const pf = POST_F * sc
+    ;[[sx, sy], [sx + sw - pf, sy], [sx, sy + sd - pf], [sx + sw - pf, sy + sd - pf]].forEach(([px, py]) => {
+      ctx.fillRect(px, py, pf, pf)
+      ctx.strokeRect(px, py, pf, pf)
+    })
+
+    // Centre lines
+    ctx.setLineDash([14, 4, 3, 4])
+    ctx.strokeStyle = '#999'
+    ctx.lineWidth = 0.8
+    ctx.beginPath(); ctx.moveTo(sx + sw / 2, sy - 16); ctx.lineTo(sx + sw / 2, sy + sd + 16); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(sx - 16, sy + sd / 2); ctx.lineTo(sx + sw + 16, sy + sd / 2); ctx.stroke()
+    ctx.setLineDash([])
+
+    // Outline
+    ctx.lineWidth = 2.5
+    ctx.strokeStyle = '#333'
+    ctx.strokeRect(sx, sy, sw, sd)
+    ctx.restore()
+
+    curX += width + gap
   })
 
-  // Centre lines
-  ctx.setLineDash([14, 4, 3, 4])
-  ctx.strokeStyle = '#999'
-  ctx.lineWidth = 0.8
-  ctx.beginPath(); ctx.moveTo(ox + sw / 2, oy - 22); ctx.lineTo(ox + sw / 2, oy + sd + 22); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(ox - 22, oy + sd / 2); ctx.lineTo(ox + sw + 22, oy + sd / 2); ctx.stroke()
-  ctx.setLineDash([])
-
-  // Outline again on top
-  ctx.lineWidth = 2.5
-  ctx.strokeStyle = '#333'
-  ctx.strokeRect(ox, oy, sw, sd)
-  ctx.restore()
-
-  dimH(ctx, ox, ox + sw, oy, -38, `${width}mm`, 18)
-  dimV(ctx, oy, oy + sd, ox, -46, `${depth}mm`, 18)
+  // 치수
+  const totalSW = totalWidth * sc
+  if (multi) {
+    dimH(ctx, ox, ox + totalSW, oy, -52, `전체 ${totalWidth}mm`, 16)
+  }
+  dimH(ctx, ox, ox + shelves[0].width * sc, oy, -32, `${shelves[0].width}mm`, 18)
+  dimV(ctx, oy, oy + maxSD, ox, -46, `${maxDepth}mm`, 18)
 
   viewLabel(ctx, '평 면 도  TOP PLAN', bx + bw / 2, by + bh - 26)
   ctx.restore()
 }
 
-function drawIsometric(ctx, params, bx, by, bw, bh) {
+function drawIsometric(ctx, data, bx, by, bw, bh) {
   ctx.save()
   ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip()
 
-  const { width, height, depth } = params
-  const { allYs } = getYs(params)
+  const shelves = data.shelves || [data]
+  const gap = data.shelfGap || 0
+
+  const totalWidth = shelves.reduce((s, sh) => s + sh.width, 0) + (shelves.length - 1) * gap
+  const maxH = Math.max(...shelves.map(s => s.height))
+  const maxD = Math.max(...shelves.map(s => s.depth))
 
   const cos30 = Math.cos(Math.PI / 6)
   const sin30 = 0.5
-  // Scale to fit
   const fitW = bw * 0.78
   const fitH = bh * 0.72
-  const sc = Math.min(fitW / (width * cos30 + depth * cos30), fitH / (height + (width + depth) * sin30))
+  const sc = Math.min(fitW / (totalWidth * cos30 + maxD * cos30), fitH / (maxH + (totalWidth + maxD) * sin30))
 
-  // Origin at centre-bottom of the isometric box
-  const ox = bx + bw / 2 + (depth * cos30 * sc) / 2 - 10
-  const oy = by + bh * 0.78
-
-  function iso(x, y, z) {
-    return [
-      ox + (x - z) * cos30 * sc,
-      oy - y * sc - (x + z) * sin30 * sc,
-    ]
-  }
-
-  const W = width, H = height, D = depth
+  const baseOx = bx + bw / 2 + (maxD * cos30 * sc) / 2 - 10
+  const baseOy = by + bh * 0.78
 
   function face(pts, fill) {
     ctx.beginPath()
@@ -358,63 +400,77 @@ function drawIsometric(ctx, params, bx, by, bw, bh) {
 
   ctx.save()
 
-  // Bottom face
-  face([iso(0,0,0), iso(W,0,0), iso(W,0,D), iso(0,0,D)], '#c8c4bc')
+  // ── 각 선반 그리기 (뒤→앞 순서로 z-sort) ──
+  let curX = 0
+  shelves.forEach((shelf) => {
+    const { width: W, height: H, depth: D } = shelf
+    const { allYs } = getYs(shelf)
+    const dx = curX
 
-  // Left face (x=0)
-  face([iso(0,0,0), iso(0,0,D), iso(0,H,D), iso(0,H,0)], '#d4d0c8')
+    function iso(x, y, z) {
+      return [
+        baseOx + (x + dx - z) * cos30 * sc,
+        baseOy - y * sc - (x + dx + z) * sin30 * sc,
+      ]
+    }
 
-  // Front face (z=0)
-  face([iso(0,0,0), iso(W,0,0), iso(W,H,0), iso(0,H,0)], '#eae6de')
+    face([iso(0,0,0), iso(W,0,0), iso(W,0,D), iso(0,0,D)], '#c8c4bc')
+    face([iso(0,0,0), iso(0,0,D), iso(0,H,D), iso(0,H,0)], '#d4d0c8')
+    face([iso(0,0,0), iso(W,0,0), iso(W,H,0), iso(0,H,0)], '#eae6de')
+    face([iso(W,0,0), iso(W,0,D), iso(W,H,D), iso(W,H,0)], '#c8c4bc')
+    face([iso(0,H,0), iso(W,H,0), iso(W,H,D), iso(0,H,D)], '#f0ece4')
 
-  // Right face (x=W)
-  face([iso(W,0,0), iso(W,0,D), iso(W,H,D), iso(W,H,0)], '#c8c4bc')
+    allYs.forEach(yMm => {
+      const y0 = yMm, y1 = yMm + BOARD_T
+      face([iso(0,y0,0), iso(W,y0,0), iso(W,y1,0), iso(0,y1,0)], '#c0b8a8')
+      face([iso(W,y0,0), iso(W,y0,D), iso(W,y1,D), iso(W,y1,0)], '#b0aa9c')
+    })
 
-  // Top face
-  face([iso(0,H,0), iso(W,H,0), iso(W,H,D), iso(0,H,D)], '#f0ece4')
+    face([iso(0,0,0), iso(POST_F,0,0), iso(POST_F,H,0), iso(0,H,0)], '#a8a4a0')
+    face([iso(W-POST_F,0,0), iso(W,0,0), iso(W,H,0), iso(W-POST_F,H,0)], '#a8a4a0')
 
-  // Shelf boards on front and right faces
-  allYs.forEach(yMm => {
-    const y0 = yMm, y1 = yMm + BOARD_T
-    // Front face
-    face([iso(0,y0,0), iso(W,y0,0), iso(W,y1,0), iso(0,y1,0)], '#c0b8a8')
-    // Right face
-    face([iso(W,y0,0), iso(W,y0,D), iso(W,y1,D), iso(W,y1,0)], '#b0aa9c')
+    curX += W + gap
   })
-
-  // Post highlights (front-left, front-right)
-  face([iso(0,0,0), iso(POST_F,0,0), iso(POST_F,H,0), iso(0,H,0)], '#a8a4a0')
-  face([iso(W-POST_F,0,0), iso(W,0,0), iso(W,H,0), iso(W-POST_F,H,0)], '#a8a4a0')
 
   ctx.restore()
 
-  // W/H/D annotation lines
+  // W/H/D annotations — 전체 기준
+  const repShelf = shelves[0]
+  const TW = totalWidth, TH = maxH, TD = maxD
+  function isoA(x, y, z) {
+    return [baseOx + (x - z) * cos30 * sc, baseOy - y * sc - (x + z) * sin30 * sc]
+  }
+
   ctx.save()
   ctx.strokeStyle = '#888'
   ctx.lineWidth = 0.8
   ctx.setLineDash([4, 3])
-  const [aw0, ah0] = iso(0, 0, D)
-  const [aw1, ah1] = iso(W, 0, D)
+  const [aw0, ah0] = isoA(0, 0, TD)
+  const [aw1, ah1] = isoA(TW, 0, TD)
   ctx.beginPath(); ctx.moveTo(aw0, ah0); ctx.lineTo(aw1, ah1); ctx.stroke()
   ctx.setLineDash([])
 
   ctx.font = 'bold 18px "Courier New", monospace'
   ctx.fillStyle = '#555'
   ctx.textAlign = 'center'
-  const [lw, lh] = iso(W / 2, 0, D + 10)
-  ctx.fillText(`W: ${W}`, lw, lh + 14)
-  const [ld, ldh] = iso(W + 10, H / 2, D / 2)
-  ctx.fillText(`D: ${D}`, ld + 20, ldh)
-  const [lhx, lhy] = iso(W + 8, H / 2, 0)
-  ctx.fillText(`H: ${H}`, lhx + 18, lhy)
+  const [lw, lh] = isoA(TW / 2, 0, TD + 10)
+  ctx.fillText(`W: ${TW}`, lw, lh + 14)
+  const [ld, ldh] = isoA(TW + 10, TH / 2, TD / 2)
+  ctx.fillText(`D: ${repShelf.depth}`, ld + 20, ldh)
+  const [lhx, lhy] = isoA(TW + 8, TH / 2, 0)
+  ctx.fillText(`H: ${maxH}`, lhx + 18, lhy)
   ctx.restore()
 
   viewLabel(ctx, '등 각 도  ISOMETRIC', bx + bw / 2, by + bh - 26)
   ctx.restore()
 }
 
-function drawTitleBlock(ctx, params, bx, by, bw, bh) {
-  const { width, height, depth, shelfCount, feetType } = params
+function drawTitleBlock(ctx, data, bx, by, bw, bh) {
+  const shelves = data.shelves || [data]
+  const gap = data.shelfGap || 0
+  const totalWidth = shelves.reduce((s, sh) => s + sh.width, 0) + (shelves.length - 1) * gap
+  const multi = shelves.length > 1
+
   const now = new Date()
   const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
 
@@ -426,8 +482,9 @@ function drawTitleBlock(ctx, params, bx, by, bw, bh) {
   ctx.lineWidth = 1.5
   ctx.strokeRect(bx, by, bw, bh)
 
-  const c1 = bw * 0.38
-  const c2 = bw * 0.24
+  const c1 = bw * 0.30
+  const c2 = bw * 0.40
+  const c3 = bw - c1 - c2
 
   // Column dividers
   ;[c1, c1 + c2].forEach(cx => {
@@ -444,7 +501,7 @@ function drawTitleBlock(ctx, params, bx, by, bw, bh) {
   ctx.lineTo(bx + bw, by + rh)
   ctx.stroke()
 
-  // Product title
+  // ── 좌측: 제품 타이틀 ──
   ctx.font = 'bold 36px "Orbitron", Arial, sans-serif'
   ctx.fillStyle = '#1a1a1a'
   ctx.textAlign = 'center'
@@ -459,31 +516,49 @@ function drawTitleBlock(ctx, params, bx, by, bw, bh) {
   ctx.fillStyle = '#888'
   ctx.fillText('ANGLE SHELF TECHNICAL DRAWING', bx + c1 / 2, by + rh * 0.92)
 
-  // ─ Spec cells ─
-  const cells = [
-    { label: '규격 (mm)', val: `W${width} × H${height} × D${depth}`, col: c1, row: 0 },
-    { label: '선반 수', val: `${shelfCount}단  /  발: ${feetType === 'caster' ? '캐스터' : '수평발'}`, col: c1 + c2, row: 0 },
-    { label: '작성일', val: dateStr, col: c1, row: 1 },
-    { label: '척도 / SCALE', val: 'NTS  (Not To Scale)', col: c1 + c2, row: 1 },
-  ]
+  // ── 중앙: 선반 규격 (선반별) ──
+  const specCX = bx + c1 + c2 / 2
+  ctx.font = '14px Arial'
+  ctx.fillStyle = '#888'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('선반 규격', specCX, by + rh * 0.16)
 
-  cells.forEach(({ label, val, col, row }) => {
-    const cx = bx + col + (col === c1 + c2 ? (bw - c1 - c2) / 2 : c2 / 2) + (col === c1 ? c2 / 2 : (bw - c1 - c2) / 2) - (col === c1 ? c2 / 2 : (bw - c1 - c2) / 2)
-    const cellX = bx + col
-    const colW = col === c1 ? c2 : (bw - c1 - c2)
-    const cellCX = cellX + colW / 2
-    const baseY = by + row * rh
-
-    ctx.font = '15px Arial'
-    ctx.fillStyle = '#888'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(label, cellCX, baseY + rh * 0.3)
-
-    ctx.font = 'bold 19px "Courier New", monospace'
+  const lineH = multi ? Math.min(32, (rh * 0.7) / shelves.length) : 36
+  const startY = by + rh * 0.35
+  shelves.forEach((shelf, i) => {
+    const { width, height, depth, shelfCount, feetType } = shelf
+    const label = multi ? `선반 ${i + 1}: ` : ''
+    const feet = feetType === 'caster' ? '캐스터' : '수평발'
+    const text = `${label}W${width}×H${height}×D${depth} / ${shelfCount}단 / ${feet}`
+    ctx.font = `bold ${multi ? 15 : 18}px "Courier New", monospace`
     ctx.fillStyle = '#111'
-    ctx.fillText(val, cellCX, baseY + rh * 0.7)
+    ctx.fillText(text, specCX, startY + i * lineH)
   })
+
+  // 전체 설치 폭 (다중일 때)
+  if (multi) {
+    ctx.font = 'bold 16px "Courier New", monospace'
+    ctx.fillStyle = '#f97316'
+    ctx.fillText(`전체 설치 폭: ${totalWidth}mm`, specCX, by + rh * 0.88)
+  }
+
+  // ── 우측: 작성일 / 척도 ──
+  const rightCX = bx + c1 + c2 + c3 / 2
+
+  ctx.font = '14px Arial'
+  ctx.fillStyle = '#888'
+  ctx.fillText('작성일', rightCX, by + rh * 0.3)
+  ctx.font = 'bold 18px "Courier New", monospace'
+  ctx.fillStyle = '#111'
+  ctx.fillText(dateStr, rightCX, by + rh * 0.7)
+
+  ctx.font = '14px Arial'
+  ctx.fillStyle = '#888'
+  ctx.fillText('척도 / SCALE', rightCX, by + rh + rh * 0.3)
+  ctx.font = 'bold 18px "Courier New", monospace'
+  ctx.fillStyle = '#111'
+  ctx.fillText('NTS  (Not To Scale)', rightCX, by + rh + rh * 0.7)
 
   ctx.restore()
 }
@@ -581,7 +656,7 @@ function getLayout(layout, drawH, cw) {
 
 // ─── main ───────────────────────────────────────────────────────
 
-function drawSheet(ctx, params, layout = 'default') {
+function drawSheet(ctx, data, layout = 'default') {
   // Background
   ctx.fillStyle = '#f9f7f4'
   ctx.fillRect(0, 0, CW, CH)
@@ -600,7 +675,7 @@ function drawSheet(ctx, params, layout = 'default') {
 
   // Title block
   const titleY = cy + ch - TB_H
-  drawTitleBlock(ctx, params, cx, titleY, cw, TB_H)
+  drawTitleBlock(ctx, data, cx, titleY, cw, TB_H)
 
   // Drawing area
   const drawH = ch - TB_H - 6
@@ -625,31 +700,39 @@ function drawSheet(ctx, params, layout = 'default') {
   ctx.setLineDash([])
   ctx.restore()
 
+  // 측면도는 대표 선반 (가장 높은) 1개로 표시
+  const shelves = data.shelves || [data]
+  const repShelf = shelves.reduce((best, s) => s.height > best.height ? s : best, shelves[0])
+
   const { front, side, plan, iso } = cells
-  drawFrontElevation(ctx, params, cx + front.x, cy + front.y, front.w, front.h)
-  drawSideElevation(ctx, params,  cx + side.x,  cy + side.y,  side.w,  side.h)
-  drawPlanView(ctx, params,       cx + plan.x,  cy + plan.y,  plan.w,  plan.h)
-  if (iso) drawIsometric(ctx, params, cx + iso.x, cy + iso.y, iso.w, iso.h)
+  drawFrontElevation(ctx, data,     cx + front.x, cy + front.y, front.w, front.h)
+  drawSideElevation(ctx, repShelf,  cx + side.x,  cy + side.y,  side.w,  side.h)
+  drawPlanView(ctx, data,           cx + plan.x,  cy + plan.y,  plan.w,  plan.h)
+  if (iso) drawIsometric(ctx, data, cx + iso.x,   cy + iso.y,   iso.w,   iso.h)
 }
 
 // ─── public API ─────────────────────────────────────────────────
 
-/** Returns an HTMLCanvasElement with the full A3 drawing */
-export function generateDimensionCanvas(params, layout = 'default') {
+/** Returns an HTMLCanvasElement with the full A3 drawing.
+ *  data = { shelves: [...], shelfGap: number, mode: string }
+ */
+export function generateDimensionCanvas(data, layout = 'default') {
   const canvas = document.createElement('canvas')
   canvas.width = CW
   canvas.height = CH
   const ctx = canvas.getContext('2d')
-  drawSheet(ctx, params, layout)
+  drawSheet(ctx, data, layout)
   return canvas
 }
 
 /** Generates and immediately triggers download as PNG */
-export function downloadDimensionPNG(params, layout = 'default') {
-  const canvas = generateDimensionCanvas(params, layout)
-  const { width, height, depth } = params
+export function downloadDimensionPNG(data, layout = 'default') {
+  const canvas = generateDimensionCanvas(data, layout)
+  const shelves = data.shelves || [data]
+  const first = shelves[0]
+  const tag = shelves.length > 1 ? `_x${shelves.length}` : ''
   const link = document.createElement('a')
   link.href = canvas.toDataURL('image/png')
-  link.download = `DEKIRI_치수도_W${width}H${height}D${depth}.png`
+  link.download = `DEKIRI_치수도_W${first.width}H${first.height}D${first.depth}${tag}.png`
   link.click()
 }

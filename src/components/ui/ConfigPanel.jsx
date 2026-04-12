@@ -187,12 +187,12 @@ function DimPreviewModal({ onClose, params }) {
 function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen, bomOpen, onBomToggle }) {
   const [arActive, setArActive] = useState(false)
   const [dimParams, setDimParams] = useState(null)
-  const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
+  const { mode, shelves, shelfGap } = useShelfStore()
   const ModePanel = MODE_PANELS[mode] || ShelfMode
 
   const openDimPreview = useCallback(() => {
-    setDimParams({ width, height, depth, shelfCount, shelfPositions, feetType })
-  }, [width, height, depth, shelfCount, shelfPositions, feetType])
+    setDimParams({ shelves, shelfGap, mode })
+  }, [shelves, shelfGap, mode])
 
   return (
     <>

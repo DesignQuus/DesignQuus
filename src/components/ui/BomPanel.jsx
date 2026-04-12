@@ -5,7 +5,7 @@ import CameraPresetButtons from './CameraPresets.jsx'
 
 // open/onToggle 을 전달하면 외부에서 제어(아코디언), 없으면 자체 상태로 동작
 export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive, onBomRef, open: openProp, onToggle }) {
-  const { mode, width, height, depth, shelfCount, feetType } = useShelfStore()
+  const { mode, shelves } = useShelfStore()
   const [openInternal, setOpenInternal] = useState(false)
   const isControlled = openProp !== undefined
   const open = isControlled ? openProp : openInternal
@@ -14,8 +14,8 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive,
   const headerRef = useCallback(node => { onBomRef?.(node) }, [onBomRef])
 
   const bom = useMemo(
-    () => calculateBOM({ mode, width, height, depth, shelfCount, feetType }),
-    [mode, width, height, depth, shelfCount, feetType]
+    () => calculateBOM({ mode, shelves }),
+    [mode, shelves]
   )
 
   function handleCopy() {
