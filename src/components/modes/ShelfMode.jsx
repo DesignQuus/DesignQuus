@@ -22,13 +22,40 @@ const outerGrid = (open) => ({
 })
 const innerClip = { overflow: 'hidden', minHeight: 0 }
 
+// 모드별 샘플 규격 — 나중에 사용자 제공 값으로 교체
+const PRESETS = {
+  shelf:     null,  // 추후 입력
+  washer:    null,
+  dressroom: null,
+  aquarium:  null,
+}
+
+const MODE_LABELS = [
+  ['shelf',     '선반시리즈'],
+  ['washer',    '세탁기선반'],
+  ['dressroom', '드레스룸'],
+  ['aquarium',  '축양장'],
+]
+
 export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const {
+    mode, setMode,
     width, setWidth, height, setHeight, depth, setDepth,
     shelfCount, setShelfCount, feetType, setFeetType,
     spaceWidth, setSpaceWidth, spaceHeight, setSpaceHeight, spaceDepth, setSpaceDepth,
     renderMode, setRenderMode,
   } = useShelfStore()
+
+  const handleModeSelect = (val) => {
+    setMode(val)
+    const p = PRESETS[val]
+    if (!p) return
+    if (p.width     != null) setWidth(p.width)
+    if (p.height    != null) setHeight(p.height)
+    if (p.depth     != null) setDepth(p.depth)
+    if (p.shelfCount != null) setShelfCount(p.shelfCount)
+    if (p.feetType  != null) setFeetType(p.feetType)
+  }
 
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
@@ -55,6 +82,23 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
         </button>
         <div style={outerGrid(spaceOpen)}>
           <div style={innerClip}>
+            {/* 제품 시리즈 선택 */}
+            <div className="grid grid-cols-2 gap-1.5 mb-3">
+              {MODE_LABELS.map(([val, lbl]) => (
+                <button
+                  key={val}
+                  onClick={() => handleModeSelect(val)}
+                  className={`py-1.5 rounded-lg text-xs font-medium transition-all
+                    ${mode === val
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-white/20 text-white/80 hover:bg-white/30'
+                    }`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+
             <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
             <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
             <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
