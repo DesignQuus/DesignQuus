@@ -120,8 +120,13 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0, pos
       // ── 선반 유닛 XZ 드래그 ──────────────────────────────────────────
       if (shelfDragRef.current) {
         if (raycaster.ray.intersectPlane(dragPlane, dragTarget)) {
-          const dx = (dragTarget.x - shelfDragRef.current.startX) * 100  // world → mm
-          const dz = (dragTarget.z - shelfDragRef.current.startZ) * 100
+          let dx = (dragTarget.x - shelfDragRef.current.startX) * 100  // world → mm
+          let dz = (dragTarget.z - shelfDragRef.current.startZ) * 100
+          if (e.ctrlKey) {
+            const SNAP = 27.5
+            dx = Math.round(dx / SNAP) * SNAP
+            dz = Math.round(dz / SNAP) * SNAP
+          }
           setShelfOffset(shelfId, shelfDragRef.current.initOffX + dx, shelfDragRef.current.initOffZ + dz)
         }
         return

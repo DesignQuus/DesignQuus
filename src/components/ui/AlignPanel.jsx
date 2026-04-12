@@ -54,56 +54,63 @@ function SectionLabel({ children }) {
 export default function AlignPanel() {
   const {
     shelves, shelfGap, spaceWidth, spaceDepth,
-    setGroupOffsetX, setGroupOffsetZ, setShelfOffset,
+    setGroupOffsetX, setGroupOffsetZ, setShelfOffset, setAlignFlash,
   } = useShelfStore(useShallow(s => ({
-    shelves:        s.shelves,
-    shelfGap:       s.shelfGap,
-    spaceWidth:     s.spaceWidth,
-    spaceDepth:     s.spaceDepth,
+    shelves:         s.shelves,
+    shelfGap:        s.shelfGap,
+    spaceWidth:      s.spaceWidth,
+    spaceDepth:      s.spaceDepth,
     setGroupOffsetX: s.setGroupOffsetX,
     setGroupOffsetZ: s.setGroupOffsetZ,
     setShelfOffset:  s.setShelfOffset,
+    setAlignFlash:   s.setAlignFlash,
   })))
 
   const totalSpan = shelves.reduce((sum, s) => sum + s.width, 0)
     + Math.max(0, shelves.length - 1) * shelfGap
   const maxDepth = Math.max(...shelves.map(s => s.depth), 1)
 
+  // flash 헬퍼
+  const flash = useCallback((axis, worldPos) => {
+    setAlignFlash({ axis, worldPos, ts: Date.now() })
+  }, [setAlignFlash])
+
   // ── 공간 기준 X (좌/중/우) ────────────────────────────────────────────────
   const alignSpaceX = useCallback((mode) => {
-    // Left edge = groupOffsetX/100 - totalSpan/200  (world units)
-    // BBox left  = -spaceWidth/200
-    if (mode === 'left')   setGroupOffsetX((totalSpan - spaceWidth) / 2)
-    else if (mode === 'center') setGroupOffsetX(0)
-    else if (mode === 'right')  setGroupOffsetX((spaceWidth - totalSpan) / 2)
-  }, [totalSpan, spaceWidth, setGroupOffsetX])
+    if (mode === 'left')        { setGroupOffsetX((totalSpan - spaceWidth) / 2);  flash('x', -spaceWidth / 200) }
+    else if (mode === 'center') { setGroupOffsetX(0);                              flash('x', 0) }
+    else if (mode === 'right')  { setGroupOffsetX((spaceWidth - totalSpan) / 2);  flash('x',  spaceWidth / 200) }
+  }, [totalSpan, spaceWidth, setGroupOffsetX, flash])
 
   // ── 공간 기준 Z (뒤/중/앞) ────────────────────────────────────────────────
   const alignSpaceZ = useCallback((mode) => {
-    if (mode === 'back')   setGroupOffsetZ(0)
-    else if (mode === 'center') setGroupOffsetZ((spaceDepth - maxDepth) / 2)
-    else if (mode === 'front')  setGroupOffsetZ(spaceDepth - maxDepth)
-  }, [maxDepth, spaceDepth, setGroupOffsetZ])
+    if (mode === 'back')        { setGroupOffsetZ(0);                              flash('z', 0) }
+    else if (mode === 'center') { setGroupOffsetZ((spaceDepth - maxDepth) / 2);   flash('z', spaceDepth / 200) }
+    else if (mode === 'front')  { setGroupOffsetZ(spaceDepth - maxDepth);         flash('z', spaceDepth / 100) }
+  }, [maxDepth, spaceDepth, setGroupOffsetZ, flash])
 
-  // ── 선반 간 Z 정렬 (앞면/뒷면 플러시) ───────────────────────────────────
+  // ── 선반 간 Z 정렬 ───────────────────────────────────────────────────────
   const alignShelvesZ = useCallback((mode) => {
     if (mode === 'back') {
       shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, 0))
+      flash('z', 0)
     } else if (mode === 'front') {
       const maxFront = Math.max(...shelves.map(s => s.depth + (s.offsetZ || 0)))
       shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, maxFront - s.depth))
+      flash('z', maxFront / 100)
     } else if (mode === 'center') {
       const avg = shelves.reduce((sum, s) => sum + (s.offsetZ || 0), 0) / shelves.length
       shelves.forEach(s => setShelfOffset(s.id, s.offsetX || 0, avg))
+      flash('z', avg / 100)
     }
-  }, [shelves, setShelfOffset])
+  }, [shelves, setShelfOffset, flash])
 
   // ── 선반 간 X 균등 배분 ───────────────────────────────────────────────────
   const distributeX = useCallback(() => {
-    // 개별 offsetX 초기화 + 그룹 중앙 정렬 → auto-centering이 균등 배분
     shelves.forEach(s => setShelfOffset(s.id, 0, s.offsetZ || 0))
     setGroupOffsetX(0)
-  }, [shelves, setShelfOffset, setGroupOffsetX])
+    flash('x', 0)
+  }, [shelves, setShelfOffset, setGroupOffsetX, flash])
 
   const multi = shelves.length > 1
 
@@ -113,7 +120,6 @@ export default function AlignPanel() {
       borderTop: '1px solid rgba(255,255,255,0.12)',
       paddingTop: 10,
     }}>
-      {/* 섹션 헤더 */}
       <div style={{
         fontSize: 10, fontWeight: 700, color: '#f97316',
         marginBottom: 8, letterSpacing: 0.5,
@@ -121,7 +127,6 @@ export default function AlignPanel() {
         정  렬
       </div>
 
-      {/* ── 공간 기준 X 정렬 ── */}
       <SectionLabel>가상공간 X (좌 · 중 · 우)</SectionLabel>
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
         <AlignBtn icon={<IconAlignLeft />}  label="좌벽" title="선반 좌측 모서리를 가상공간 좌벽에 정렬" onClick={() => alignSpaceX('left')} />
@@ -129,7 +134,6 @@ export default function AlignPanel() {
         <AlignBtn icon={<IconAlignRight />} label="우벽" title="선반 우측 모서리를 가상공간 우벽에 정렬" onClick={() => alignSpaceX('right')} />
       </div>
 
-      {/* ── 공간 기준 Z 정렬 ── */}
       <SectionLabel>가상공간 Z (뒤 · 중 · 앞)</SectionLabel>
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
         <AlignBtn icon={<IconAlignBack />}  label="뒷벽" title="선반 뒷면을 z=0 기준선에 정렬 (기본)"  onClick={() => alignSpaceZ('back')} accent />
@@ -137,7 +141,6 @@ export default function AlignPanel() {
         <AlignBtn icon={<IconAlignFront />} label="앞벽" title="선반 앞면을 가상공간 앞벽에 정렬"      onClick={() => alignSpaceZ('front')} />
       </div>
 
-      {/* ── 선반 간 정렬 (다중 선반일 때만) ── */}
       {multi && (
         <>
           <SectionLabel>선반 간 깊이 정렬</SectionLabel>
