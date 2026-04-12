@@ -270,6 +270,31 @@ const OPTION_TABS = [
   { id: 'layers',  icon: <IconLayers />, tooltip: '색상 옵션' },
 ]
 
+// 설치 가상 공간 탭 — 렌더 모드 선택
+function RenderModeTabContent() {
+  const { renderMode, setRenderMode } = useShelfStore()
+  return (
+    <div>
+      <p className="text-xs font-semibold text-white/60 mb-3">렌더 모드</p>
+      <div className="flex gap-2">
+        {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
+          <button
+            key={val}
+            onClick={() => setRenderMode(val)}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all
+              ${renderMode === val
+                ? 'bg-orange-500 text-white shadow-md'
+                : 'bg-white/20 text-white/80 hover:bg-white/30'
+              }`}
+          >
+            {lbl}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // 팔레트 탭 — 포스트 색상 선택
 function PaletteTabContent() {
   const { postColor, setPostColor } = useShelfStore()
@@ -526,7 +551,9 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       {/* 스크롤 가능한 내용 */}
       <div ref={contentRef} className="flex-1 overflow-y-auto px-4 pb-2 panel-scroll">
         <div ref={innerRef}>
-          {activeTab === 'palette' ? (
+          {activeTab === 'adjust' ? (
+            <RenderModeTabContent />
+          ) : activeTab === 'palette' ? (
             <PaletteTabContent />
           ) : (
             <PanelContent

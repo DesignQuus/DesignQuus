@@ -51,24 +51,6 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
             <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
             <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
             <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
-            <div className="mt-2">
-              <span className="text-xs font-medium text-white/90 block mb-2">렌더 모드</span>
-              <div className="flex gap-2">
-                {[['realistic', '리얼'], ['technical', 'ISO']].map(([val, lbl]) => (
-                  <button
-                    key={val}
-                    onClick={() => setRenderMode(val)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all
-                      ${renderMode === val
-                        ? 'bg-orange-500 text-white shadow-md'
-                        : 'bg-white/20 text-white/80 hover:bg-white/30'
-                      }`}
-                  >
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
