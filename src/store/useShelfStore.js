@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { syncToUrl, readFromUrl } from '../utils/urlSync.js'
 
 const MODES = ['shelf', 'washer', 'dressroom', 'aquarium']
@@ -69,6 +69,8 @@ const useShelfStore = create((set, get) => ({
   shelfGap: 0,         // 선반 간 시각적 간격 (mm) — 0이면 포스트 외면이 맞닿음
   groupOffsetX: 0,     // 선반 전체 그룹 좌우 위치 (mm)
   groupOffsetZ: 0,     // 선반 전체 그룹 앞뒤 위치 (mm)
+  alignFlash: null,
+  setAlignFlash: (flash) => set({ alignFlash: flash }),
 
   // ── 다중 선반 인스턴스 ────────────────────────────────────────────
   shelves: [firstShelf],
@@ -278,3 +280,4 @@ const useShelfStore = create((set, get) => ({
 
 export default useShelfStore
 export { MODES, FEET_TYPES, defaultShelfPositions }
+

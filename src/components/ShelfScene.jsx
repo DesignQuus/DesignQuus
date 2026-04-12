@@ -1,4 +1,4 @@
-import { Suspense, useRef, useCallback, useEffect } from 'react'
+﻿import { Suspense, useRef, useCallback, useEffect } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, GizmoHelper, GizmoViewcube, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
@@ -9,6 +9,7 @@ import useShelfStore from '../store/useShelfStore.js'
 import useDevStore, { isDev } from '../store/useDevStore.js'
 import DevMeasure from './dev/DevMeasure.jsx'
 import DevDimOverall from './dev/DevDimOverall.jsx'
+import AlignGuide from './AlignGuide.jsx'
 
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
@@ -126,6 +127,8 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         )
       })()}
 
+            <AlignGuide />
+
       {/* DEV: edge-to-edge measurement lines */}
       {isDev && <DevMeasure />}
 
@@ -189,3 +192,4 @@ export default function ShelfScene({ cameraRef, controlsRef, screenshotRef }) {
     </Canvas>
   )
 }
+

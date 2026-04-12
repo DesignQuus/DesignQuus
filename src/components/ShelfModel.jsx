@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -320,3 +320,4 @@ function DressroomExtras({ widthMm, depthMm, heightMm, renderMode }) {
     </mesh>
   )
 }
+
