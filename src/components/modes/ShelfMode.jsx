@@ -62,7 +62,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
           <span>선반 규격</span>
           <IconLines open={shelfOpen} />
         </button>
-        <div style={sectionAnim(shelfOpen, '420px')}>
+        <div style={sectionAnim(shelfOpen, '600px')}>
           <SliderRow label="너비" value={width}  min={300} max={1800} step={50}  onChange={setWidth} />
           <SliderRow label="높이" value={height} min={600} max={2400} step={100} onChange={setHeight} />
           <SliderRow label="깊이" value={depth}  min={300} max={900}  step={50}  onChange={setDepth} />
