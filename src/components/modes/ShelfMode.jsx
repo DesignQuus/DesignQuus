@@ -45,6 +45,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
     spaceWidth, setSpaceWidth, spaceHeight, setSpaceHeight, spaceDepth, setSpaceDepth,
     renderMode, setRenderMode,
     shelves, activeShelfId, addShelf, removeShelf, setActiveShelf,
+    shelfGap, setShelfGap,
   } = useShelfStore()
 
   const handleModeSelect = (val) => {
@@ -103,6 +104,7 @@ export default function ShelfMode({ onSpaceRef, onShelfRef, spaceOpen, setSpaceO
             <SliderRow label="공간 너비" value={spaceWidth}  min={300} max={3000} step={50}  onChange={setSpaceWidth} />
             <SliderRow label="공간 높이" value={spaceHeight} min={600} max={3000} step={100} onChange={setSpaceHeight} />
             <SliderRow label="공간 깊이" value={spaceDepth}  min={300} max={1500} step={50}  onChange={setSpaceDepth} />
+            <SliderRow label="선반 간격" value={shelfGap}    min={0}   max={500}  step={25}   onChange={setShelfGap} />
           </div>
         </div>
       </div>

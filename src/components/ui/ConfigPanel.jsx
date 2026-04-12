@@ -676,38 +676,107 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   )
 }
 
-// 모바일: 하단 슬라이드업 시트
+// 모바일: 하단 슬라이드업 바텀시트 (아코디언 포함)
 function MobilePanel({ onCameraPreset, onArMode }) {
-  const [open, setOpen] = useState(false)
+  const [sheetOpen, setSheetOpen]     = useState(false)
+  const [activeSection, setActiveSection] = useState(null)
+
+  const spaceOpen = activeSection === 'space'
+  const shelfOpen = activeSection === 'shelf'
+  const bomOpen   = activeSection === 'bom'
+  const setSpaceOpen = (v) => setActiveSection(v ? 'space' : null)
+  const setShelfOpen = (v) => setActiveSection(v ? 'shelf' : null)
+  const toggleBom    = () => setActiveSection(prev => prev === 'bom' ? null : 'bom')
+
+  // 터치 스와이프 닫기: 시트 상단을 아래로 드래그하면 닫힘
+  const touchStartY = useRef(0)
+  const onTouchStart = (e) => { touchStartY.current = e.touches[0].clientY }
+  const onTouchEnd   = (e) => {
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    if (dy > 60) setSheetOpen(false)
+  }
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-center pb-2 pointer-events-none">
+      {/* FAB — 하단 중앙 고정 버튼 */}
+      <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 20, pointerEvents: 'none' }}>
         <button
-          className="pointer-events-auto config-panel px-6 py-2 rounded-full text-white text-sm font-bold shadow-lg"
-          onClick={() => setOpen(v => !v)}
+          onClick={() => setSheetOpen(v => !v)}
+          style={{
+            pointerEvents: 'auto',
+            background: 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)',
+            border: '1px solid #4a5e72',
+            borderRadius: 24,
+            padding: '9px 22px',
+            color: 'white',
+            fontSize: 13,
+            fontFamily: "'Orbitron', sans-serif",
+            fontWeight: 900,
+            letterSpacing: '0.04em',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}
         >
-          선반 구성 도구 {open ? '▼' : '▲'}
+          DEKIRI 3D
+          <span style={{ fontSize: 10, opacity: 0.7 }}>{sheetOpen ? '▼' : '▲'}</span>
         </button>
       </div>
 
+      {/* 반투명 배경 오버레이 */}
+      {sheetOpen && (
+        <div
+          onClick={() => setSheetOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 29, background: 'rgba(0,0,0,0.35)' }}
+        />
+      )}
+
+      {/* 바텀 시트 */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-10 config-panel rounded-t-2xl transition-transform duration-300"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         style={{
-          transform: open ? 'translateY(0)' : 'translateY(100%)',
-          maxHeight: '75vh',
-          overflowY: 'auto',
-          paddingBottom: '60px',
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          zIndex: 30,
+          maxHeight: '80vh',
+          display: 'flex', flexDirection: 'column',
+          background: 'linear-gradient(135deg, #1e2535 0%, #15192b 100%)',
+          border: '1px solid #4a5e72',
+          borderBottom: 'none',
+          borderRadius: '20px 20px 0 0',
+          boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
+          transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-3">
-            <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: '15px', letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white text-xs">✕</button>
-          </div>
+        {/* 드래그 핸들 */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.25)' }} />
+        </div>
+
+        {/* 헤더 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 18px 12px', flexShrink: 0 }}>
+          <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 16, letterSpacing: '0.04em', color: 'white' }}>DEKIRI 3D</span>
+          <button
+            onClick={() => setSheetOpen(false)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 18, cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+          >✕</button>
+        </div>
+
+        {/* 구분선 */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 0, flexShrink: 0 }} />
+
+        {/* 스크롤 가능한 내용 */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 80px', WebkitOverflowScrolling: 'touch' }}>
           <PanelContent
             onCameraPreset={onCameraPreset}
             onArMode={onArMode}
+            spaceOpen={spaceOpen}
+            setSpaceOpen={setSpaceOpen}
+            shelfOpen={shelfOpen}
+            setShelfOpen={setShelfOpen}
+            bomOpen={bomOpen}
+            onBomToggle={toggleBom}
           />
         </div>
       </div>
@@ -718,6 +787,6 @@ function MobilePanel({ onCameraPreset, onArMode }) {
 export default function ConfigPanel({ onCameraPreset, onArMode }) {
   const isMobile = useIsMobile()
   return isMobile
-    ? <MobilePanel onCameraPreset={onCameraPreset} onScreenshot={onScreenshot} onArMode={onArMode} />
+    ? <MobilePanel onCameraPreset={onCameraPreset} onArMode={onArMode} />
     : <DesktopPanel onCameraPreset={onCameraPreset} onArMode={onArMode} />
 }

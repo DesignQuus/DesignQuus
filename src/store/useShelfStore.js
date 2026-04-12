@@ -3,10 +3,20 @@ import { syncToUrl, readFromUrl } from '../utils/urlSync.js'
 
 const MODES = ['shelf', 'washer', 'dressroom', 'aquarium']
 const FEET_TYPES = ['level', 'caster']
-// 선반 간 스냅 간격 (mm) — ShelfScene의 GAP와 반드시 동일하게 유지
-const SHELF_GAP_MM = 0
 // 공간 여유 마진 (mm) — 선반 전체 치수에 더해 가상 공간 크기 산정
 const SPACE_MARGIN_MM = 200
+
+// 선반 배치에 필요한 공간 계산 헬퍼 (addShelf/removeShelf 공용)
+function calcRequiredSpace(shelves, gapMm) {
+  const totalW = shelves.reduce((s, sh) => s + sh.width, 0) + (shelves.length - 1) * gapMm
+  const maxH   = Math.max(...shelves.map(sh => sh.height))
+  const maxD   = Math.max(...shelves.map(sh => sh.depth))
+  return {
+    needW: totalW + SPACE_MARGIN_MM,
+    needH: maxH   + SPACE_MARGIN_MM,
+    needD: maxD   + SPACE_MARGIN_MM,
+  }
+}
 
 // 27.5mm pitch: shelf positions stored as pitch index (integer)
 function defaultShelfPositions(count, height) {
@@ -54,6 +64,7 @@ const useShelfStore = create((set, get) => ({
   selectedShelfIdx: -1,
   arMode: false,
   notification: null,  // { message, id } — 토스트 메시지
+  shelfGap: 0,         // 선반 간 간격 (mm) — SliderRow로 조절
 
   // ── 다중 선반 인스턴스 ────────────────────────────────────────────
   shelves: [firstShelf],
@@ -77,39 +88,25 @@ const useShelfStore = create((set, get) => ({
 
   // 현재 활성 선반을 복제해 새 인스턴스 추가 + 가상 공간 자동 확대
   addShelf: () => {
-    const state = get()
-    const src      = state.shelves.find(s => s.id === state.activeShelfId) || state.shelves[0]
-    const newId    = state.nextShelfId
-    const newShelf = makeShelfInstance(newId, `선반 ${newId}`, src)
+    const state      = get()
+    const src        = state.shelves.find(s => s.id === state.activeShelfId) || state.shelves[0]
+    const newId      = state.nextShelfId
+    const newShelf   = makeShelfInstance(newId, `선반 ${newId}`, src)
     const newShelves = [...state.shelves, newShelf]
 
-    // 복제 후 선반 전체가 차지하는 공간 계산
-    const totalW = newShelves.reduce((sum, s) => sum + s.width, 0)
-                   + (newShelves.length - 1) * SHELF_GAP_MM
-    const maxH   = Math.max(...newShelves.map(s => s.height))
-    const maxD   = Math.max(...newShelves.map(s => s.depth))
-    const needW  = totalW + SPACE_MARGIN_MM
-    const needH  = maxH   + SPACE_MARGIN_MM
-    const needD  = maxD   + SPACE_MARGIN_MM
-
+    const { needW, needH, needD } = calcRequiredSpace(newShelves, state.shelfGap)
     const spaceNeedsResize =
       needW > state.spaceWidth ||
       needH > state.spaceHeight ||
       needD > state.spaceDepth
 
-    const update = {
-      shelves: newShelves,
-      activeShelfId: newId,
-      nextShelfId: newId + 1,
-    }
-
+    const update = { shelves: newShelves, activeShelfId: newId, nextShelfId: newId + 1 }
     if (spaceNeedsResize) {
       update.spaceWidth  = Math.max(state.spaceWidth,  needW)
       update.spaceHeight = Math.max(state.spaceHeight, needH)
       update.spaceDepth  = Math.max(state.spaceDepth,  needD)
       update.notification = { message: '설치 가상공간이 재설정 됩니다.', id: Date.now() }
     }
-
     set(update)
     syncToUrl(get())
   },
@@ -117,13 +114,35 @@ const useShelfStore = create((set, get) => ({
   // 토스트 알림 해제
   clearNotification: () => set({ notification: null }),
 
-  // 특정 선반 삭제 (1개 남으면 삭제 불가)
-  removeShelf: (id) => {
+  // 선반 간격 변경 — 공간도 자동 재계산
+  setShelfGap: (v) => {
     const state = get()
+    const { needW, needH, needD } = calcRequiredSpace(state.shelves, v)
+    const update = { shelfGap: v }
+    if (needW > state.spaceWidth)  update.spaceWidth  = needW
+    if (needH > state.spaceHeight) update.spaceHeight = needH
+    if (needD > state.spaceDepth)  update.spaceDepth  = needD
+    set(update)
+    syncToUrl(get())
+  },
+
+  // 특정 선반 삭제 (1개 남으면 삭제 불가) + 공간 자동 축소
+  removeShelf: (id) => {
+    const state     = get()
     if (state.shelves.length <= 1) return
     const remaining = state.shelves.filter(s => s.id !== id)
+
+    // 삭제 후 필요 공간 재계산 → 현재 공간이 과할 경우 축소
+    const { needW, needH, needD } = calcRequiredSpace(remaining, state.shelfGap)
+    const spaceUpdate = {
+      spaceWidth:  Math.max(needW, state.spaceWidth  > needW ? needW : state.spaceWidth),
+      spaceHeight: Math.max(needH, state.spaceHeight > needH ? needH : state.spaceHeight),
+      spaceDepth:  Math.max(needD, state.spaceDepth  > needD ? needD : state.spaceDepth),
+    }
+
     if (id !== state.activeShelfId) {
-      set({ shelves: remaining })
+      set({ shelves: remaining, ...spaceUpdate })
+      syncToUrl(get())
       return
     }
     const idx  = state.shelves.findIndex(s => s.id === id)
@@ -142,6 +161,7 @@ const useShelfStore = create((set, get) => ({
       hangerHeight:   next.hangerHeight,
       partitionCount: next.partitionCount,
       tankSize:       next.tankSize,
+      ...spaceUpdate,
     })
     syncToUrl(get())
   },

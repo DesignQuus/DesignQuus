@@ -13,7 +13,7 @@ import DevDimOverall from './dev/DevDimOverall.jsx'
 // Inner component that exposes Three.js camera APIs
 function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
   const { camera, gl, scene } = useThree()
-  const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode, shelves, activeShelfId, setActiveShelf } = useShelfStore()
+  const { width, height, depth, spaceWidth, spaceHeight, spaceDepth, renderMode, shelves, activeShelfId, setActiveShelf, shelfGap } = useShelfStore()
   const showOverallDims = useDevStore(s => s.showOverallDims)
 
   // 선반 뒷면 z=0 정렬 기준 — 카메라 타겟 오프셋 (POST_EXT=0)
@@ -98,9 +98,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Bounding box */}
       <BoundingBox width={spaceWidth} height={spaceHeight} depth={spaceDepth} />
 
-      {/* 다중 선반 — X축으로 나란히 스냅 배치 (GAP=0 붙여서), 전체 중심이 원점 */}
+      {/* 다중 선반 — X축으로 나란히 배치, 전체 중심이 원점 */}
       {(() => {
-        const GAP = 0  // useShelfStore의 SHELF_GAP_MM와 동일하게 유지
+        const GAP = shelfGap  // store의 shelfGap (mm) 사용
         // 각 선반의 X 시작 좌표 계산
         let cur = 0
         const starts = shelves.map(s => { const x = cur; cur += s.width + GAP; return x })
