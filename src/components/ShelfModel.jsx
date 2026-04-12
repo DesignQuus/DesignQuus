@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useShallow } from 'zustand/shallow'
 import AnglePost from './parts/AnglePost.jsx'
 import ShelfBoard from './parts/ShelfBoard.jsx'
 import LevelFoot from './parts/LevelFoot.jsx'
@@ -19,7 +20,7 @@ const BOTTOM_Y = FOOT_HEIGHT_MM + PITCH_MM   // 46 + 27.5 = 73.5mm
 // posX: 3D X축 오프셋 (mm)
 export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
   const { camera, gl, controls } = useThree()
-  const store = useShelfStore(s => ({
+  const store = useShelfStore(useShallow(s => ({
     width: s.width, height: s.height, depth: s.depth,
     shelfPositions: s.shelfPositions, feetType: s.feetType,
     renderMode: s.renderMode, mode: s.mode,
@@ -27,7 +28,7 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
     setSelectedShelfIdx: s.setSelectedShelfIdx,
     setShelfPosition: s.setShelfPosition,
     setActiveShelf: s.setActiveShelf,
-  }))
+  })))
 
   // 비활성 선반은 shelfConfig 값 사용, 활성 선반은 store 값 사용
   const cfg = (!isActive && shelfConfig) ? shelfConfig : store
