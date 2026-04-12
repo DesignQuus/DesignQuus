@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import useShelfStore from '../../store/useShelfStore.js'
 import { calculateBOM } from '../../utils/bomCalculator.js'
 import CameraPresetButtons from './CameraPresets.jsx'
 
-export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive }) {
+export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive, onBomRef }) {
   const { mode, width, height, depth, shelfCount, feetType } = useShelfStore()
   const [open, setOpen] = useState(false)
+  const headerRef = useCallback(node => { onBomRef?.(node) }, [onBomRef])
 
   const bom = useMemo(
     () => calculateBOM({ mode, width, height, depth, shelfCount, feetType }),
@@ -20,6 +21,7 @@ export default function BomPanel({ onCameraPreset, onDim, arActive, setArActive 
   return (
     <div className="mt-3 border-t border-white/20 pt-3">
       <button
+        ref={headerRef}
         onClick={() => setOpen(v => !v)}
         className="w-full flex justify-between items-center text-xs font-semibold"
         style={{ color: '#f97316' }}

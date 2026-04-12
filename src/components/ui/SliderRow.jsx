@@ -5,6 +5,10 @@ import { useState, useRef } from 'react'
 export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm', badge, onChange }) {
   const [draft, setDraft] = useState(null)
 
+  // 항상 최신 value를 가리키는 ref — setInterval 클로저 stale 방지
+  const valueRef = useRef(value)
+  valueRef.current = value
+
   const commit = (raw) => {
     const num = parseFloat(raw)
     if (!isNaN(num)) {
@@ -14,20 +18,24 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
     setDraft(null)
   }
 
-  const inc = () => onChange(Math.min(max, value + step))
-  const dec = () => onChange(Math.max(min, value - step))
-  // 장시간 누름 반복은 1단위씩 (슬라이더 step과 무관하게 1mm 단위)
-  const incBy1 = () => onChange(Math.min(max, value + 1))
-  const decBy1 = () => onChange(Math.max(min, value - 1))
+  const inc = () => onChange(Math.min(max, Math.round((valueRef.current + step) / step) * step))
+  const dec = () => onChange(Math.max(min, Math.round((valueRef.current - step) / step) * step))
 
   const repeatRef = useRef(null)
-  // initFn: 첫 클릭 (step 단위), repeatFn: 장시간 반복 (1 단위)
-  const startRepeat = (initFn, repeatFn) => {
-    initFn()
+
+  // dir: +1 증가 / -1 감소
+  // 첫 클릭: step 단위 이동, 350ms 이후 누르고 있으면: 1단위씩 80ms 반복
+  const startRepeat = (dir) => {
+    if (dir > 0) inc(); else dec()
     repeatRef.current = setTimeout(() => {
-      repeatRef.current = setInterval(repeatFn, 80)
+      repeatRef.current = setInterval(() => {
+        // valueRef.current는 매 렌더마다 갱신되므로 항상 최신값
+        const next = valueRef.current + dir
+        onChange(Math.max(min, Math.min(max, next)))
+      }, 80)
     }, 350)
   }
+
   const stopRepeat = () => {
     clearTimeout(repeatRef.current)
     clearInterval(repeatRef.current)
@@ -102,9 +110,11 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
             <div style={{ display: 'flex', flexDirection: 'column', marginRight: 5, gap: 1 }}>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); startRepeat(inc, incBy1) }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(1) }}
                 onMouseUp={stopRepeat}
                 onMouseLeave={stopRepeat}
+                onTouchStart={e => { e.preventDefault(); startRepeat(1) }}
+                onTouchEnd={stopRepeat}
                 style={{
                   background: 'none', border: 'none', padding: 0,
                   color: 'rgba(255,255,255,0.65)', fontSize: 8, lineHeight: 1,
@@ -113,9 +123,11 @@ export default function SliderRow({ label, value, min, max, step = 1, unit = 'mm
               >▲</button>
               <button
                 tabIndex={-1}
-                onMouseDown={e => { e.preventDefault(); startRepeat(dec, decBy1) }}
+                onMouseDown={e => { e.preventDefault(); startRepeat(-1) }}
                 onMouseUp={stopRepeat}
                 onMouseLeave={stopRepeat}
+                onTouchStart={e => { e.preventDefault(); startRepeat(-1) }}
+                onTouchEnd={stopRepeat}
                 style={{
                   background: 'none', border: 'none', padding: 0,
                   color: 'rgba(255,255,255,0.65)', fontSize: 8, lineHeight: 1,

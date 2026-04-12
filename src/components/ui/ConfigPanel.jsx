@@ -184,7 +184,7 @@ function DimPreviewModal({ onClose, params }) {
   )
 }
 
-function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
+function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomRef, spaceOpen, setSpaceOpen, shelfOpen, setShelfOpen }) {
   const [arActive, setArActive] = useState(false)
   const [dimParams, setDimParams] = useState(null)
   const { mode, width, height, depth, shelfCount, shelfPositions, feetType } = useShelfStore()
@@ -204,6 +204,7 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, spaceO
         onDim={openDimPreview}
         arActive={arActive}
         setArActive={setArActive}
+        onBomRef={onBomRef}
       />
 
       {dimParams && (
@@ -311,9 +312,13 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const innerRef = useRef(null)
   const panelRef = useRef(null)
 
-  // ShelfMode 섹션 헤더 DOM 노드
+  // ShelfMode / BomPanel 섹션 헤더 DOM 노드
   const [spaceEl, setSpaceEl] = useState(null)
   const [shelfEl, setShelfEl] = useState(null)
+  const [bomEl,   setBomEl]   = useState(null)
+
+  // 각 섹션 헤더 우측에 맞춰 표시되는 탭 버튼 Y 위치
+  const [tabTops, setTabTops] = useState([60, 104, 148])
 
   // 섹션 열림 상태 — DesktopPanel에서 관리 (자동 접힘 인터랙션)
   const [spaceOpen, setSpaceOpen] = useState(false)
@@ -335,30 +340,25 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     const panelRect = panelEl.getBoundingClientRect()
 
     const COLLAPSE_THRESHOLD = 14  // 패널 상단에서 이 px 이하로 올라오면 자동 접힘
+    const MIN_SPACING = 42         // 탭 버튼 간 최소 간격 px
 
-    let adjustTop = 60
-    if (spaceEl) {
-      const r = spaceEl.getBoundingClientRect()
-      const computed = r.top + r.height / 2 - panelRect.top - 19
-      // 스크롤로 섹션이 임계점 위로 올라오면 자동 접힘
-      if (spaceOpenRef.current && computed < COLLAPSE_THRESHOLD) {
-        setSpaceOpen(false)
-      }
-      adjustTop = Math.max(COLLAPSE_THRESHOLD, computed)
+    // 섹션 헤더 중앙 Y → 패널 좌상단 기준 탭 top 값
+    function headerTop(el, fallback) {
+      if (!el) return fallback
+      const r = el.getBoundingClientRect()
+      return r.top + r.height / 2 - panelRect.top - 19  // -19 = 버튼 높이(38) / 2
     }
 
-    let paletteTop = adjustTop + 44
-    if (shelfEl) {
-      const r = shelfEl.getBoundingClientRect()
-      const computed = r.top + r.height / 2 - panelRect.top - 19
-      if (shelfOpenRef.current && computed < adjustTop + 44) {
-        setShelfOpen(false)
-      }
-      paletteTop = Math.max(adjustTop + 44, computed)
-    }
+    let t0 = Math.max(COLLAPSE_THRESHOLD, headerTop(spaceEl, 60))
+    if (spaceOpenRef.current && headerTop(spaceEl, 60) < COLLAPSE_THRESHOLD) setSpaceOpen(false)
 
-    // 탭 위치는 균등 배치로 고정 — 자동 접힘만 처리
-  }, [spaceEl, shelfEl])
+    let t1 = Math.max(t0 + MIN_SPACING, headerTop(shelfEl, t0 + MIN_SPACING))
+    if (shelfOpenRef.current && headerTop(shelfEl, t0 + MIN_SPACING) < t0 + MIN_SPACING) setShelfOpen(false)
+
+    let t2 = Math.max(t1 + MIN_SPACING, headerTop(bomEl, t1 + MIN_SPACING))
+
+    setTabTops([t0, t1, t2])
+  }, [spaceEl, shelfEl, bomEl])
 
   useEffect(() => { recomputeTabs() }, [recomputeTabs])
 
@@ -438,21 +438,15 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
       style={{ left: pos.x, top: pos.y, height: panelHeight }}
     >
 
-      {/* 우측 견출 탭 레일 — 균등 배치 */}
+      {/* 우측 견출 탭 레일 — 섹션 헤더 위치에 정렬 */}
       <div style={{
         position: 'absolute', left: '100%', top: 0, height: '100%', width: 38,
         pointerEvents: 'none',
         borderLeft: '1px solid #4a5e72',
         borderTopLeftRadius: 16,
         borderBottomLeftRadius: 16,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-evenly',
-        alignItems: 'flex-start',
-        paddingTop: 12,
-        paddingBottom: 12,
       }}>
-        {OPTION_TABS.map((tab) => {
+        {OPTION_TABS.map((tab, i) => {
           const isActive = activeTab === tab.id
           return (
             <button
@@ -463,7 +457,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
                 setTooltip({ text: tab.tooltip, x: r.right + 10, y: r.top + r.height / 2 })
               }}
               onMouseLeave={() => setTooltip(null)}
-              style={tabBtnStyle(isActive)}
+              style={{ ...tabBtnStyle(isActive), position: 'absolute', top: tabTops[i] }}
             >
               {tab.icon}
             </button>
@@ -530,6 +524,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
               onArMode={onArMode}
               onSpaceRef={setSpaceEl}
               onShelfRef={setShelfEl}
+              onBomRef={setBomEl}
               spaceOpen={spaceOpen}
               setSpaceOpen={setSpaceOpen}
               shelfOpen={shelfOpen}
