@@ -13,6 +13,7 @@ export default function ShelfBoard({
   renderMode = 'realistic',
   partId = null,
   onClick,
+  onPointerDown,
   onPointerOver,
   onPointerOut,
 }) {
@@ -66,7 +67,7 @@ export default function ShelfBoard({
       position={[devOff.dx / 100, y + thick / 2 + devOff.dy / 100, devOff.dz / 100]}
       rotation={[devOff.rx * DEG, devOff.ry * DEG, devOff.rz * DEG]}
     >
-      <mesh castShadow receiveShadow onClick={handleClick} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
+      <mesh castShadow receiveShadow onClick={handleClick} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
         <boxGeometry args={[w, thick, d]} />
         <primitive object={mat} attach="material" />
       </mesh>

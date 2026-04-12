@@ -47,6 +47,8 @@ function makeShelfInstance(id, label, params = {}) {
     hangerHeight:   params.hangerHeight   ?? 1400,
     partitionCount: params.partitionCount ?? 2,
     tankSize:       params.tankSize       ?? '60',
+    offsetX:        0,   // 개별 선반 X 위치 오프셋 (mm)
+    offsetZ:        0,   // 개별 선반 Z 위치 오프셋 (mm)
   }
 }
 
@@ -112,6 +114,11 @@ const useShelfStore = create((set, get) => ({
     set(update)
     syncToUrl(get())
   },
+
+  // 개별 선반 XZ 위치 오프셋 설정
+  setShelfOffset: (id, ox, oz) => set(state => ({
+    shelves: state.shelves.map(s => s.id === id ? { ...s, offsetX: ox, offsetZ: oz } : s),
+  })),
 
   // 토스트 알림 해제
   clearNotification: () => set({ notification: null }),

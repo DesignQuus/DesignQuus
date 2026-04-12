@@ -109,13 +109,15 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
         return (
           <group position={[groupOffsetX / 100, 0, groupOffsetZ / 100]}>
             {shelves.map((shelf, i) => {
-              const posX = centerOffset + starts[i] + shelf.width / 2
+              const posX = centerOffset + starts[i] + shelf.width / 2 + (shelf.offsetX || 0)
+              const posZ = shelf.offsetZ || 0
               return (
                 <Suspense key={shelf.id} fallback={null}>
                   <ShelfModel
                     shelfConfig={shelf}
                     isActive={shelf.id === activeShelfId}
                     posX={posX}
+                    posZ={posZ}
                   />
                 </Suspense>
               )

@@ -19,7 +19,7 @@ const BOTTOM_Y = FOOT_HEIGHT_MM + PITCH_MM   // 46 + 27.5 = 73.5mm
 // shelfConfig: 비활성 선반 렌더 시 전달 (없으면 store 활성값 사용)
 // isActive: false 이면 드래그/선택 비활성
 // posX: 3D X축 오프셋 (mm)
-export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
+export default function ShelfModel({ shelfConfig, isActive = true, posX = 0, posZ = 0 }) {
   const { camera, gl, controls } = useThree()
   const store = useShelfStore(useShallow(s => ({
     width: s.width, height: s.height, depth: s.depth,
@@ -38,6 +38,12 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
 
   const showSpacingDims = useDevStore(s => isDev ? s.showSpacingDims : true)
   const shelvesCount = useShelfStore(s => s.shelves.length)
+  const setShelfOffset = useShelfStore(s => s.setShelfOffset)
+  const shelfId = shelfConfig?.id ?? null
+
+  // 선반 유닛 XZ 드래그 상태
+  const shelfDragRef = useRef(null)  // { startX, startZ, initOffX, initOffZ }
+  const [isDraggingShelf, setIsDraggingShelf] = useState(false)
 
   // 활성 선반 오렌지 아웃라인 geometry (다중 선반일 때만 생성)
   const outlineGeo = useMemo(
@@ -78,13 +84,40 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
     if (controls) controls.enabled = false
   }, [setSelectedShelfIdx, controls])
 
+  // 선반 유닛 XZ 드래그 시작 (바닥판 onPointerDown)
+  const startShelfDrag = useCallback((e) => {
+    if (!isActive) return
+    e.stopPropagation()
+    shelfDragRef.current = {
+      startX:   e.point.x,
+      startZ:   e.point.z,
+      initOffX: shelfConfig?.offsetX ?? 0,
+      initOffZ: shelfConfig?.offsetZ ?? 0,
+    }
+    setIsDraggingShelf(true)
+    document.body.style.cursor = 'move'
+    if (controls) controls.enabled = false
+  }, [isActive, shelfConfig, controls])
+
   useEffect(() => {
     function onPointerMove(e) {
-      if (dragIdxRef.current < 0) return
       const rect = gl.domElement.getBoundingClientRect()
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1
       const ny = -((e.clientY - rect.top) / rect.height) * 2 + 1
       raycaster.setFromCamera({ x: nx, y: ny }, camera)
+
+      // ── 선반 유닛 XZ 드래그 ──────────────────────────────────────────
+      if (shelfDragRef.current) {
+        if (raycaster.ray.intersectPlane(dragPlane, dragTarget)) {
+          const dx = (dragTarget.x - shelfDragRef.current.startX) * 100  // world → mm
+          const dz = (dragTarget.z - shelfDragRef.current.startZ) * 100
+          setShelfOffset(shelfId, shelfDragRef.current.initOffX + dx, shelfDragRef.current.initOffZ + dz)
+        }
+        return
+      }
+
+      // ── 선반판 Y 드래그 ──────────────────────────────────────────────
+      if (dragIdxRef.current < 0) return
       if (!raycaster.ray.intersectPlane(dragPlane, dragTarget)) return
 
       const yMm = dragTarget.y * 100
@@ -96,6 +129,15 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
     }
 
     function onPointerUp() {
+      // 선반 유닛 드래그 해제
+      if (shelfDragRef.current) {
+        shelfDragRef.current = null
+        setIsDraggingShelf(false)
+        document.body.style.cursor = 'auto'
+        if (controls) controls.enabled = true
+        return
+      }
+      // 선반판 드래그 해제
       if (dragIdxRef.current >= 0) {
         dragIdxRef.current = -1
         document.body.style.cursor = 'auto'
@@ -110,14 +152,14 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
-  }, [camera, gl, controls, height, raycaster, dragPlane, dragTarget, setShelfPosition])
+  }, [camera, gl, controls, height, raycaster, dragPlane, dragTarget, setShelfPosition, setShelfOffset, shelfId])
 
   // 뒷면(포스트 끝)을 z=0 그리드 굵은 선에 정렬
   const zOffset = (halfD + POST_EXT) / 100
 
   return (
     <group
-      position={[posX / 100, 0, zOffset]}
+      position={[posX / 100, 0, zOffset + posZ / 100]}
       onClick={!isActive ? (e) => { e.stopPropagation(); setActiveShelf(shelfConfig?.id) } : undefined}
       onPointerOver={!isActive ? () => { document.body.style.cursor = 'pointer' } : undefined}
       onPointerOut={!isActive ? () => { document.body.style.cursor = 'auto' } : undefined}
@@ -127,8 +169,21 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
         <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} partId={`AnglePost_${i}`} />
       ))}
 
-      {/* Bottom board */}
-      <ShelfBoard widthMm={width} depthMm={depth} yMm={BOTTOM_Y} type="bottom" renderMode={renderMode} partId="ShelfBoard_bottom" />
+      {/* Bottom board — 활성 선반에서 드래그하면 선반 유닛 전체 XZ 이동 */}
+      <ShelfBoard
+        widthMm={width} depthMm={depth} yMm={BOTTOM_Y} type="bottom" renderMode={renderMode} partId="ShelfBoard_bottom"
+        onPointerDown={isActive ? startShelfDrag : undefined}
+        onPointerOver={isActive ? (e) => { e.stopPropagation(); if (!shelfDragRef.current) document.body.style.cursor = 'move' } : undefined}
+        onPointerOut={isActive ? () => { if (!shelfDragRef.current) document.body.style.cursor = 'auto' } : undefined}
+      />
+
+      {/* 드래그 중 바닥 하이라이트 — 이동 방향 시각화 */}
+      {isDraggingShelf && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
+          <planeGeometry args={[width / 100 + 0.2, depth / 100 + 0.2]} />
+          <meshBasicMaterial color="#f97316" transparent opacity={0.15} depthWrite={false} />
+        </mesh>
+      )}
 
       {/* Top board */}
       <ShelfBoard widthMm={width} depthMm={depth} yMm={topY} type="top" renderMode={renderMode} partId="ShelfBoard_top" />
