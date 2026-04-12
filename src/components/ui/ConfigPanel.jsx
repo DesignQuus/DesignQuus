@@ -361,7 +361,7 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     if (spaceOpenRef.current && headerTop(spaceEl, 60) < COLLAPSE_THRESHOLD) setActiveSection(null)
 
     let t1 = Math.max(t0 + MIN_SPACING, headerTop(shelfEl, t0 + MIN_SPACING))
-    if (shelfOpenRef.current && headerTop(shelfEl, t0 + MIN_SPACING) < t0 + MIN_SPACING) setActiveSection(null)
+    if (shelfOpenRef.current && headerTop(shelfEl, t1) < COLLAPSE_THRESHOLD) setActiveSection(null)
 
     let t2 = Math.max(t1 + MIN_SPACING, headerTop(bomEl, t1 + MIN_SPACING))
 
