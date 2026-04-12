@@ -7,6 +7,7 @@ import WasherMode from '../modes/WasherMode.jsx'
 import DressroomMode from '../modes/DressroomMode.jsx'
 import AquariumMode from '../modes/AquariumMode.jsx'
 import BomPanel from './BomPanel.jsx'
+import AlignPanel from './AlignPanel.jsx'
 import CameraPresetButtons from './CameraPresets.jsx'
 
 const MODE_PANELS = {
@@ -215,6 +216,9 @@ function PanelContent({ onCameraPreset, onArMode, onSpaceRef, onShelfRef, onBomR
   return (
     <>
       <ModePanel onSpaceRef={onSpaceRef} onShelfRef={onShelfRef} spaceOpen={spaceOpen} setSpaceOpen={setSpaceOpen} shelfOpen={shelfOpen} setShelfOpen={setShelfOpen} />
+
+      {/* 정렬 패널 — 공간 기준 + 선반 간 정렬 */}
+      <AlignPanel />
 
       {/* BomPanel에 카메라/도면/AR 도구 통합 — 아코디언 제어 */}
       <BomPanel
