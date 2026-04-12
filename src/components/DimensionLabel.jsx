@@ -15,6 +15,7 @@ export default function DimensionLabel({ yBottomMm, yTopMm, widthMm, depthMm }) 
     <Html
       position={[x, midY, z]}
       center={false}
+      zIndexRange={[100, 0]}
       style={{ pointerEvents: 'none' }}
     >
       <div style={{

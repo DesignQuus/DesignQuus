@@ -170,21 +170,22 @@ function drawFrontElevation(ctx, data, bx, by, bw, bh) {
 
     ctx.save()
 
-    // Posts
-    ctx.fillStyle = '#b0b0b0'
+    // Boards FIRST (so posts render on top at board heights)
+    ctx.fillStyle = '#e0d8c8'
     ctx.strokeStyle = '#333'
     ctx.lineWidth = 1.5
-    ;[[sx, sy], [sx + sw - POST_F * sc, sy]].forEach(([px, py]) => {
-      ctx.fillRect(px, py, POST_F * sc, sh)
-      ctx.strokeRect(px, py, POST_F * sc, sh)
-    })
-
-    // Boards
-    ctx.fillStyle = '#e0d8c8'
     allYs.forEach(yMm => {
       const bt = sy + sh - (yMm + BOARD_T) * sc
       ctx.fillRect(sx, bt, sw, BOARD_T * sc)
       ctx.strokeRect(sx, bt, sw, BOARD_T * sc)
+    })
+
+    // Posts ON TOP (cover boards, keep column visible at all heights)
+    ctx.fillStyle = '#b0b0b0'
+    ctx.lineWidth = 1.5
+    ;[[sx, sy], [sx + sw - POST_F * sc, sy]].forEach(([px, py]) => {
+      ctx.fillRect(px, py, POST_F * sc, sh)
+      ctx.strokeRect(px, py, POST_F * sc, sh)
     })
 
     // Outline
@@ -207,13 +208,14 @@ function drawFrontElevation(ctx, data, bx, by, bw, bh) {
     // 개별 너비 치수
     dimH(ctx, sx, sx + sw, sy, -42, `${width}mm`)
 
-    // 선반 라벨 (다중일 때)
+    // 선반 라벨 (다중일 때) — 수직 중앙에 표시
     if (multi) {
       ctx.save()
       ctx.font = 'bold 16px Arial, sans-serif'
       ctx.fillStyle = '#f97316'
       ctx.textAlign = 'center'
-      ctx.fillText(`선반 ${idx + 1}`, sx + sw / 2, sy + 18)
+      ctx.textBaseline = 'middle'
+      ctx.fillText(`선반 ${idx + 1}`, sx + sw / 2, sy + sh / 2)
       ctx.restore()
     }
 
@@ -384,7 +386,7 @@ function drawIsometric(ctx, data, bx, by, bw, bh) {
   const fitH = bh * 0.72
   const sc = Math.min(fitW / (totalWidth * cos30 + maxD * cos30), fitH / (maxH + (totalWidth + maxD) * sin30))
 
-  const baseOx = bx + bw / 2 + (maxD * cos30 * sc) / 2 - 10
+  const baseOx = bx + bw / 2 + (maxD - totalWidth) * cos30 * sc / 2
   const baseOy = by + bh * 0.78
 
   function face(pts, fill) {
