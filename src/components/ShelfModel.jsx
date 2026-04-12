@@ -88,16 +88,27 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0, pos
   const startShelfDrag = useCallback((e) => {
     if (!isActive) return
     e.stopPropagation()
+
+    // e.point는 선반판 표면(y≈0.79)의 좌표.
+    // onPointerMove는 y=0 평면과 교차시키므로,
+    // 시작점도 같은 y=0 평면으로 통일해야 드래그 시 점프가 없음.
+    const rect = gl.domElement.getBoundingClientRect()
+    const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    const ny = -((e.clientY - rect.top) / rect.height) * 2 + 1
+    raycaster.setFromCamera({ x: nx, y: ny }, camera)
+    const hit = new THREE.Vector3()
+    if (!raycaster.ray.intersectPlane(dragPlane, hit)) return   // shouldn't happen
+
     shelfDragRef.current = {
-      startX:   e.point.x,
-      startZ:   e.point.z,
+      startX:   hit.x,
+      startZ:   hit.z,
       initOffX: shelfConfig?.offsetX ?? 0,
       initOffZ: shelfConfig?.offsetZ ?? 0,
     }
     setIsDraggingShelf(true)
     document.body.style.cursor = 'move'
     if (controls) controls.enabled = false
-  }, [isActive, shelfConfig, controls])
+  }, [isActive, shelfConfig, controls, camera, gl, raycaster, dragPlane])
 
   useEffect(() => {
     function onPointerMove(e) {
