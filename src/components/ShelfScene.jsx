@@ -100,9 +100,8 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
 
       {/* 다중 선반 — 그룹 오프셋 적용 후 X축 나란히 배치 */}
       {(() => {
-        // L형 포스트 플랜지 폭(35mm): GAP=0일 때 인접 포스트 외면이 맞닿도록 보정
-        const POST_BORDER = 35
-        const actualGap = shelfGap + POST_BORDER * 2
+        // shelfGap=0 → 인접 포스트 외각 코너가 맞닿음 (보드 엣지 기준 간격)
+        const actualGap = shelfGap
         let cur = 0
         const starts = shelves.map(s => { const x = cur; cur += s.width + actualGap; return x })
         const totalSpan = cur - actualGap
