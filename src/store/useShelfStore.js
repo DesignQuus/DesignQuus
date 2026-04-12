@@ -3,6 +3,10 @@ import { syncToUrl, readFromUrl } from '../utils/urlSync.js'
 
 const MODES = ['shelf', 'washer', 'dressroom', 'aquarium']
 const FEET_TYPES = ['level', 'caster']
+// 선반 간 스냅 간격 (mm) — ShelfScene의 GAP와 반드시 동일하게 유지
+const SHELF_GAP_MM = 0
+// 공간 여유 마진 (mm) — 선반 전체 치수에 더해 가상 공간 크기 산정
+const SPACE_MARGIN_MM = 200
 
 // 27.5mm pitch: shelf positions stored as pitch index (integer)
 function defaultShelfPositions(count, height) {
@@ -49,6 +53,7 @@ const useShelfStore = create((set, get) => ({
   renderMode: 'realistic',
   selectedShelfIdx: -1,
   arMode: false,
+  notification: null,  // { message, id } — 토스트 메시지
 
   // ── 다중 선반 인스턴스 ────────────────────────────────────────────
   shelves: [firstShelf],
@@ -70,15 +75,47 @@ const useShelfStore = create((set, get) => ({
 
   // ── 다중 선반 액션 ─────────────────────────────────────────────────
 
-  // 현재 활성 선반을 복제해 새 인스턴스 추가
+  // 현재 활성 선반을 복제해 새 인스턴스 추가 + 가상 공간 자동 확대
   addShelf: () => {
     const state = get()
-    const src   = state.shelves.find(s => s.id === state.activeShelfId) || state.shelves[0]
-    const newId = state.nextShelfId
+    const src      = state.shelves.find(s => s.id === state.activeShelfId) || state.shelves[0]
+    const newId    = state.nextShelfId
     const newShelf = makeShelfInstance(newId, `선반 ${newId}`, src)
-    set({ shelves: [...state.shelves, newShelf], activeShelfId: newId, nextShelfId: newId + 1 })
-    // flat 파라미터는 동일한 값(현재 활성과 동일 복제)이므로 변경 불필요
+    const newShelves = [...state.shelves, newShelf]
+
+    // 복제 후 선반 전체가 차지하는 공간 계산
+    const totalW = newShelves.reduce((sum, s) => sum + s.width, 0)
+                   + (newShelves.length - 1) * SHELF_GAP_MM
+    const maxH   = Math.max(...newShelves.map(s => s.height))
+    const maxD   = Math.max(...newShelves.map(s => s.depth))
+    const needW  = totalW + SPACE_MARGIN_MM
+    const needH  = maxH   + SPACE_MARGIN_MM
+    const needD  = maxD   + SPACE_MARGIN_MM
+
+    const spaceNeedsResize =
+      needW > state.spaceWidth ||
+      needH > state.spaceHeight ||
+      needD > state.spaceDepth
+
+    const update = {
+      shelves: newShelves,
+      activeShelfId: newId,
+      nextShelfId: newId + 1,
+    }
+
+    if (spaceNeedsResize) {
+      update.spaceWidth  = Math.max(state.spaceWidth,  needW)
+      update.spaceHeight = Math.max(state.spaceHeight, needH)
+      update.spaceDepth  = Math.max(state.spaceDepth,  needD)
+      update.notification = { message: '설치 가상공간이 재설정 됩니다.', id: Date.now() }
+    }
+
+    set(update)
+    syncToUrl(get())
   },
+
+  // 토스트 알림 해제
+  clearNotification: () => set({ notification: null }),
 
   // 특정 선반 삭제 (1개 남으면 삭제 불가)
   removeShelf: (id) => {

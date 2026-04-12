@@ -98,9 +98,9 @@ function SceneInner({ cameraRef, controlsRef, screenshotRef }) {
       {/* Bounding box */}
       <BoundingBox width={spaceWidth} height={spaceHeight} depth={spaceDepth} />
 
-      {/* 다중 선반 — X축으로 나란히 배치 (500mm 간격), 전체 중심이 원점 */}
+      {/* 다중 선반 — X축으로 나란히 스냅 배치 (GAP=0 붙여서), 전체 중심이 원점 */}
       {(() => {
-        const GAP = 500
+        const GAP = 0  // useShelfStore의 SHELF_GAP_MM와 동일하게 유지
         // 각 선반의 X 시작 좌표 계산
         let cur = 0
         const starts = shelves.map(s => { const x = cur; cur += s.width + GAP; return x })

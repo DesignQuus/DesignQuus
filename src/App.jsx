@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
 import ModeTab from './components/ui/ModeTab.jsx'
 import ConfigPanel from './components/ui/ConfigPanel.jsx'
 import ShelfScene from './components/ShelfScene.jsx'
@@ -7,6 +7,47 @@ import useShelfStore from './store/useShelfStore.js'
 import DevTrigger from './components/dev/DevTrigger.jsx'
 import DevPanel from './components/dev/DevPanel.jsx'
 import { isDev } from './store/useDevStore.js'
+
+// 가상 공간 재설정 토스트 알림
+function SpaceNotification() {
+  const notification    = useShelfStore(s => s.notification)
+  const clearNotification = useShelfStore(s => s.clearNotification)
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    if (!notification) return
+    setShow(true)
+    const fadeTimer  = setTimeout(() => setShow(false),           3000)
+    const clearTimer = setTimeout(() => clearNotification(),      3300) // fade 후 제거
+    return () => { clearTimeout(fadeTimer); clearTimeout(clearTimer) }
+  }, [notification?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!notification) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 80,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9000,
+      background: 'rgba(249,115,22,0.95)',
+      color: 'white',
+      padding: '12px 28px',
+      borderRadius: 12,
+      fontSize: 14,
+      fontWeight: 600,
+      letterSpacing: '0.02em',
+      boxShadow: '0 4px 24px rgba(249,115,22,0.4), 0 2px 8px rgba(0,0,0,0.35)',
+      pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+      opacity: show ? 1 : 0,
+      transition: 'opacity 0.3s ease',
+    }}>
+      ⚠️ {notification.message}
+    </div>
+  )
+}
 
 class ErrorBoundary extends React.Component {
   state = { error: null }
@@ -63,6 +104,9 @@ export default function App() {
         {arMode && (
           <PhotoARMode onClose={() => setArMode(false)} />
         )}
+
+        {/* 설치 가상공간 재설정 토스트 */}
+        <SpaceNotification />
 
         {/* 마우스 조작 안내 */}
         <div style={{
