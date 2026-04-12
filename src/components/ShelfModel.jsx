@@ -26,12 +26,13 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
     selectedShelfIdx: s.selectedShelfIdx,
     setSelectedShelfIdx: s.setSelectedShelfIdx,
     setShelfPosition: s.setShelfPosition,
+    setActiveShelf: s.setActiveShelf,
   }))
 
   // 비활성 선반은 shelfConfig 값 사용, 활성 선반은 store 값 사용
   const cfg = (!isActive && shelfConfig) ? shelfConfig : store
   const { width, height, depth, shelfPositions, feetType } = cfg
-  const { renderMode, mode, selectedShelfIdx, setSelectedShelfIdx, setShelfPosition } = store
+  const { renderMode, mode, selectedShelfIdx, setSelectedShelfIdx, setShelfPosition, setActiveShelf } = store
 
   const showSpacingDims = useDevStore(s => isDev ? s.showSpacingDims : true)
 
@@ -104,7 +105,12 @@ export default function ShelfModel({ shelfConfig, isActive = true, posX = 0 }) {
   const zOffset = (halfD + POST_EXT) / 100
 
   return (
-    <group position={[posX / 100, 0, zOffset]}>
+    <group
+      position={[posX / 100, 0, zOffset]}
+      onClick={!isActive ? (e) => { e.stopPropagation(); setActiveShelf(shelfConfig?.id) } : undefined}
+      onPointerOver={!isActive ? () => { document.body.style.cursor = 'pointer' } : undefined}
+      onPointerOut={!isActive ? () => { document.body.style.cursor = 'auto' } : undefined}
+    >
       {/* Angle posts */}
       {corners.map((pos, i) => (
         <AnglePost key={i} heightMm={height - 16.5} positionMm={pos} yOffsetMm={16.5} renderMode={renderMode} partId={`AnglePost_${i}`} />
