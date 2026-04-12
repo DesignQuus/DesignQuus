@@ -347,6 +347,15 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   const [spaceEl, setSpaceEl] = useState(null)
   const [shelfEl, setShelfEl] = useState(null)
   const [bomEl,   setBomEl]   = useState(null)
+  // ref 미러 — goCompact에서 deps 없이 즉시 접근
+  const spaceElRef = useRef(null)
+  const shelfElRef = useRef(null)
+  const bomElRef   = useRef(null)
+  spaceElRef.current = spaceEl
+  shelfElRef.current = shelfEl
+  bomElRef.current   = bomEl
+  // recomputeTabs 최신 참조 (goCompact/goMaximized에서 정의 순서 무관하게 접근)
+  const recomputeTabsRef = useRef(null)
 
   // 각 섹션 헤더 우측에 맞춰 표시되는 탭 버튼 Y 위치
   const [tabTops, setTabTops] = useState([55, 99, 143])
@@ -371,31 +380,30 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
 
   const { pos, headerRef } = useDraggable({ x: 16, y: 16 })
 
-  // goCompact 내부 setTimeout 취소용 ref
-  const compactTimer = useRef(null)
-
-  // compact: 모든 섹션 접기 + 패널 최소 높이
-  // ※ scrollHeight 는 overflow:hidden 무시 → offsetHeight 사용 (실제 렌더 높이)
+  // compact: 모든 섹션 접기 + 패널 최소 높이 즉시 설정
+  // 섹션 헤더 버튼(spaceEl/shelfEl/bomEl)은 아코디언과 무관하게 즉시 측정 가능
   const goCompact = useCallback(() => {
     setExpandAll(false)
     setActiveSection(null)
     setPanelMode('compact')
-    // 아코디언 닫힘 애니메이션(220ms) 대기 후 실제 렌더 높이 측정
-    compactTimer.current = setTimeout(() => {
-      compactTimer.current = null
-      if (!innerRef.current || !headerRef.current) return
-      const headerH = headerRef.current.offsetHeight
-      setPanelHeight(headerH + innerRef.current.offsetHeight + 24)
-    }, 280)
+    if (!headerRef.current) return
+    const headerH = headerRef.current.offsetHeight
+    const h0 = spaceElRef.current?.offsetHeight ?? 28
+    const h1 = shelfElRef.current?.offsetHeight ?? 28
+    const h2 = bomElRef.current?.offsetHeight  ?? 28
+    // 섹션 간 보더/패딩/마진 ≈ 70px + 하단 리사이즈 핸들 20px
+    setPanelHeight(headerH + h0 + h1 + h2 + 90)
+    // 다음 프레임에서 탭 위치 즉시 재계산
+    requestAnimationFrame(() => recomputeTabsRef.current?.())
   }, [headerRef])
 
   // maximized: 모든 섹션 열기 + 패널 최대 높이
   const goMaximized = useCallback(() => {
-    if (compactTimer.current) { clearTimeout(compactTimer.current); compactTimer.current = null }
     setPanelMode('maximized')
     setExpandAll(true)
     setActiveSection(null)
     setPanelHeight(Math.max(300, window.innerHeight - pos.y - 16))
+    requestAnimationFrame(() => recomputeTabsRef.current?.())
   }, [pos.y])
 
   // 단일클릭: compact ↔ maximized 즉시 토글 (e.detail≥2 → 더블클릭에 위임)
@@ -407,7 +415,6 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
   }, [goCompact, goMaximized])
 
   const handleDotsDblClick = useCallback(() => {
-    if (compactTimer.current) { clearTimeout(compactTimer.current); compactTimer.current = null }
     if (!innerRef.current || !headerRef.current) return
     const headerH = headerRef.current.offsetHeight
     // 피팅 시에는 전체 스크롤 가능 높이 기준 (열려있는 콘텐츠 포함)
@@ -444,6 +451,9 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     setTabTops([t0, t1, t2])
   }, [spaceEl, shelfEl, bomEl])
 
+  // 최신 recomputeTabs 를 ref에 저장 (goCompact/goMaximized 에서 RAF로 호출)
+  recomputeTabsRef.current = recomputeTabs
+
   useEffect(() => { recomputeTabs() }, [recomputeTabs])
 
   useEffect(() => {
@@ -458,7 +468,11 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
     const el = innerRef.current
     if (!el) return
     const fit = () => {
-      if (panelModeRef.current !== 'normal') return
+      // compact/maximized 모드에서도 탭 위치는 항상 재계산
+      if (panelModeRef.current !== 'normal') {
+        recomputeTabs()
+        return
+      }
       const headerH = headerRef.current?.offsetHeight ?? 60
       const fitH = Math.min(window.innerHeight - 32, headerH + el.scrollHeight + 36)
       setPanelHeight(fitH)
