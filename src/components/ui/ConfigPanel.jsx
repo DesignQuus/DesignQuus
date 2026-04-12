@@ -265,7 +265,7 @@ function IconLayers() {
 }
 
 const OPTION_TABS = [
-  { id: 'adjust',  icon: <IconSpace />,  tooltip: '설치 가상 공간' },
+  { id: 'adjust',  icon: <IconSpace />,  tooltip: '설치 가상\n공간' },
   { id: 'palette', icon: <IconShelf />,  tooltip: '선반 규격' },
   { id: 'layers',  icon: <IconLayers />, tooltip: '색상 옵션' },
 ]
@@ -514,7 +514,8 @@ function DesktopPanel({ onCameraPreset, onArMode }) {
           color: '#1a1a1a',
           fontSize: 11,
           fontWeight: 500,
-          whiteSpace: 'nowrap',
+          whiteSpace: 'pre-line',
+          textAlign: 'center',
           pointerEvents: 'none',
           zIndex: 99999,
           boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
