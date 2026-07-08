@@ -19,3 +19,4 @@
 019_space_ventilation_rls.sql
 021_rule_studio_catalog_import.sql
 022_rule_studio_catalog_rls.sql
+023_security_runtime_role.sql
