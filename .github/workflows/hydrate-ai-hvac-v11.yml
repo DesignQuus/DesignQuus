@@ -35,9 +35,13 @@ jobs:
           ZIP='/tmp/ai-hvac-v11-core-source.zip'
           EXPECTED='e119224c5786d761637dc466987f41b6db635a402b1a5ccb5ba86fba0101fcdd'
 
+          # Historical transfer layout: part-001 is 20,000 Base64 chars;
+          # parts 002-014 are 10,000 chars each. Together they already
+          # cover the first 150,000 Base64 chars, so raw segment 015 is
+          # intentionally skipped to avoid a 10,000-char overlap.
           cat "$ROOT"/part-{001..014}.b64 | base64 -d > "$ZIP"
 
-          for n in $(seq 15 21); do
+          for n in $(seq 16 21); do
             i=$(printf '%03d' "$n")
             cat "$ROOT/part-${i}.bin" >> "$ZIP"
           done
