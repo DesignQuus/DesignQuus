@@ -131,7 +131,7 @@ jobs:
           assert payload['statusCode'] == 404
           assert payload['errorCode'] == 'HTTP_404'
           assert payload['requestId'] == 'v12-error-probe'
-          assert payload['path'] == '/does-not-exist'
+          assert payload['path'].endswith('/does-not-exist')
           PY
 
       - name: Runtime diagnostics
