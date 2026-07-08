@@ -1,104 +1,20 @@
-name: Hydrate AI HVAC v1.1 Full Source
+name: Hydrate AI HVAC v1.1 Full Source (Archived)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - claude/ai-hvac-full-source-v1.1-complete-20260709
-    paths:
-      - '.github/workflows/hydrate-ai-hvac-v11.yml'
-      - 'source-bootstrap-v11/**'
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  hydrate:
-    if: github.actor != 'github-actions[bot]'
+  archived:
+    name: Hydration already completed
     runs-on: ubuntu-latest
-    env:
-      TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
     steps:
-      - name: Checkout payload branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.TARGET_BRANCH }}
-          fetch-depth: 0
-
-      - name: Reconstruct and verify canonical source ZIP
-        shell: bash
+      - name: Report archived hydration state
         run: |
-          set -euo pipefail
-          ROOT='source-bootstrap-v11'
-          B64='/tmp/ai-hvac-v11-core-source.b64'
-          ZIP='/tmp/ai-hvac-v11-core-source.zip'
-          EXPECTED='e119224c5786d761637dc466987f41b6db635a402b1a5ccb5ba86fba0101fcdd'
-
-          cat "$ROOT"/part-{001..013}.b64 \
-              "$ROOT"/part-014a.b64 \
-              "$ROOT"/part-014b.b64 \
-              "$ROOT"/tail-{a..e}.b64 > "$B64"
-
-          B64_CHARS=$(wc -c < "$B64" | tr -d ' ')
-          test "$B64_CHARS" = '241420'
-          echo "SOURCE_BASE64_CHARS_VERIFIED=$B64_CHARS"
-
-          base64 -d "$B64" > "$ZIP"
-
-          ZIP_BYTES=$(wc -c < "$ZIP" | tr -d ' ')
-          test "$ZIP_BYTES" = '181064'
-          echo "SOURCE_ZIP_BYTES_VERIFIED=$ZIP_BYTES"
-
-          ACTUAL=$(sha256sum "$ZIP" | awk '{print $1}')
-          test "$ACTUAL" = "$EXPECTED"
-          echo "SOURCE_ZIP_SHA256_VERIFIED=$ACTUAL"
-
-          FILE_COUNT=$(unzip -Z1 "$ZIP" | grep -v '/$' | wc -l | tr -d ' ')
-          test "$FILE_COUNT" = '227'
-          echo "SOURCE_FILE_COUNT_VERIFIED=$FILE_COUNT"
-
-      - name: Hydrate repository with 227 runtime-core files
-        shell: bash
-        run: |
-          set -euo pipefail
-          ZIP='/tmp/ai-hvac-v11-core-source.zip'
-          EXTRACT='/tmp/ai-hvac-v11-source'
-          WORKFLOW_BACKUP='/tmp/ai-hvac-current-workflows'
-
-          rm -rf "$EXTRACT" "$WORKFLOW_BACKUP"
-          mkdir -p "$EXTRACT" "$WORKFLOW_BACKUP"
-
-          # Preserve the branch's already-authorized workflow definitions.
-          cp -a .github/workflows/. "$WORKFLOW_BACKUP"/
-
-          unzip -q "$ZIP" -d "$EXTRACT"
-          cp -a "$EXTRACT"/. .
-
-          # Do not let the hydration commit create/update workflow files.
-          rm -rf .github/workflows
-          mkdir -p .github/workflows
-          cp -a "$WORKFLOW_BACKUP"/. .github/workflows/
-
-          rm -rf source-bootstrap-v11
-
-      - name: Commit hydrated full source
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE_HEAD=$(git rev-parse HEAD)
-
-          git fetch origin "$TARGET_BRANCH"
-          REMOTE_HEAD=$(git rev-parse "origin/$TARGET_BRANCH")
-          if [[ "$REMOTE_HEAD" != "$BASE_HEAD" ]]; then
-            echo "Remote branch advanced during hydration: base=$BASE_HEAD remote=$REMOTE_HEAD" >&2
-            exit 1
-          fi
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --quiet && { echo 'No hydration changes to commit'; exit 0; }
-          git commit -m 'Hydrate AI HVAC v1.1 full source (227 files)'
-          git push origin HEAD:"$TARGET_BRANCH"
+          echo 'AI HVAC v1.1 full-source hydration has already completed successfully.'
+          echo 'Canonical source ZIP SHA-256: e119224c5786d761637dc466987f41b6db635a402b1a5ccb5ba86fba0101fcdd'
+          echo 'Hydrated runtime-core file count: 227'
+          echo 'The temporary source-bootstrap-v11 payload was intentionally removed after hydration.'
+          echo 'Use Runtime Certification for ongoing source and runtime validation.'
