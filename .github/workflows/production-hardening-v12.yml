@@ -56,6 +56,7 @@ jobs:
       POSTGRES_DB: hvac
       POSTGRES_USER: hvac
       POSTGRES_PASSWORD: v12-runtime-probe-password
+      AUTH_SHARED_SECRET: v12-runtime-probe-auth-secret-0123456789abcdef
       GIT_SHA: ${{ github.sha }}
     steps:
       - name: Checkout
@@ -69,7 +70,7 @@ jobs:
       - name: Apply migrations
         run: docker compose run --rm migrations
 
-      - name: Run database smoke test
+      - name: Run database and tenant isolation smoke tests
         run: docker compose run --rm db-smoke
 
       - name: Start API
@@ -133,6 +134,80 @@ jobs:
           assert payload['requestId'] == 'v12-error-probe'
           assert payload['path'].endswith('/does-not-exist')
           PY
+
+      - name: Verify authentication and RBAC boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          TENANT_ID='10000000-0000-7000-8000-000000000000'
+          JOB_ID='00000000-0000-7000-8000-000000000001'
+          EXTRACTION_ID='00000000-0000-7000-8000-000000000002'
+          PROTECTED_URL="http://localhost:3001/v1/import-jobs/${JOB_ID}/extractions"
+
+          UNAUTH_STATUS="$(curl --silent --output /tmp/unauth.json --write-out '%{http_code}' "$PROTECTED_URL")"
+          cat /tmp/unauth.json
+          test "$UNAUTH_STATUS" = '401'
+
+          BAD_SECRET_STATUS="$(curl --silent \
+            --output /tmp/bad-secret.json \
+            --write-out '%{http_code}' \
+            --header 'x-auth-secret: wrong-secret' \
+            --header 'x-user-id: runtime-probe-user' \
+            --header 'x-user-role: OPERATOR' \
+            --header "x-tenant-id: ${TENANT_ID}" \
+            "$PROTECTED_URL")"
+          cat /tmp/bad-secret.json
+          test "$BAD_SECRET_STATUS" = '401'
+
+          VALID_STATUS="$(curl --silent \
+            --output /tmp/valid-auth.json \
+            --write-out '%{http_code}' \
+            --header "x-auth-secret: ${AUTH_SHARED_SECRET}" \
+            --header 'x-user-id: runtime-probe-user' \
+            --header 'x-user-role: OPERATOR' \
+            --header "x-tenant-id: ${TENANT_ID}" \
+            "$PROTECTED_URL")"
+          cat /tmp/valid-auth.json
+          test "$VALID_STATUS" = '200'
+
+          FORBIDDEN_STATUS="$(curl --silent \
+            --output /tmp/forbidden.json \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header 'content-type: application/json' \
+            --header "x-auth-secret: ${AUTH_SHARED_SECRET}" \
+            --header 'x-user-id: runtime-probe-user' \
+            --header 'x-user-role: OPERATOR' \
+            --header "x-tenant-id: ${TENANT_ID}" \
+            --data '{"decision":"ACCEPTED"}' \
+            "http://localhost:3001/v1/extractions/${EXTRACTION_ID}/review")"
+          cat /tmp/forbidden.json
+          test "$FORBIDDEN_STATUS" = '403'
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          unauth = json.loads(Path('/tmp/unauth.json').read_text(encoding='utf-8'))
+          bad_secret = json.loads(Path('/tmp/bad-secret.json').read_text(encoding='utf-8'))
+          forbidden = json.loads(Path('/tmp/forbidden.json').read_text(encoding='utf-8'))
+
+          assert unauth['errorCode'] == 'AUTH_GATEWAY_SECRET_INVALID'
+          assert bad_secret['errorCode'] == 'AUTH_GATEWAY_SECRET_INVALID'
+          assert forbidden['errorCode'] == 'AUTH_ROLE_FORBIDDEN'
+          PY
+
+      - name: Verify insecure production startup is blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          if docker compose run --rm --no-deps -e AUTH_SHARED_SECRET= api > /tmp/insecure-start.log 2>&1; then
+            cat /tmp/insecure-start.log
+            echo 'Insecure production API unexpectedly started' >&2
+            exit 1
+          fi
+          cat /tmp/insecure-start.log
+          grep -q 'Production startup blocked' /tmp/insecure-start.log
 
       - name: Runtime diagnostics
         if: failure()
