@@ -44,12 +44,78 @@ jobs:
       - name: Build API
         run: npm run build:api
 
+      - name: Generate CycloneDX npm SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          npm sbom --sbom-format cyclonedx > artifacts/npm-sbom.cdx.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('artifacts/npm-sbom.cdx.json').read_text(encoding='utf-8'))
+          assert payload['bomFormat'] == 'CycloneDX'
+          assert payload['specVersion']
+          assert isinstance(payload.get('components', []), list)
+          PY
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hvac-v12-npm-sbom
+          path: artifacts/npm-sbom.cdx.json
+          if-no-files-found: error
+
       - name: Dependency audit
         run: npm audit --audit-level=low
 
+  supply-chain-gate:
+    name: v1.2 Container Vulnerability Gate
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Build API image
+        run: docker build -f apps/api/Dockerfile -t ai-hvac-api:${{ github.sha }} .
+
+      - name: Build Web image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/v1 \
+            -f apps/web/Dockerfile \
+            -t ai-hvac-web:${{ github.sha }} .
+
+      - name: Scan API image for critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ai-hvac-api:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL
+
+      - name: Scan Web image for critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ai-hvac-web:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL
+
   runtime-probes:
     name: v1.2 Runtime Probe Gate
-    needs: quality-gate
+    needs:
+      - quality-gate
+      - supply-chain-gate
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
@@ -57,6 +123,9 @@ jobs:
       POSTGRES_USER: hvac
       POSTGRES_PASSWORD: v12-runtime-probe-password
       AUTH_SHARED_SECRET: v12-runtime-probe-auth-secret-0123456789abcdef
+      JSON_BODY_LIMIT: 64kb
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 12
       GIT_SHA: ${{ github.sha }}
     steps:
       - name: Checkout
@@ -195,6 +264,61 @@ jobs:
           assert unauth['errorCode'] == 'AUTH_GATEWAY_SECRET_INVALID'
           assert bad_secret['errorCode'] == 'AUTH_GATEWAY_SECRET_INVALID'
           assert forbidden['errorCode'] == 'AUTH_ROLE_FORBIDDEN'
+          PY
+
+      - name: Verify payload and rate-limit policies
+        shell: bash
+        run: |
+          set -euo pipefail
+          TENANT_ID='10000000-0000-7000-8000-000000000000'
+          EXTRACTION_ID='00000000-0000-7000-8000-000000000002'
+          PROTECTED_URL='http://localhost:3001/v1/import-jobs/00000000-0000-7000-8000-000000000001/extractions'
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          Path('/tmp/oversized.json').write_text(
+              json.dumps({'decision': 'ACCEPTED', 'correctedValue': 'x' * 70000}),
+              encoding='utf-8',
+          )
+          PY
+
+          PAYLOAD_STATUS="$(curl --silent \
+            --output /tmp/payload-error.txt \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header 'content-type: application/json' \
+            --header "x-auth-secret: ${AUTH_SHARED_SECRET}" \
+            --header 'x-user-id: runtime-probe-user' \
+            --header 'x-user-role: ENGINEER' \
+            --header "x-tenant-id: ${TENANT_ID}" \
+            --data-binary @/tmp/oversized.json \
+            "http://localhost:3001/v1/extractions/${EXTRACTION_ID}/review")"
+          cat /tmp/payload-error.txt
+          test "$PAYLOAD_STATUS" = '413'
+
+          RATE_LIMITED=0
+          for attempt in $(seq 1 30); do
+            STATUS="$(curl --silent \
+              --output /tmp/rate-limit.json \
+              --write-out '%{http_code}' \
+              "$PROTECTED_URL")"
+            if [ "$STATUS" = '429' ]; then
+              RATE_LIMITED=1
+              break
+            fi
+          done
+          cat /tmp/rate-limit.json
+          test "$RATE_LIMITED" = '1'
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/rate-limit.json').read_text(encoding='utf-8'))
+          assert payload['statusCode'] == 429
+          assert payload['errorCode'] == 'RATE_LIMIT_EXCEEDED'
+          assert payload['requestId']
           PY
 
       - name: Verify insecure production startup is blocked
