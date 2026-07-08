@@ -12,11 +12,13 @@ import { RuleStudioModule } from './modules/rule-studio/rule-studio.module';
 import { SpaceVentilationModule } from './modules/space-ventilation/space-ventilation.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RequestObservabilityMiddleware } from './observability/request-observability.middleware';
+import { SecurityModule } from './security/security.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
+    SecurityModule,
     ObservabilityModule,
     HealthModule,
     RuleStudioModule,
