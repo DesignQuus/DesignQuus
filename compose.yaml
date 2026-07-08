@@ -63,6 +63,8 @@ services:
       STORAGE_ROOT: /data/storage
       APP_VERSION: 1.2.0
       GIT_SHA: ${GIT_SHA:-local}
+      AUTH_MODE: trusted_gateway
+      AUTH_SHARED_SECRET: ${AUTH_SHARED_SECRET:-}
     ports:
     - 3001:3001
     volumes:
