@@ -1,0 +1,105 @@
+name: ai-hvac-engineering-os
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hvac}
+      POSTGRES_USER: ${POSTGRES_USER:-hvac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hvac-dev-password}
+    ports:
+    - 5432:5432
+    volumes:
+    - hvac-db-data:/var/lib/postgresql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+  migrations:
+    image: postgis/postgis:18-3.6
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hvac}:${POSTGRES_PASSWORD:-hvac-dev-password}@db:5432/${POSTGRES_DB:-hvac}
+      MIGRATIONS_DIR: /app/database/migrations
+    volumes:
+    - ./database:/app/database:ro
+    - ./scripts:/app/scripts:ro
+    command:
+    - /bin/sh
+    - /app/scripts/run_migrations.sh
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+  db-smoke:
+    image: postgis/postgis:18-3.6
+    working_dir: /app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hvac}:${POSTGRES_PASSWORD:-hvac-dev-password}@db:5432/${POSTGRES_DB:-hvac}
+    volumes:
+    - ./scripts:/app/scripts:ro
+    command:
+    - /bin/sh
+    - /app/scripts/run_db_smoke_test.sh
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: 'no'
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hvac}:${POSTGRES_PASSWORD:-hvac-dev-password}@db:5432/${POSTGRES_DB:-hvac}
+      WEB_ORIGIN: http://localhost:3000
+      STORAGE_ROOT: /data/storage
+      APP_VERSION: 1.0.1
+    ports:
+    - 3001:3001
+    volumes:
+    - hvac-storage:/data/storage
+    depends_on:
+      db-smoke:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - fetch('http://localhost:3001/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/v1
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/v1
+      APP_VERSION: 1.0.1
+    ports:
+    - 3000:3000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+volumes:
+  hvac-db-data: null
+  hvac-storage: null

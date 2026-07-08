@@ -1,0 +1,27 @@
+{
+  "name": "ai-hvac-engineering-os",
+  "version": "1.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @hvac/api && npm run build --workspace @hvac/web",
+    "build:api": "npm run build --workspace @hvac/api",
+    "build:web": "npm run build --workspace @hvac/web",
+    "test:calc": "python -m unittest discover -s workers/calc-worker/tests -p 'test_*.py'",
+    "test:cad": "python -m unittest discover -s workers/cad-worker/tests -p 'test_*.py'",
+    "validate:v1": "python scripts/validate_v10.py",
+    "check": "npm run test:calc && npm run test:cad && npm run build && npm run validate:v1",
+    "certify:engine": "python scripts/run_engineering_e2e_v10.py",
+    "certify:runtime": "sh scripts/certify_runtime_v101.sh",
+    "validate:v101": "python scripts/validate_v101.py"
+  },
+  "overrides": {
+    "postcss": "8.5.16",
+    "multer": "2.2.0"
+  }
+}

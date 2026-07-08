@@ -1,0 +1,16 @@
+policy: ERV_APPROVAL_BLOCKERS_V0_2
+blockers:
+  - code: UNREVIEWED_CRITICAL_EXTRACTION
+    when: critical_extraction.review_status == PENDING
+  - code: MISSING_SPACE
+    when: spaces.count == 0
+  - code: RULE_RUN_INCOMPLETE
+    when: compliance.status != COMPLETED
+  - code: CALCULATION_INCOMPLETE
+    when: calculation.status != COMPLETED
+  - code: NO_SELECTED_EQUIPMENT
+    when: selection.selected_count != 1
+  - code: MISSING_DESIGN_BOM
+    when: design_bom.version_count == 0
+  - code: OPEN_BLOCKER_FINDING
+    when: validation.open_blocker_count > 0

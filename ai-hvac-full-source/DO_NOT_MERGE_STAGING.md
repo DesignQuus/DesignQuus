@@ -1,0 +1,1 @@
+Staging markers will be replaced by the full source tree commit.

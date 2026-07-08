@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.git
+*.zip
+*.sha256
+__pycache__
+**/__pycache__
+.pytest_cache
+.env
+.env.*
+!.env.production.example

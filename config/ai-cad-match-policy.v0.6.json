@@ -1,0 +1,18 @@
+{
+  "version": "0.6.0",
+  "weights": {
+    "geometry_iou": 0.45,
+    "centroid_proximity": 0.2,
+    "area_similarity": 0.15,
+    "text_similarity": 0.15,
+    "layer_confidence": 0.05
+  },
+  "thresholds": {
+    "auto_match_min_score": 0.85,
+    "auto_match_min_gap_to_second": 0.1,
+    "review_min_score": 0.65
+  },
+  "geometry_iou_grid_size": 96,
+  "centroid_distance_full_score": 0.02,
+  "centroid_distance_zero_score": 0.25
+}

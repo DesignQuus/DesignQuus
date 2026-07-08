@@ -1,0 +1,20 @@
+name: Hydrate AI HVAC v1.1 Full Source (Archived)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archived:
+    name: Hydration already completed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report archived hydration state
+        run: |
+          echo 'AI HVAC v1.1 full-source hydration has already completed successfully.'
+          echo 'Canonical source ZIP SHA-256: e119224c5786d761637dc466987f41b6db635a402b1a5ccb5ba86fba0101fcdd'
+          echo 'Hydrated runtime-core file count: 227'
+          echo 'The temporary source-bootstrap-v11 payload was intentionally removed after hydration.'
+          echo 'Use Runtime Certification for ongoing source and runtime validation.'

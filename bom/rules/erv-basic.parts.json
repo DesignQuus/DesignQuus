@@ -1,0 +1,10 @@
+{
+  "rule_set": "ERV_BASIC_PARTS_V0.2",
+  "warning": "Baseline example. Site conditions and approved design rules must override quantities.",
+  "items": [
+    {"item_code": "ERV-UNIT", "description": "전열교환기 본체", "quantity_formula": "selected_equipment_count", "unit": "EA"},
+    {"item_code": "FILTER-SET", "description": "기본 필터 세트", "quantity_formula": "selected_equipment_count", "unit": "SET"},
+    {"item_code": "CTRL-LOCAL", "description": "로컬 제어기", "quantity_formula": "selected_equipment_count", "unit": "EA"},
+    {"item_code": "FLEX-CONN", "description": "플렉시블 연결재", "quantity_formula": "selected_equipment_count * 4", "unit": "EA"}
+  ]
+}

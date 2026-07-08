@@ -1,0 +1,1 @@
+The next commit will replace staging files with the complete project tree.

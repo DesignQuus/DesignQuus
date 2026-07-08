@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/erv-catalog-canonical-v0.9.json",
+  "type": "object",
+  "required": [
+    "manufacturer_code",
+    "model_code",
+    "model_name",
+    "airflow_m3_h",
+    "sales_status"
+  ],
+  "properties": {
+    "manufacturer_code": {
+      "type": "string"
+    },
+    "model_code": {
+      "type": "string"
+    },
+    "model_name": {
+      "type": "string"
+    },
+    "airflow_m3_h": {
+      "type": "number",
+      "minimum": 0
+    },
+    "external_static_pressure_pa": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "sensible_efficiency_pct": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "total_efficiency_pct": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "power_input_kw": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "voltage_v": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "phase_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "noise_db_a": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "list_price": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "lead_time_days": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "sales_status": {
+      "enum": [
+        "ACTIVE",
+        "DISCONTINUED",
+        "REPLACED",
+        "SPECIAL_ORDER"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

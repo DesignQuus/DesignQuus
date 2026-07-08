@@ -1,0 +1,40 @@
+{
+  "snapshot_date": "2026-07-08",
+  "sources": [
+    {
+      "source_code": "KDS-31-25-20-2026",
+      "title": "KDS 31 25 20:2026 환기설비 설계기준",
+      "authority": "국가건설기준센터 / 한국건설기술연구원",
+      "source_type": "KDS",
+      "effective_from": "2026-02-23",
+      "status": "METADATA_ONLY",
+      "official_locator": "KCSC KDS 31 mechanical design standards list",
+      "content_policy": "REQUIRES_APPROVED_SOURCE_CONTENT_IMPORT"
+    },
+    {
+      "source_code": "BLDG-EQUIP-RULE-2025-10-31",
+      "title": "건축물의 설비기준 등에 관한 규칙",
+      "authority": "국토교통부",
+      "source_type": "LAW",
+      "effective_from": "2025-10-31",
+      "status": "METADATA_ONLY",
+      "official_locator": "국가법령정보센터 법령 ID 006188",
+      "related_clauses": [
+        "제11조",
+        "별표 1의5",
+        "별표 1의6"
+      ],
+      "content_policy": "REQUIRES_APPROVED_SOURCE_CONTENT_IMPORT"
+    },
+    {
+      "source_code": "IAQ-ENFORCEMENT-DECREE-2026-04-16",
+      "title": "실내공기질 관리법 시행령",
+      "authority": "환경부",
+      "source_type": "LAW",
+      "effective_from": "2026-04-16",
+      "status": "METADATA_ONLY",
+      "official_locator": "국가법령정보센터 법령 ID 005137",
+      "content_policy": "APPLICABILITY_METADATA_ONLY"
+    }
+  ]
+}
