@@ -5,8 +5,11 @@ import {
   REQUEST_ID_HEADER,
 } from './common/request-id.middleware';
 import { HttpExceptionFilter } from './observability/http-exception.filter';
+import { validateSecurityEnvironment } from './security/security-environment';
 
 async function bootstrap(): Promise<void> {
+  validateSecurityEnvironment();
+
   const app = await NestFactory.create(AppModule, {
     logger:
       process.env.NODE_ENV === 'production'
