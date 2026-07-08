@@ -1,0 +1,51 @@
+{
+  "certificate_version": "1.0.2-bootstrap",
+  "status": "PASSED",
+  "certified_at": "2026-07-08T07:24:17.078479+00:00",
+  "source_package": {
+    "name": "ai-hvac-engineering-os-runtime-certification-v1.0.1.zip",
+    "sha256": "ece0e2b5750c0e309a6d78ed302b8b4ba2e2a48a06db6a0733542bee6b87b660"
+  },
+  "runtime": {
+    "node_version": "v24.17.0",
+    "python_version": "3.13.14",
+    "docker_version": "28.0.4",
+    "docker_compose_version": "2.38.2",
+    "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+    "postgis_version": "3.6 USE_GEOS=1 USE_PROJ=1 USE_STATS=1",
+    "exact_iou": 0.3333333333333333
+  },
+  "engineering_e2e": {
+    "status": "PASSED",
+    "space": {
+      "space_type_code": "CONFERENCE_ROOM",
+      "area_m2": 20.0,
+      "occupancy_design": 20,
+      "ceiling_height_m": 3.0,
+      "volume_m3": 60.0
+    },
+    "ventilation": {
+      "per_person_m3_h": 500.0,
+      "per_area_m3_h": 80.0,
+      "required_flow_m3_h": 500.0,
+      "method": "MAX_OF"
+    },
+    "selection": {
+      "selected_model": "ERV-A",
+      "total_score": 80.75,
+      "candidate_count": 2
+    },
+    "bom": {
+      "item_count": 4,
+      "items": [
+        {"item_code": "ERV-UNIT", "quantity": 1, "unit": "EA"},
+        {"item_code": "FILTER-SET", "quantity": 1, "unit": "SET"},
+        {"item_code": "CTRL-LOCAL", "quantity": 1, "unit": "EA"},
+        {"item_code": "FLEX-CONN", "quantity": 4, "unit": "EA"}
+      ]
+    },
+    "approval_gate": "REVIEW_READY",
+    "blockers": []
+  },
+  "blockers": []
+}
