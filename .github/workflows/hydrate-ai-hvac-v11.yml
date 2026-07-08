@@ -65,17 +65,37 @@ jobs:
           set -euo pipefail
           ZIP='/tmp/ai-hvac-v11-core-source.zip'
           EXTRACT='/tmp/ai-hvac-v11-source'
+          WORKFLOW_BACKUP='/tmp/ai-hvac-current-workflows'
 
-          rm -rf "$EXTRACT"
-          mkdir -p "$EXTRACT"
+          rm -rf "$EXTRACT" "$WORKFLOW_BACKUP"
+          mkdir -p "$EXTRACT" "$WORKFLOW_BACKUP"
+
+          # Preserve the branch's already-authorized workflow definitions.
+          cp -a .github/workflows/. "$WORKFLOW_BACKUP"/
+
           unzip -q "$ZIP" -d "$EXTRACT"
           cp -a "$EXTRACT"/. .
+
+          # Do not let the hydration commit create/update workflow files.
+          rm -rf .github/workflows
+          mkdir -p .github/workflows
+          cp -a "$WORKFLOW_BACKUP"/. .github/workflows/
+
           rm -rf source-bootstrap-v11
 
       - name: Commit hydrated full source
         shell: bash
         run: |
           set -euo pipefail
+          BASE_HEAD=$(git rev-parse HEAD)
+
+          git fetch origin "$TARGET_BRANCH"
+          REMOTE_HEAD=$(git rev-parse "origin/$TARGET_BRANCH")
+          if [[ "$REMOTE_HEAD" != "$BASE_HEAD" ]]; then
+            echo "Remote branch advanced during hydration: base=$BASE_HEAD remote=$REMOTE_HEAD" >&2
+            exit 1
+          fi
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
