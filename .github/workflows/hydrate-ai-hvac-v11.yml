@@ -8,6 +8,8 @@ on:
     paths:
       - '.github/workflows/hydrate-ai-hvac-v11.yml'
       - 'source-bootstrap-v11/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -16,10 +18,13 @@ jobs:
   hydrate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    env:
+      TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
     steps:
       - name: Checkout payload branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.TARGET_BRANCH }}
           fetch-depth: 0
 
       - name: Reconstruct and verify canonical source ZIP
@@ -75,4 +80,4 @@ jobs:
           git add -A
           git diff --cached --quiet && { echo 'No hydration changes to commit'; exit 0; }
           git commit -m 'Hydrate AI HVAC v1.1 full source (227 files)'
-          git push origin HEAD
+          git push origin HEAD:"$TARGET_BRANCH"
