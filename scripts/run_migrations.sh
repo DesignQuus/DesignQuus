@@ -27,10 +27,15 @@ while IFS= read -r migration || [ -n "$migration" ]; do
     exit 1
   fi
 
+  # The manifest is repository-controlled, but still escape SQL quotes so the
+  # migration name can be used safely in plain psql -c statements. psql's
+  # :'variable' interpolation is not relied upon here because -c execution in
+  # the runtime container passed the token through to PostgreSQL unchanged.
+  migration_literal="$(printf '%s' "$migration" | sed "s/'/''/g")"
+
   already_applied="$(
-    psql "$DATABASE_URL" -Atq \
-      -v migration_name="$migration" \
-      -c "SELECT 1 FROM public.schema_migrations WHERE migration_name = :'migration_name';"
+    psql "$DATABASE_URL" -Atq -v ON_ERROR_STOP=1 \
+      -c "SELECT 1 FROM public.schema_migrations WHERE migration_name = '$migration_literal';"
   )"
 
   if [ "$already_applied" = "1" ]; then
@@ -42,8 +47,7 @@ while IFS= read -r migration || [ -n "$migration" ]; do
   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file"
 
   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
-    -v migration_name="$migration" \
-    -c "INSERT INTO public.schema_migrations(migration_name) VALUES (:'migration_name');"
+    -c "INSERT INTO public.schema_migrations(migration_name) VALUES ('$migration_literal');"
 
 done < "$MANIFEST"
 
