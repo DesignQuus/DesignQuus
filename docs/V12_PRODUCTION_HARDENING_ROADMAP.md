@@ -14,7 +14,9 @@ The v1.2 program does not change the core engineering ownership model:
 
 ## Phase 1 — Runtime Health and Traceability
 
-Status: **IMPLEMENTED — CI verification pending**
+Status: **PASSED**
+
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE1.md`
 
 - Global `x-request-id` propagation.
 - Graceful shutdown hooks.
@@ -25,18 +27,30 @@ Status: **IMPLEMENTED — CI verification pending**
 - Docker Compose API healthcheck switched from shallow health to readiness.
 - v1.2 source/build/runtime probe CI gate.
 
-## Phase 2 — Observability
+## Phase 2 — Structured Observability
 
-Planned:
+Status: **PASSED**
 
-- Structured JSON logs.
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE2.md`
+
+- Structured JSON request logs.
 - Request duration and response status logging.
 - Stable error codes and correlation IDs.
-- OpenTelemetry trace contract.
-- Prometheus-compatible service metrics.
+- Stable HTTP error response envelope.
+- Server error message masking.
+- Prometheus-compatible service metrics at `/v1/metrics`.
+- Build metadata and process uptime metrics.
+- HTTP request count and duration-sum metrics.
+
+Advanced observability extensions remain available for later hardening:
+
+- OpenTelemetry distributed trace export.
 - Engineering-run metrics for rule, calculation, CAD, and selection pipelines.
+- External Prometheus/Grafana deployment profiles.
 
 ## Phase 3 — Security and Tenant Isolation
+
+Status: **IN PROGRESS**
 
 Planned:
 
@@ -49,7 +63,7 @@ Planned:
 
 ## Phase 4 — Reliability and Recovery
 
-Planned:
+Status: **PLANNED**
 
 - Durable job retry policy.
 - Dead-letter and replay workflow.
@@ -60,7 +74,7 @@ Planned:
 
 ## Phase 5 — Performance and Release Certification
 
-Planned:
+Status: **PLANNED**
 
 - API latency budgets.
 - Concurrent drawing upload and review load tests.
@@ -82,5 +96,7 @@ A v1.2 release candidate must satisfy all of the following:
 6. `/health/live` returns HTTP 200.
 7. `/health/ready` returns HTTP 200 only when PostgreSQL is reachable.
 8. Request ID propagation is verified end to end.
-9. Production readiness defects are documented before certification.
-10. Certification success never auto-merges the branch.
+9. Structured metrics and stable error envelopes are runtime verified.
+10. Cross-tenant isolation and RBAC gates pass.
+11. Production readiness defects are documented before certification.
+12. Certification success never auto-merges the branch.
