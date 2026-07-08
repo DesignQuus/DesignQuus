@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import type { Pool } from 'pg';
 import { PG_POOL } from '../../database/database.constants';
+import { Public } from '../../security/public.decorator';
 
 const SERVICE_NAME = 'ai-hvac-engineering-os-api';
 const READINESS_TIMEOUT_MS = 3_000;
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
