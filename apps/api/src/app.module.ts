@@ -12,6 +12,7 @@ import { RuleStudioModule } from './modules/rule-studio/rule-studio.module';
 import { SpaceVentilationModule } from './modules/space-ventilation/space-ventilation.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RequestObservabilityMiddleware } from './observability/request-observability.middleware';
+import { RequestPolicyMiddleware } from './security/request-policy.middleware';
 import { SecurityModule } from './security/security.module';
 
 @Module({
@@ -33,6 +34,8 @@ import { SecurityModule } from './security/security.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestObservabilityMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestObservabilityMiddleware, RequestPolicyMiddleware)
+      .forRoutes('*');
   }
 }
