@@ -34,6 +34,7 @@ def main() -> None:
         "apps/api/src/main.ts",
         "requestIdMiddleware",
         "HttpExceptionFilter",
+        "validateSecurityEnvironment",
         "useGlobalFilters",
         "enableShutdownHooks",
         "REQUEST_ID_HEADER",
@@ -45,7 +46,14 @@ def main() -> None:
         "response.setHeader",
     )
     require_text(
+        "apps/api/src/common/tenant.ts",
+        "RequestWithIdentity",
+        "request.identity?.tenantId",
+        "AUTH_IDENTITY_REQUIRED",
+    )
+    require_text(
         "apps/api/src/modules/health/health.controller.ts",
+        "@Public()",
         "@Get('live')",
         "@Get('ready')",
         "SELECT 1",
@@ -55,6 +63,7 @@ def main() -> None:
     )
     require_text(
         "apps/api/src/app.module.ts",
+        "SecurityModule",
         "ObservabilityModule",
         "RequestObservabilityMiddleware",
         "forRoutes('*')",
@@ -68,6 +77,7 @@ def main() -> None:
     )
     require_text(
         "apps/api/src/observability/metrics.controller.ts",
+        "@Public()",
         "@Controller('metrics')",
         "text/plain; version=0.0.4",
     )
@@ -86,10 +96,71 @@ def main() -> None:
         "requestId",
     )
     require_text(
+        "apps/api/src/security/authentication.guard.ts",
+        "trusted_gateway",
+        "timingSafeEqual",
+        "AUTH_GATEWAY_SECRET_INVALID",
+        "x-user-id",
+        "x-user-role",
+        "x-tenant-id",
+    )
+    require_text(
+        "apps/api/src/security/roles.guard.ts",
+        "AUTH_ROLE_FORBIDDEN",
+        "requiredRoles.includes(role)",
+    )
+    require_text(
+        "apps/api/src/security/security.module.ts",
+        "APP_GUARD",
+        "AuthenticationGuard",
+        "RolesGuard",
+    )
+    require_text(
+        "apps/api/src/security/security-environment.ts",
+        "Production startup blocked",
+        "AUTH_SHARED_SECRET",
+        "32",
+    )
+    require_text(
+        "apps/api/src/modules/document/presentation/document.controller.ts",
+        "@Roles('OPERATOR', 'ENGINEER', 'ADMINISTRATOR')",
+        "@Roles('ENGINEER', 'APPROVER', 'ADMINISTRATOR')",
+    )
+    require_text(
+        "apps/api/src/database/tenant-transaction.ts",
+        "SET LOCAL ROLE app_runtime",
+        "app.tenant_id",
+    )
+    require_text(
+        "database/migrations/023_security_runtime_role.sql",
+        "CREATE ROLE app_runtime",
+        "NOSUPERUSER",
+        "FORCE ROW LEVEL SECURITY",
+        "GRANT EXECUTE ON ALL FUNCTIONS",
+    )
+    require_text(
+        "database/migrations/runtime-manifest.txt",
+        "023_security_runtime_role.sql",
+    )
+    require_text(
+        "scripts/tenant_isolation_test.sql",
+        "TENANT_A_READ_ISOLATION_FAILED",
+        "TENANT_B_READ_ISOLATION_FAILED",
+        "CROSS_TENANT_WRITE_WAS_NOT_BLOCKED",
+        "TENANT_ISOLATION_CERTIFIED",
+    )
+    require_text(
+        "scripts/run_db_smoke_test.sh",
+        "tenant_isolation_test.sql",
+        "TENANT_ISOLATION_OK",
+    )
+    require_text(
         "compose.yaml",
         "/v1/health/ready",
         "APP_VERSION: 1.2.0",
         "GIT_SHA:",
+        "AUTH_MODE: trusted_gateway",
+        "AUTH_SHARED_SECRET:",
         "stop_grace_period: 20s",
     )
 
@@ -103,6 +174,13 @@ def main() -> None:
         "structured_request_logs": True,
         "stable_error_envelope": True,
         "prometheus_metrics": "/v1/metrics",
+        "trusted_gateway_auth": True,
+        "rbac": ["OPERATOR", "ENGINEER", "APPROVER", "ADMINISTRATOR"],
+        "verified_tenant_identity": True,
+        "runtime_db_role": "app_runtime",
+        "forced_rls": True,
+        "cross_tenant_certification": True,
+        "production_secret_blocker": True,
         "compose_readiness_gate": True,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
