@@ -32,17 +32,24 @@ jobs:
         run: |
           set -euo pipefail
           ROOT='source-bootstrap-v11'
+          B64='/tmp/ai-hvac-v11-core-source.b64'
           ZIP='/tmp/ai-hvac-v11-core-source.zip'
           EXPECTED='e119224c5786d761637dc466987f41b6db635a402b1a5ccb5ba86fba0101fcdd'
 
-          cat \
-            "$ROOT"/part-{001..014}.b64 \
-            "$ROOT"/tail-a.b64 \
-            "$ROOT"/tail-b.b64 \
-            "$ROOT"/tail-c.b64 \
-            "$ROOT"/tail-d.b64 \
-            "$ROOT"/tail-e.b64 \
-            | base64 -d > "$ZIP"
+          cat "$ROOT"/part-{001..013}.b64 \
+              "$ROOT"/part-014a.b64 \
+              "$ROOT"/part-014b.b64 \
+              "$ROOT"/tail-{a..e}.b64 > "$B64"
+
+          B64_CHARS=$(wc -c < "$B64" | tr -d ' ')
+          test "$B64_CHARS" = '241420'
+          echo "SOURCE_BASE64_CHARS_VERIFIED=$B64_CHARS"
+
+          base64 -d "$B64" > "$ZIP"
+
+          ZIP_BYTES=$(wc -c < "$ZIP" | tr -d ' ')
+          test "$ZIP_BYTES" = '181064'
+          echo "SOURCE_ZIP_BYTES_VERIFIED=$ZIP_BYTES"
 
           ACTUAL=$(sha256sum "$ZIP" | awk '{print $1}')
           test "$ACTUAL" = "$EXPECTED"
