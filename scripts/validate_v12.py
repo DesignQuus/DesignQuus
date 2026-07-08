@@ -35,6 +35,8 @@ def main() -> None:
         "requestIdMiddleware",
         "HttpExceptionFilter",
         "validateSecurityEnvironment",
+        "bodyParser: false",
+        "JSON_BODY_LIMIT",
         "useGlobalFilters",
         "enableShutdownHooks",
         "REQUEST_ID_HEADER",
@@ -66,6 +68,7 @@ def main() -> None:
         "SecurityModule",
         "ObservabilityModule",
         "RequestObservabilityMiddleware",
+        "RequestPolicyMiddleware",
         "forRoutes('*')",
     )
     require_text(
@@ -122,6 +125,14 @@ def main() -> None:
         "32",
     )
     require_text(
+        "apps/api/src/security/request-policy.middleware.ts",
+        "RATE_LIMIT_WINDOW_MS",
+        "RATE_LIMIT_MAX_REQUESTS",
+        "RATE_LIMIT_EXCEEDED",
+        "security.rate_limit_exceeded",
+        "x-ratelimit-remaining",
+    )
+    require_text(
         "apps/api/src/modules/document/presentation/document.controller.ts",
         "@Roles('OPERATOR', 'ENGINEER', 'ADMINISTRATOR')",
         "@Roles('ENGINEER', 'APPROVER', 'ADMINISTRATOR')",
@@ -161,7 +172,19 @@ def main() -> None:
         "GIT_SHA:",
         "AUTH_MODE: trusted_gateway",
         "AUTH_SHARED_SECRET:",
+        "JSON_BODY_LIMIT:",
+        "RATE_LIMIT_WINDOW_MS:",
+        "RATE_LIMIT_MAX_REQUESTS:",
         "stop_grace_period: 20s",
+    )
+    require_text(
+        ".github/workflows/production-hardening-v12.yml",
+        "npm sbom --sbom-format cyclonedx",
+        "aquasecurity/trivy-action@v0.36.0",
+        "Scan API image for critical vulnerabilities",
+        "Scan Web image for critical vulnerabilities",
+        "RATE_LIMIT_EXCEEDED",
+        "PAYLOAD_STATUS",
     )
 
     summary = {
@@ -181,6 +204,10 @@ def main() -> None:
         "forced_rls": True,
         "cross_tenant_certification": True,
         "production_secret_blocker": True,
+        "json_payload_limit": True,
+        "application_rate_limit": True,
+        "cyclonedx_sbom": True,
+        "container_critical_vulnerability_gate": True,
         "compose_readiness_gate": True,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
