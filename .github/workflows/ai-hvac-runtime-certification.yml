@@ -58,7 +58,10 @@ jobs:
             postgis/postgis:18-3.6
 
           for i in $(seq 1 60); do
-            if docker exec ai-hvac-postgis pg_isready -U postgres -d hvac; then
+            if docker exec ai-hvac-postgis \
+              psql -U postgres -d hvac -Atqc 'SELECT 1' 2>/dev/null \
+              | grep -qx '1'; then
+              echo 'POSTGRES_TARGET_DATABASE_READY=1'
               exit 0
             fi
             sleep 2
@@ -70,7 +73,7 @@ jobs:
       - name: Apply PostGIS bootstrap SQL
         run: |
           docker exec -i ai-hvac-postgis \
-            psql -U postgres -d hvac \
+            psql -v ON_ERROR_STOP=1 -U postgres -d hvac \
             < ai-hvac-runtime/bootstrap.sql
 
       - name: Collect runtime facts
