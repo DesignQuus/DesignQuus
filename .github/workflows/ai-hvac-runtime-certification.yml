@@ -1,0 +1,133 @@
+name: AI HVAC Bootstrap Runtime Certification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/ai-hvac-runtime-cert-v1.0.2-session-20260708
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-hvac-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-bootstrap:
+    name: Node 24 / PostgreSQL 18 / PostGIS 3.6 / Engineering E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.17.0"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Verify bootstrap manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('ai-hvac-runtime/manifest.v1.0.2.json').read_text())
+          assert data['source_package']['sha256'] == 'ece0e2b5750c0e309a6d78ed302b8b4ba2e2a48a06db6a0733542bee6b87b660'
+          assert data['source_package']['local_regression_tests'] == 83
+          assert data['source_package']['local_engineering_e2e'] == 'PASSED'
+          print('BOOTSTRAP_MANIFEST_OK')
+          PY
+
+      - name: Start PostgreSQL 18 + PostGIS 3.6
+        run: |
+          docker run -d \
+            --name ai-hvac-postgis \
+            -e POSTGRES_PASSWORD=hvac-runtime-password \
+            -e POSTGRES_DB=hvac \
+            -p 5432:5432 \
+            postgis/postgis:18-3.6
+
+          for i in $(seq 1 60); do
+            if docker exec ai-hvac-postgis pg_isready -U postgres -d hvac; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs ai-hvac-postgis
+          exit 1
+
+      - name: Apply PostGIS bootstrap SQL
+        run: |
+          docker exec -i ai-hvac-postgis \
+            psql -U postgres -d hvac \
+            < ai-hvac-runtime/bootstrap.sql
+
+      - name: Collect runtime facts
+        run: |
+          NODE_VERSION="$(node --version)"
+          POSTGRES_VERSION="$(docker exec ai-hvac-postgis psql -U postgres -d hvac -Atc 'SHOW server_version;')"
+          POSTGIS_VERSION="$(docker exec ai-hvac-postgis psql -U postgres -d hvac -Atc 'SELECT postgis_version();')"
+          EXACT_IOU="$(docker exec ai-hvac-postgis psql -U postgres -d hvac -Atc "SELECT ST_Area(ST_Intersection(ST_GeomFromText('POLYGON((0 0,2 0,2 2,0 2,0 0))'),ST_GeomFromText('POLYGON((1 0,3 0,3 2,1 2,1 0))')))/ST_Area(ST_Union(ST_GeomFromText('POLYGON((0 0,2 0,2 2,0 2,0 0))'),ST_GeomFromText('POLYGON((1 0,3 0,3 2,1 2,1 0))')));")"
+          DOCKER_VERSION="$(docker version --format '{{.Server.Version}}')"
+          COMPOSE_VERSION="$(docker compose version --short)"
+
+          {
+            echo "NODE_VERSION=$NODE_VERSION"
+            echo "POSTGRES_VERSION=$POSTGRES_VERSION"
+            echo "POSTGIS_VERSION=$POSTGIS_VERSION"
+            echo "EXACT_IOU=$EXACT_IOU"
+            echo "DOCKER_VERSION=$DOCKER_VERSION"
+            echo "COMPOSE_VERSION=$COMPOSE_VERSION"
+          } >> "$GITHUB_ENV"
+
+          echo "Node: $NODE_VERSION"
+          echo "PostgreSQL: $POSTGRES_VERSION"
+          echo "PostGIS: $POSTGIS_VERSION"
+          echo "Exact IoU: $EXACT_IOU"
+
+      - name: Run engineering E2E and generate certificate
+        run: python ai-hvac-runtime/certify_bootstrap.py
+
+      - name: Verify runtime certificate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('artifacts/runtime-certificate-v1.0.2-bootstrap.json')
+          cert = json.loads(path.read_text())
+          assert cert['status'] == 'PASSED', cert
+          assert cert['runtime']['postgres_version'].startswith('18.')
+          assert '3.6' in cert['runtime']['postgis_version']
+          assert cert['engineering_e2e']['ventilation']['required_flow_m3_h'] == 500.0
+          assert cert['engineering_e2e']['selection']['selected_model'] == 'ERV-A'
+          assert cert['engineering_e2e']['bom']['item_count'] == 4
+          assert cert['engineering_e2e']['approval_gate'] == 'REVIEW_READY'
+          assert cert['blockers'] == []
+          print('AI_HVAC_RUNTIME_BOOTSTRAP_PASSED')
+          PY
+
+      - name: Upload runtime certificate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hvac-runtime-certificate-v1.0.2-bootstrap
+          path: artifacts/runtime-certificate-v1.0.2-bootstrap.json
+          if-no-files-found: error
+
+      - name: PostGIS logs on failure
+        if: failure()
+        run: docker logs ai-hvac-postgis || true
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f ai-hvac-postgis || true

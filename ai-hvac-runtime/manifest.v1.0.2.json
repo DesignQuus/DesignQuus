@@ -1,0 +1,23 @@
+{
+  "project": "AI HVAC Engineering OS",
+  "stage": "GitHub Runtime Bootstrap",
+  "version": "1.0.2-bootstrap",
+  "source_package": {
+    "name": "ai-hvac-engineering-os-runtime-certification-v1.0.1.zip",
+    "sha256": "ece0e2b5750c0e309a6d78ed302b8b4ba2e2a48a06db6a0733542bee6b87b660",
+    "local_regression_tests": 83,
+    "local_engineering_e2e": "PASSED"
+  },
+  "github_runtime_gates": {
+    "node": "24.x",
+    "postgresql": "18.x",
+    "postgis": "3.6.x",
+    "exact_iou": "1/3 within tolerance",
+    "required_flow_m3_h": 500,
+    "selected_model": "ERV-A",
+    "bom_item_count": 4,
+    "approval_gate": "REVIEW_READY",
+    "blockers": 0
+  },
+  "scope_note": "This bootstrap certifies GitHub Runner + Docker/PostGIS + engineering handshake. Full v1.0.1 source-tree certification remains a separate gate until the full source tree is published to GitHub."
+}
