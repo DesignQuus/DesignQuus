@@ -1,0 +1,29 @@
+{
+  "snapshot_date": "2026-07-08",
+  "sources": [
+    {
+      "source_code": "KDS-31-25-20-2026",
+      "title": "KDS 31 25 20:2026 환기설비 설계기준",
+      "authority": "국가건설기준센터 / 한국건설기술연구원",
+      "effective_from": "2026-02-23",
+      "status": "METADATA_ONLY",
+      "verification_note": "Current KCSC viewer/list verified on 2026-07-08"
+    },
+    {
+      "source_code": "IAQ-ENFORCEMENT-DECREE-2026-04-16",
+      "title": "실내공기질 관리법 시행령",
+      "authority": "기후에너지환경부",
+      "effective_from": "2026-04-16",
+      "status": "METADATA_ONLY",
+      "verification_note": "Current law.go.kr enforcement date verified on 2026-07-08"
+    },
+    {
+      "source_code": "IAQ-ACT-2026-03-26",
+      "title": "실내공기질 관리법",
+      "authority": "기후에너지환경부",
+      "effective_from": "2026-03-26",
+      "status": "METADATA_ONLY",
+      "verification_note": "Current law.go.kr enforcement date verified on 2026-07-08"
+    }
+  ]
+}

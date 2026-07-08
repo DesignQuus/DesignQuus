@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DrawingRecognitionResult",
+  "type": "object",
+  "required": [
+    "adapter",
+    "objects"
+  ],
+  "properties": {
+    "adapter": {
+      "type": "string"
+    },
+    "model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "object_type",
+          "confidence_score",
+          "source_page",
+          "coordinate_space"
+        ]
+      }
+    }
+  }
+}

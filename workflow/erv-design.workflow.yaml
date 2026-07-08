@@ -1,0 +1,34 @@
+workflow: ERV_DESIGN_V0_2
+version: 0.2.0
+steps:
+  - code: DRAWING
+    next: AI_EXTRACTION
+    gate: source_file_version_exists
+  - code: AI_EXTRACTION
+    next: AI_REVIEW
+    job_type: DRAWING_AI_ANALYZE
+  - code: AI_REVIEW
+    next: CORE_MODEL
+    gate: critical_extractions_reviewed
+  - code: CORE_MODEL
+    next: COMPLIANCE
+    gate: at_least_one_space_exists
+  - code: COMPLIANCE
+    next: CALCULATION
+    job_type: COMPLIANCE_RUN
+    gate: approved_rule_version_only
+  - code: CALCULATION
+    next: EQUIPMENT_SELECTION
+    job_type: VENTILATION_FLOW
+    gate: calculation_completed
+  - code: EQUIPMENT_SELECTION
+    next: BOM
+    gate: one_candidate_selected
+  - code: BOM
+    next: REVIEW
+    gate: design_bom_exists
+  - code: REVIEW
+    next: APPROVAL
+    gate: no_open_blockers
+  - code: APPROVAL
+    terminal: true

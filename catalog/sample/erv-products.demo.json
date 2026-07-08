@@ -1,0 +1,8 @@
+{
+  "warning": "Fictional sample products only. Not manufacturer data.",
+  "products": [
+    {"model_code": "ERV-DEMO-0500", "airflow_m3_h": 500, "external_static_pressure_pa": 150, "power_input_kw": 0.35, "list_price": 1000000, "lead_time_days": 7},
+    {"model_code": "ERV-DEMO-1000", "airflow_m3_h": 1000, "external_static_pressure_pa": 200, "power_input_kw": 0.65, "list_price": 1700000, "lead_time_days": 10},
+    {"model_code": "ERV-DEMO-1500", "airflow_m3_h": 1500, "external_static_pressure_pa": 250, "power_input_kw": 0.95, "list_price": 2300000, "lead_time_days": 14}
+  ]
+}

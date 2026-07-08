@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/runtime-certificate-v1.0.1.json",
+  "type": "object",
+  "required": [
+    "certificate_version",
+    "status",
+    "certified_at",
+    "source",
+    "runtime",
+    "database",
+    "application",
+    "engineering_e2e",
+    "quality_gates"
+  ],
+  "properties": {
+    "certificate_version": {
+      "const": "1.0.1"
+    },
+    "status": {
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "NOT_EXECUTED"
+      ]
+    },
+    "certified_at": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "git_sha",
+        "git_ref"
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "node_version",
+        "python_version",
+        "docker_version",
+        "docker_compose_version"
+      ]
+    },
+    "database": {
+      "type": "object",
+      "required": [
+        "postgres_version",
+        "postgis_version",
+        "migration_count",
+        "db_smoke_status"
+      ]
+    },
+    "application": {
+      "type": "object",
+      "required": [
+        "api_health_status",
+        "web_http_status",
+        "api_image",
+        "web_image"
+      ]
+    },
+    "engineering_e2e": {
+      "type": "object",
+      "required": [
+        "status",
+        "required_flow_m3_h",
+        "selected_model",
+        "bom_item_count",
+        "approval_gate"
+      ]
+    },
+    "quality_gates": {
+      "type": "object",
+      "required": [
+        "calc_rule_catalog_tests",
+        "cad_geometry_tests",
+        "npm_audit_vulnerabilities",
+        "blockers"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

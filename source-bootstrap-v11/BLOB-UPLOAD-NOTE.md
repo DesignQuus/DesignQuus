@@ -1,1 +1,0 @@
-Blob upload continues with raw binary segments 018–025. The branch remains valid while unattached Git blob objects are prepared; they become visible only after the final tree/commit is created.

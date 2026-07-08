@@ -1,0 +1,21 @@
+{
+  "$schema": "https://example.local/schemas/hvac-rule-v0.2.json",
+  "rule_code": "VENT-DEMO-001",
+  "name": "Demo conference room ventilation rule",
+  "production_use": false,
+  "warning": "Example only. Replace all rates with legally and technically reviewed values.",
+  "effective_from": "2026-01-01",
+  "condition": {
+    "all": [
+      {"field": "space.space_type_code", "operator": "eq", "value": "CONFERENCE_ROOM"}
+    ]
+  },
+  "result": {
+    "calculation_code": "VENTILATION_FLOW",
+    "method": "MAX_OF",
+    "parameters": {
+      "per_person_m3_h": 0.0,
+      "per_area_m3_h_m2": 0.0
+    }
+  }
+}

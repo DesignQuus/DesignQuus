@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ventilation-rule-draft-v0.9.json",
+  "type": "object",
+  "required": [
+    "rule_code",
+    "name",
+    "source_code",
+    "source_clause",
+    "effective_from",
+    "priority",
+    "legal_effect",
+    "conditions",
+    "calculation_method",
+    "parameters"
+  ],
+  "properties": {
+    "rule_code": {
+      "type": "string",
+      "minLength": 3
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_clause": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "effective_to": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "priority": {
+      "type": "integer"
+    },
+    "legal_effect": {
+      "enum": [
+        "LEGAL_REQUIREMENT",
+        "ENGINEERING_STANDARD",
+        "PROJECT_REQUIREMENT",
+        "INTERNAL_POLICY"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "field",
+          "operator"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "enum": [
+              "eq",
+              "in",
+              "gte",
+              "lte",
+              "exists"
+            ]
+          },
+          "value": {}
+        }
+      }
+    },
+    "calculation_method": {
+      "enum": [
+        "PER_PERSON",
+        "PER_AREA",
+        "ACH",
+        "MAX_OF",
+        "SUM_OF"
+      ]
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "parameter_code",
+          "value_numeric",
+          "unit",
+          "source_clause",
+          "verification_status"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

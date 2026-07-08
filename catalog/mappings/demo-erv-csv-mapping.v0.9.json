@@ -1,0 +1,26 @@
+{
+  "mapping_code": "DEMO_ERV_CSV",
+  "mapping_version": 1,
+  "manufacturer_code": "DEMO-MFG",
+  "encoding": "utf-8-sig",
+  "field_mapping": {
+    "model_code": "Model",
+    "model_name": "Name",
+    "airflow_m3_h": "Airflow",
+    "external_static_pressure_pa": "ESP",
+    "power_input_kw": "Power",
+    "sensible_efficiency_pct": "SensibleEff",
+    "total_efficiency_pct": "TotalEff",
+    "voltage_v": "Voltage",
+    "phase_count": "Phase",
+    "noise_db_a": "Noise",
+    "list_price": "Price",
+    "lead_time_days": "LeadDays",
+    "sales_status": "Status"
+  },
+  "unit_mapping": {
+    "airflow": "m3/min",
+    "pressure": "mmAq",
+    "power": "W"
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "version": "0.6.0",
+  "categories": [
+    {
+      "category": "ROOM_BOUNDARY",
+      "name_patterns": [
+        "room",
+        "space",
+        "area",
+        "rm",
+        "실",
+        "구획"
+      ],
+      "entity_type_weights": {
+        "LWPOLYLINE": 0.35,
+        "POLYLINE": 0.35
+      },
+      "base_weight": 0.15
+    },
+    {
+      "category": "ROOM_TEXT",
+      "name_patterns": [
+        "room_name",
+        "roomname",
+        "실명",
+        "명칭",
+        "text"
+      ],
+      "entity_type_weights": {
+        "TEXT": 0.35,
+        "MTEXT": 0.35
+      },
+      "base_weight": 0.15
+    },
+    {
+      "category": "WALL",
+      "name_patterns": [
+        "wall",
+        "벽",
+        "a-wall"
+      ],
+      "entity_type_weights": {
+        "LINE": 0.25,
+        "LWPOLYLINE": 0.2
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "DOOR",
+      "name_patterns": [
+        "door",
+        "문",
+        "a-door"
+      ],
+      "entity_type_weights": {
+        "BLOCK_REFERENCE": 0.35,
+        "ARC": 0.15
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "WINDOW",
+      "name_patterns": [
+        "window",
+        "win",
+        "창",
+        "a-glaz"
+      ],
+      "entity_type_weights": {
+        "BLOCK_REFERENCE": 0.25,
+        "LINE": 0.15
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "HVAC_EQUIPMENT",
+      "name_patterns": [
+        "hvac",
+        "equip",
+        "ahu",
+        "erv",
+        "fan",
+        "기계",
+        "장비"
+      ],
+      "entity_type_weights": {
+        "BLOCK_REFERENCE": 0.4
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "DUCT",
+      "name_patterns": [
+        "duct",
+        "덕트",
+        "supply",
+        "return",
+        "exhaust"
+      ],
+      "entity_type_weights": {
+        "LINE": 0.2,
+        "LWPOLYLINE": 0.2
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "PIPE",
+      "name_patterns": [
+        "pipe",
+        "piping",
+        "배관",
+        "refrigerant",
+        "drain"
+      ],
+      "entity_type_weights": {
+        "LINE": 0.2,
+        "LWPOLYLINE": 0.2
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "ANNOTATION",
+      "name_patterns": [
+        "anno",
+        "dim",
+        "note",
+        "치수",
+        "주기"
+      ],
+      "entity_type_weights": {
+        "TEXT": 0.2,
+        "MTEXT": 0.2
+      },
+      "base_weight": 0.2
+    },
+    {
+      "category": "IGNORE",
+      "name_patterns": [
+        "defpoints",
+        "xref",
+        "border",
+        "title"
+      ],
+      "entity_type_weights": {},
+      "base_weight": 0.4
+    }
+  ]
+}

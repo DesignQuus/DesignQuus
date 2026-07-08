@@ -1,0 +1,39 @@
+{
+  "warning": "DEMO ENGINEERING POLICY ONLY. NOT A LEGAL VENTILATION RATE.",
+  "rule_sets": [
+    {
+      "rule_code": "DEMO-CONFERENCE-VENT-001",
+      "version": 1,
+      "name": "Demo conference room ventilation calculation",
+      "source_code": "DEMO-INTERNAL-POLICY",
+      "source_status": "CONTENT_VERIFIED",
+      "rule_status": "APPROVED",
+      "effective_from": "2026-01-01",
+      "priority": 100,
+      "conditions": [
+        {
+          "field": "space_type_code",
+          "operator": "eq",
+          "value": "CONFERENCE_ROOM"
+        }
+      ],
+      "calculation_method": "MAX_OF",
+      "parameters": [
+        {
+          "parameter_code": "PER_PERSON_M3_H",
+          "value_numeric": 25.0,
+          "unit": "m3/h.person",
+          "verification_status": "VERIFIED",
+          "source_clause": "DEMO"
+        },
+        {
+          "parameter_code": "PER_AREA_M3_H_M2",
+          "value_numeric": 4.0,
+          "unit": "m3/h.m2",
+          "verification_status": "VERIFIED",
+          "source_clause": "DEMO"
+        }
+      ]
+    }
+  ]
+}

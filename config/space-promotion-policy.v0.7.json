@@ -1,0 +1,20 @@
+{
+  "version": "SPACE_PROMOTION_POLICY/0.7.0",
+  "require_validated_unit": true,
+  "allowed_unit_statuses": [
+    "VALIDATED",
+    "USER_CONFIRMED"
+  ],
+  "allowed_geometry_statuses": [
+    "VALID",
+    "REPAIRED_SINGLE"
+  ],
+  "require_room_status": "ACCEPTED",
+  "require_room_name": true,
+  "require_ai_cad_match": false,
+  "ai_cad_allowed_decisions": [
+    "AUTO_MATCH"
+  ],
+  "geometry_coordinate_space": "MODEL_LOCAL_M",
+  "area_source": "EXACT_CAD_GEOMETRY"
+}

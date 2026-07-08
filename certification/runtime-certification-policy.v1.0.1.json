@@ -1,0 +1,28 @@
+{
+  "certificate_version": "1.0.1",
+  "required": {
+    "runtime": {
+      "node_major": 24,
+      "postgres_major": 18,
+      "postgis_major_minor": "3.6"
+    },
+    "database": {
+      "minimum_migration_count": 21,
+      "db_smoke_status": "PASSED"
+    },
+    "application": {
+      "api_health_status": "PASSED",
+      "web_http_status": "PASSED"
+    },
+    "engineering_e2e": {
+      "status": "PASSED",
+      "approval_gate": "REVIEW_READY"
+    },
+    "quality_gates": {
+      "calc_rule_catalog_tests": 38,
+      "cad_geometry_tests": 45,
+      "npm_audit_vulnerabilities": 0,
+      "blockers": 0
+    }
+  }
+}
