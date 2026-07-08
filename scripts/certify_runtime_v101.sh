@@ -7,6 +7,12 @@ cd "$ROOT_DIR"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 mkdir -p "$ARTIFACTS_DIR"
 
+capture_runtime_diagnostics() {
+  docker compose ps -a > "$ARTIFACTS_DIR/docker-compose-ps-v1.0.1.txt" 2>&1 || true
+  docker compose logs --no-color > "$ARTIFACTS_DIR/docker-compose-v1.0.1.log" 2>&1 || true
+  docker compose logs --no-color migrations > "$ARTIFACTS_DIR/migrations-v1.0.1.log" 2>&1 || true
+}
+
 cleanup() {
   if [ "${KEEP_RUNTIME_STACK:-0}" != "1" ]; then
     docker compose down -v --remove-orphans >/dev/null 2>&1 || true
@@ -23,8 +29,7 @@ wait_for_url() {
     i=$((i + 1))
     if [ "$i" -ge "$attempts" ]; then
       echo "TIMEOUT: $label ($url)" >&2
-      docker compose ps
-      docker compose logs --no-color > "$ARTIFACTS_DIR/docker-compose.log" 2>&1 || true
+      capture_runtime_diagnostics
       exit 1
     fi
     sleep 2
@@ -72,7 +77,11 @@ echo "[5/9] Build application images"
 docker compose build --pull api web
 
 echo "[6/9] Start full stack"
-docker compose up -d
+if ! docker compose up -d; then
+  echo "FULL_STACK_START_FAILED" >&2
+  capture_runtime_diagnostics
+  exit 1
+fi
 wait_for_url "http://localhost:3001/v1/health" "API"
 wait_for_url "http://localhost:3000" "Web"
 
@@ -131,7 +140,6 @@ echo "[9/9] Generate and verify certificate"
 python scripts/generate_runtime_certificate.py
 python scripts/verify_runtime_certificate.py
 
-docker compose ps > "$ARTIFACTS_DIR/docker-compose-ps-v1.0.1.txt"
-docker compose logs --no-color > "$ARTIFACTS_DIR/docker-compose-v1.0.1.log" 2>&1 || true
+capture_runtime_diagnostics
 
 echo "RUNTIME_CERTIFICATION_PASSED"
