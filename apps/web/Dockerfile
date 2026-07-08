@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY apps/web/scripts apps/web/scripts
 RUN npm install --workspace @hvac/web --include-workspace-root
 
 FROM node:24.17.0-alpine AS builder
@@ -12,6 +13,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY apps/web ./apps/web
+COPY --from=deps /app/apps/web/public/pdf.worker.min.mjs ./apps/web/public/pdf.worker.min.mjs
 RUN npm run build --workspace @hvac/web
 
 FROM node:24.17.0-alpine AS runner
