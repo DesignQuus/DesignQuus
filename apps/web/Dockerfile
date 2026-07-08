@@ -11,6 +11,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/v1
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package-lock.json ./package-lock.json
 COPY package.json ./
 COPY apps/web ./apps/web
 COPY --from=deps /app/apps/web/public/pdf.worker.min.mjs ./apps/web/public/pdf.worker.min.mjs
