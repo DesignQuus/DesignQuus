@@ -8,7 +8,6 @@ import platform
 import statistics
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -84,7 +83,11 @@ def json_request(
     return http_request(method, path, body=body, headers=headers)
 
 
-def encode_multipart(fields: dict[str, str], filename: str, file_content: bytes) -> tuple[bytes, str]:
+def encode_multipart(
+    fields: dict[str, str],
+    filename: str,
+    file_content: bytes,
+) -> tuple[bytes, str]:
     boundary = f"----ai-hvac-phase5a-{uuid.uuid4().hex}"
     chunks: list[bytes] = []
     for key, value in fields.items():
@@ -130,8 +133,7 @@ def run_scenario(
     errors: list[dict[str, Any]] = []
     statuses: dict[str, int] = {}
 
-    warmups = min(3, requests)
-    for index in range(warmups):
+    for index in range(min(3, requests)):
         response = operation(-(index + 1))
         if response.status not in expected_statuses:
             raise RequestFailure(
@@ -166,14 +168,12 @@ def run_scenario(
                 errors.append({"index": index, "exception": repr(error)})
 
     wall_seconds = max(time.perf_counter() - wall_started, 0.000001)
-    completed = len(latencies_ms)
     error_rate = len(errors) / requests
     throughput_rps = requests / wall_seconds
-
     metrics = {
         "requests": requests,
         "concurrency": concurrency,
-        "completed": completed,
+        "completed": len(latencies_ms),
         "successes": requests - len(errors),
         "errors": len(errors),
         "errorRate": round(error_rate, 6),
@@ -189,8 +189,7 @@ def run_scenario(
             "max": round(max(latencies_ms), 3) if latencies_ms else 0.0,
         },
     }
-
-    budget_checks = {
+    checks = {
         "errorRate": error_rate <= max_error_rate,
         "p95Ms": metrics["latencyMs"]["p95"] <= float(config["p95MsMax"]),
         "p99Ms": metrics["latencyMs"]["p99"] <= float(config["p99MsMax"]),
@@ -203,12 +202,11 @@ def run_scenario(
             "p99MsMax": config["p99MsMax"],
             "minThroughputRps": config["minThroughputRps"],
         },
-        "checks": budget_checks,
-        "status": "PASSED" if all(budget_checks.values()) else "FAILED",
+        "checks": checks,
+        "status": "PASSED" if all(checks.values()) else "FAILED",
     }
     if errors:
         metrics["errorSamples"] = errors[:5]
-
     print(json.dumps({name: metrics}, indent=2))
     return metrics
 
@@ -222,24 +220,55 @@ def main() -> None:
     budgets = json.loads(Path(args.budgets).read_text(encoding="utf-8"))
     scenarios = budgets["scenarios"]
     max_error_rate = float(budgets["global"]["maxErrorRate"])
-
     if not AUTH_SHARED_SECRET:
         raise AssertionError("AUTH_SHARED_SECRET is required")
 
     minimal_pdf = (
         b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
-        b"2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
+        b"2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\n"
+        b"trailer<</Root 1 0 R>>\n%%EOF\n"
     )
 
+    def reliability_write(index: int) -> Response:
+        unique = f"{index}-{uuid.uuid4().hex}"
+        return json_request(
+            "POST",
+            "/reliability/idempotency/reservations",
+            {
+                "scope": "PERFORMANCE_WRITE",
+                "idempotencyKey": f"phase5a-write-{unique}",
+                "requestPayload": {"sequence": index, "token": unique},
+                "ttlSeconds": 3600,
+            },
+            role="ENGINEER",
+            user_id="phase5a-reliability-write",
+        )
+
+    def drawing_upload(index: int) -> Response:
+        encoded, boundary = encode_multipart(
+            {
+                "projectId": PROJECT_ID,
+                "projectRevisionId": PROJECT_REVISION_ID,
+                "fileType": "PDF",
+            },
+            f"phase5a-{index}-{uuid.uuid4().hex}.pdf",
+            minimal_pdf,
+        )
+        return http_request(
+            "POST",
+            "/files/upload",
+            body=encoded,
+            headers={
+                **auth_headers("ENGINEER", "phase5a-upload"),
+                "content-type": f"multipart/form-data; boundary={boundary}",
+                "idempotency-key": f"phase5a-upload-{index}-{uuid.uuid4().hex}",
+            },
+            timeout=30.0,
+        )
+
     scenario_operations: dict[str, tuple[Callable[[int], Response], set[int]]] = {
-        "health_live": (
-            lambda _index: http_request("GET", "/health/live"),
-            {200},
-        ),
-        "health_ready": (
-            lambda _index: http_request("GET", "/health/ready"),
-            {200},
-        ),
+        "health_live": (lambda _index: http_request("GET", "/health/live"), {200}),
+        "health_ready": (lambda _index: http_request("GET", "/health/ready"), {200}),
         "reliability_read": (
             lambda _index: json_request(
                 "GET",
@@ -249,6 +278,7 @@ def main() -> None:
             ),
             {200},
         ),
+        "reliability_write": (reliability_write, {201}),
         "db_pool_saturation": (
             lambda _index: json_request(
                 "GET",
@@ -293,32 +323,7 @@ def main() -> None:
             ),
             {200},
         ),
-        "drawing_upload": (
-            lambda index: (
-                lambda encoded: http_request(
-                    "POST",
-                    "/files/upload",
-                    body=encoded[0],
-                    headers={
-                        **auth_headers("ENGINEER", "phase5a-upload"),
-                        "content-type": f"multipart/form-data; boundary={encoded[1]}",
-                        "idempotency-key": f"phase5a-upload-{index}-{uuid.uuid4().hex}",
-                    },
-                    timeout=30.0,
-                )
-            )(
-                encode_multipart(
-                    {
-                        "projectId": PROJECT_ID,
-                        "projectRevisionId": PROJECT_REVISION_ID,
-                        "fileType": "PDF",
-                    },
-                    f"phase5a-{index}-{uuid.uuid4().hex}.pdf",
-                    minimal_pdf,
-                )
-            ),
-            {201},
-        ),
+        "drawing_upload": (drawing_upload, {201}),
     }
 
     report: dict[str, Any] = {
@@ -361,20 +366,25 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    print(json.dumps({
-        "status": report["status"],
-        "suiteWallSeconds": report["suiteWallSeconds"],
-        "scenarios": {
-            name: {
-                "p95Ms": value["latencyMs"]["p95"],
-                "p99Ms": value["latencyMs"]["p99"],
-                "throughputRps": value["throughputRps"],
-                "errorRate": value["errorRate"],
-                "budget": value["budget"]["status"],
-            }
-            for name, value in report["scenarios"].items()
-        },
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "status": report["status"],
+                "suiteWallSeconds": report["suiteWallSeconds"],
+                "scenarios": {
+                    name: {
+                        "p95Ms": value["latencyMs"]["p95"],
+                        "p99Ms": value["latencyMs"]["p99"],
+                        "throughputRps": value["throughputRps"],
+                        "errorRate": value["errorRate"],
+                        "budget": value["budget"]["status"],
+                    }
+                    for name, value in report["scenarios"].items()
+                },
+            },
+            indent=2,
+        )
+    )
 
     if not all_passed:
         raise SystemExit("PHASE5A_PERFORMANCE_BASELINE=FAILED")
