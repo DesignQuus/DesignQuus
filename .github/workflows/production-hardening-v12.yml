@@ -49,7 +49,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          npm sbom --sbom-format cyclonedx > artifacts/npm-sbom.cdx.json
+          npm --version
+          test -f package-lock.json
+          npm sbom --package-lock-only --sbom-format cyclonedx > artifacts/npm-sbom.cdx.json
           python - <<'PY'
           import json
           from pathlib import Path
