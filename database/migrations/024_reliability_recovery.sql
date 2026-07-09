@@ -105,7 +105,7 @@ CREATE INDEX idx_outbox_claim
     ON ops.outbox_events (
         tenant_id, state, next_attempt_at, created_at
     )
-    WHERE state IN ('PENDING','FAILED');
+    WHERE state IN ('PENDING','FAILED','PUBLISHING');
 
 CREATE INDEX idx_outbox_lease
     ON ops.outbox_events (tenant_id, lease_expires_at)
@@ -183,12 +183,13 @@ AS $$
     WITH candidates AS (
         SELECT id
           FROM ops.outbox_events
-         WHERE state IN ('PENDING','FAILED')
-           AND next_attempt_at <= now()
-           AND (
-               lease_expires_at IS NULL
-               OR lease_expires_at <= now()
-           )
+         WHERE (
+             state IN ('PENDING','FAILED')
+             AND next_attempt_at <= now()
+         ) OR (
+             state = 'PUBLISHING'
+             AND lease_expires_at <= now()
+         )
          ORDER BY created_at, id
          FOR UPDATE SKIP LOCKED
          LIMIT GREATEST(1, LEAST(p_limit, 100))
@@ -262,6 +263,54 @@ BEGIN
     RETURNING id INTO v_dead_letter_id;
 
     RETURN v_dead_letter_id;
+END
+$$;
+
+CREATE OR REPLACE FUNCTION ops.fail_outbox_event(
+    p_event_id uuid,
+    p_failure_reason text,
+    p_retry_delay_ms integer,
+    p_max_attempts integer
+)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_event ops.outbox_events%ROWTYPE;
+BEGIN
+    SELECT *
+      INTO v_event
+      FROM ops.outbox_events
+     WHERE id = p_event_id
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'OUTBOX_EVENT_NOT_FOUND'
+            USING ERRCODE = 'P0002';
+    END IF;
+
+    IF v_event.attempt_count >= GREATEST(1, p_max_attempts) THEN
+        PERFORM ops.move_outbox_to_dead_letter(
+            p_event_id,
+            p_failure_reason
+        );
+        RETURN 'DEAD_LETTER';
+    END IF;
+
+    UPDATE ops.outbox_events
+       SET state = 'FAILED',
+           next_attempt_at = now()
+               + make_interval(
+                   secs => GREATEST(0, p_retry_delay_ms)::double precision / 1000.0
+               ),
+           locked_at = NULL,
+           locked_by = NULL,
+           lease_expires_at = NULL,
+           last_error = p_failure_reason,
+           updated_at = now()
+     WHERE id = p_event_id;
+
+    RETURN 'RETRY_SCHEDULED';
 END
 $$;
 
