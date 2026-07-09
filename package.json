@@ -14,9 +14,10 @@
     "build:web": "npm run build --workspace @hvac/web",
     "test:calc": "python -m unittest discover -s workers/calc-worker/tests -p 'test_*.py'",
     "test:cad": "python -m unittest discover -s workers/cad-worker/tests -p 'test_*.py'",
+    "test:reliability": "npm run test:reliability --workspace @hvac/api",
     "validate:v1": "python scripts/validate_v10.py",
     "validate:v12": "python scripts/validate_v12.py",
-    "check": "npm run test:calc && npm run test:cad && npm run build && npm run validate:v1 && npm run validate:v12",
+    "check": "npm run test:calc && npm run test:cad && npm run test:reliability && npm run build && npm run validate:v1 && npm run validate:v12",
     "certify:engine": "python scripts/run_engineering_e2e_v10.py",
     "certify:runtime": "sh scripts/certify_runtime_v101.sh",
     "validate:v101": "python scripts/validate_v101.py"
