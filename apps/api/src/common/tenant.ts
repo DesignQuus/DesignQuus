@@ -1,9 +1,22 @@
-import { BadRequestException, createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  createParamDecorator,
+  ExecutionContext,
+} from '@nestjs/common';
+import type { RequestWithIdentity } from '../security/identity';
 
-export const TenantId = createParamDecorator((_data: unknown, ctx: ExecutionContext): string => {
-  const request = ctx.switchToHttp().getRequest<{ headers: Record<string, string | string[] | undefined> }>();
-  const value = request.headers['x-tenant-id'];
-  const tenantId = Array.isArray(value) ? value[0] : value;
-  if (!tenantId) throw new BadRequestException('x-tenant-id header is required');
-  return tenantId;
-});
+export const TenantId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string => {
+    const request = ctx.switchToHttp().getRequest<RequestWithIdentity>();
+    const tenantId = request.identity?.tenantId;
+
+    if (!tenantId) {
+      throw new UnauthorizedException({
+        errorCode: 'AUTH_IDENTITY_REQUIRED',
+        message: 'Verified request identity is required',
+      });
+    }
+
+    return tenantId;
+  },
+);

@@ -1,6 +1,6 @@
 {
   "name": "ai-hvac-engineering-os",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "workspaces": [
     "apps/*"
@@ -14,8 +14,15 @@
     "build:web": "npm run build --workspace @hvac/web",
     "test:calc": "python -m unittest discover -s workers/calc-worker/tests -p 'test_*.py'",
     "test:cad": "python -m unittest discover -s workers/cad-worker/tests -p 'test_*.py'",
+    "test:reliability": "npm run test:reliability --workspace @hvac/api",
     "validate:v1": "python scripts/validate_v10.py",
-    "check": "npm run test:calc && npm run test:cad && npm run build && npm run validate:v1",
+    "validate:v12": "python scripts/validate_v12.py",
+    "validate:runtime-domains": "python scripts/validate_runtime_role_domains.py",
+    "validate:phase4b": "python scripts/validate_phase4b.py",
+    "validate:phase4c": "python scripts/validate_phase4c.py",
+    "validate:phase5a": "python scripts/validate_phase5a.py",
+    "validate:phase5b": "python scripts/validate_phase5b.py",
+    "check": "npm run test:calc && npm run test:cad && npm run test:reliability && npm run build && npm run validate:v1 && npm run validate:v12 && npm run validate:runtime-domains && npm run validate:phase4b && npm run validate:phase4c && npm run validate:phase5a && npm run validate:phase5b",
     "certify:engine": "python scripts/run_engineering_e2e_v10.py",
     "certify:runtime": "sh scripts/certify_runtime_v101.sh",
     "validate:v101": "python scripts/validate_v101.py"

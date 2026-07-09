@@ -1,0 +1,42 @@
+{
+  "policyVersion": "1.2.0",
+  "releaseVersion": "1.2.0",
+  "requiredGates": [
+    "bootstrapCertification",
+    "fullRuntimeCertification",
+    "productionHardeningCertification",
+    "reliabilityCertification",
+    "recoveryCertification",
+    "performanceCertification",
+    "dependencyAudit",
+    "sbomArtifact",
+    "containerCriticalVulnerabilityScan"
+  ],
+  "preDeployment": [
+    "previousReleaseImageAvailable",
+    "currentReleaseImageBuilt",
+    "databaseReachable",
+    "stableDataFingerprintCaptured",
+    "rollbackPolicyValidated"
+  ],
+  "deployment": [
+    "forwardMigrationsApplied",
+    "databaseSmokePassed",
+    "currentReadinessPassed",
+    "currentVersionVerified",
+    "currentGitShaVerified",
+    "stableDataPreservedAfterForwardMigration"
+  ],
+  "failureInjection": [
+    "brokenCandidateStarted",
+    "brokenCandidateRejected",
+    "failureReasonCaptured"
+  ],
+  "rollback": [
+    "previousReleaseImageRedeployed",
+    "previousReleaseHealthPassed",
+    "forwardMigratedDatabaseRetained",
+    "stableDataPreservedAfterRollback",
+    "rollbackArtifactGenerated"
+  ]
+}

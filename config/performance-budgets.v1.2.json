@@ -1,0 +1,72 @@
+{
+  "policyVersion": "1.2.0",
+  "environment": "github-hosted-runner-docker-compose",
+  "global": {
+    "maxErrorRate": 0.0
+  },
+  "scenarios": {
+    "health_live": {
+      "requests": 100,
+      "concurrency": 20,
+      "p95MsMax": 500,
+      "p99MsMax": 1000,
+      "minThroughputRps": 30
+    },
+    "health_ready": {
+      "requests": 60,
+      "concurrency": 10,
+      "p95MsMax": 750,
+      "p99MsMax": 1500,
+      "minThroughputRps": 15
+    },
+    "reliability_read": {
+      "requests": 80,
+      "concurrency": 20,
+      "p95MsMax": 1000,
+      "p99MsMax": 2000,
+      "minThroughputRps": 15
+    },
+    "reliability_write": {
+      "requests": 60,
+      "concurrency": 10,
+      "p95MsMax": 1200,
+      "p99MsMax": 2500,
+      "minThroughputRps": 10
+    },
+    "db_pool_saturation": {
+      "requests": 120,
+      "concurrency": 50,
+      "p95MsMax": 3000,
+      "p99MsMax": 5000,
+      "minThroughputRps": 15
+    },
+    "calculation_throughput": {
+      "requests": 150,
+      "concurrency": 30,
+      "p95MsMax": 750,
+      "p99MsMax": 1500,
+      "minThroughputRps": 30
+    },
+    "selection_throughput": {
+      "requests": 40,
+      "concurrency": 8,
+      "p95MsMax": 2000,
+      "p99MsMax": 4000,
+      "minThroughputRps": 5
+    },
+    "drawing_review_read": {
+      "requests": 80,
+      "concurrency": 20,
+      "p95MsMax": 1000,
+      "p99MsMax": 2000,
+      "minThroughputRps": 15
+    },
+    "drawing_upload": {
+      "requests": 20,
+      "concurrency": 4,
+      "p95MsMax": 3000,
+      "p99MsMax": 5000,
+      "minThroughputRps": 2
+    }
+  }
+}

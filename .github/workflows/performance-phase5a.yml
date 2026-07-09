@@ -1,0 +1,138 @@
+name: Performance Phase 5A
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/ai-hvac-production-hardening-v1.2-20260709
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-phase5a-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  performance-baseline:
+    name: Phase 5A Performance Baseline Certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      POSTGRES_DB: hvac
+      POSTGRES_USER: hvac
+      POSTGRES_PASSWORD: phase5a-performance-password
+      AUTH_SHARED_SECRET: phase5a-performance-auth-secret-0123456789abcdef
+      RATE_LIMIT_WINDOW_MS: 600000
+      RATE_LIMIT_MAX_REQUESTS: 5000
+      JSON_BODY_LIMIT: 1mb
+      GIT_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Validate Phase 5A performance contract
+        run: python scripts/validate_phase5a.py
+
+      - name: Prepare performance artifacts
+        run: mkdir -p artifacts
+
+      - name: Start PostgreSQL
+        run: docker compose up -d db
+
+      - name: Apply migrations
+        run: docker compose run --rm migrations
+
+      - name: Run database certification
+        run: docker compose run --rm db-smoke
+
+      - name: Load performance fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose run --rm db-smoke /bin/sh -c \
+            'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /app/scripts/performance_fixture.sql'
+
+      - name: Start API with performance policy
+        run: docker compose up -d api
+
+      - name: Wait for API readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3001/v1/health/ready > artifacts/pre-performance-ready.json; then
+              cat artifacts/pre-performance-ready.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose ps
+          docker compose logs --no-color api
+          exit 1
+
+      - name: Run Phase 5A performance baseline
+        env:
+          BASE_URL: http://localhost:3001/v1
+        run: |
+          python scripts/performance_baseline.py \
+            --budgets config/performance-budgets.v1.2.json \
+            --output artifacts/performance-baseline.json
+
+      - name: Capture database performance report
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/performance_db_report.sql \
+            > artifacts/performance-db-report.json
+          python -m json.tool artifacts/performance-db-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('artifacts/performance-db-report.json').read_text())
+          assert report['ervDesignRunCount'] >= 43
+          assert report['idempotencyRecordCount'] >= 64
+          assert report['uploadedFileCount'] >= 23
+          assert report['extractionCount'] == 50
+          assert report['databaseStats']['deadlocks'] == 0
+          print('PHASE5A_DATABASE_PERFORMANCE_REPORT=PASSED')
+          PY
+
+      - name: Capture post-performance health
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent http://localhost:3001/v1/health/ready \
+            > artifacts/post-performance-ready.json
+          curl --fail --silent http://localhost:3001/v1/metrics \
+            > artifacts/post-performance-metrics.txt
+
+      - name: Upload Phase 5A performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hvac-v12-phase5a-performance-artifacts
+          path: artifacts/
+          if-no-files-found: warn
+
+      - name: Performance diagnostics
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --no-color api db || true
+          find artifacts -maxdepth 2 -type f -print || true
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v --remove-orphans || true

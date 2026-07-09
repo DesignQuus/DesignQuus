@@ -91,6 +91,8 @@ jobs:
           POSTGRES_DB: hvac
           POSTGRES_USER: hvac
           POSTGRES_PASSWORD: runtime-certification-password
+          AUTH_SHARED_SECRET: runtime-certification-auth-secret-0123456789abcdef
+          GIT_SHA: ${{ github.sha }}
           KEEP_RUNTIME_STACK: "1"
         run: |
           set -o pipefail

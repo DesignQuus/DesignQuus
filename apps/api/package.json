@@ -1,12 +1,13 @@
 {
   "name": "@hvac/api",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand",
+    "test:reliability": "jest --config test/jest-unit.json --runInBand",
     "start:prod": "node dist/main.js"
   },
   "dependencies": {
