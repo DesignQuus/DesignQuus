@@ -1,0 +1,30 @@
+{
+  "policyVersion": "1.2.0",
+  "candidateRelease": {
+    "version": "1.2.0",
+    "branch": "claude/ai-hvac-production-hardening-v1.2-20260709",
+    "healthEndpoint": "/v1/health",
+    "readinessEndpoint": "/v1/health/ready"
+  },
+  "previousCertifiedRelease": {
+    "version": "1.1.0",
+    "branch": "claude/ai-hvac-full-source-v1.1-complete-20260709",
+    "healthEndpoint": "/v1/health"
+  },
+  "databaseStrategy": {
+    "migrationMode": "forward-only-additive",
+    "rollbackMode": "application-image-rollback",
+    "schemaDownMigrationAllowed": false,
+    "previousApplicationMustRunAgainstForwardMigratedDatabase": true
+  },
+  "failureInjection": {
+    "type": "production-startup-secret-blocker",
+    "expectedResult": "candidate-process-exits-nonzero",
+    "expectedLogMarker": "Production startup blocked"
+  },
+  "integrity": {
+    "stableDataFingerprintMustMatchAfterForwardMigration": true,
+    "stableDataFingerprintMustMatchAfterRollback": true,
+    "forwardMigrationMustRemainAppliedAfterRollback": true
+  }
+}
