@@ -1,0 +1,384 @@
+name: Deployment Rollback Phase 5B
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/ai-hvac-production-hardening-v1.2-20260709
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deployment-rollback-phase5b-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deployment-rollback-certification:
+    name: Phase 5B Deployment and Rollback Certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      POSTGRES_DB: hvac
+      POSTGRES_USER: hvac
+      POSTGRES_PASSWORD: phase5b-deployment-password
+      AUTH_SHARED_SECRET: phase5b-deployment-auth-secret-0123456789abcdef
+      GIT_SHA: ${{ github.sha }}
+      PREVIOUS_RELEASE_REF: claude/ai-hvac-full-source-v1.1-complete-20260709
+      COMPOSE_NETWORK: ai-hvac-engineering-os_default
+    steps:
+      - name: Checkout current release candidate
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Checkout previous certified release
+        uses: actions/checkout@v5
+        with:
+          ref: claude/ai-hvac-full-source-v1.1-complete-20260709
+          path: previous-release
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Validate Phase 5B deployment rollback contract
+        run: python scripts/validate_phase5b.py
+
+      - name: Prepare deployment rollback artifacts
+        run: mkdir -p artifacts
+
+      - name: Build previous release image
+        run: |
+          docker build \
+            -f previous-release/apps/api/Dockerfile \
+            -t ai-hvac-api:phase5b-v1.1 \
+            previous-release
+
+      - name: Build current release image
+        run: |
+          docker build \
+            -f apps/api/Dockerfile \
+            -t ai-hvac-api:phase5b-v1.2 \
+            .
+
+      - name: Capture image package versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm ai-hvac-api:phase5b-v1.1 \
+            node -p "require('./package.json').version" \
+            > artifacts/previous-image-version.txt
+          docker run --rm ai-hvac-api:phase5b-v1.2 \
+            node -p "require('./package.json').version" \
+            > artifacts/current-image-version.txt
+          cat artifacts/previous-image-version.txt
+          cat artifacts/current-image-version.txt
+          test "$(tr -d '[:space:]' < artifacts/previous-image-version.txt)" = "1.1.0"
+          test "$(tr -d '[:space:]' < artifacts/current-image-version.txt)" = "1.2.0"
+
+      - name: Start deployment database
+        run: docker compose up -d db
+
+      - name: Wait for deployment database
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if docker compose exec -T db \
+              pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs --no-color db
+          exit 1
+
+      - name: Apply previous release migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --network "$COMPOSE_NETWORK" \
+            -v "$PWD/previous-release/database:/app/database:ro" \
+            -v "$PWD/previous-release/scripts:/app/scripts:ro" \
+            -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+            -e MIGRATIONS_DIR=/app/database/migrations \
+            postgis/postgis:18-3.6 \
+            /bin/sh /app/scripts/run_migrations.sh \
+            2>&1 | tee artifacts/previous-migrations.log
+
+      - name: Load stable rollback fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_rollback_fixture.sql
+
+      - name: Capture pre-forward fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_stable_fingerprint.sql \
+            > artifacts/pre-forward-fingerprint.json
+          python -m json.tool artifacts/pre-forward-fingerprint.json
+
+      - name: Deploy previous release
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d \
+            --name phase5b-api-previous \
+            --network "$COMPOSE_NETWORK" \
+            -p 3001:3001 \
+            -e NODE_ENV=production \
+            -e PORT=3001 \
+            -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+            -e STORAGE_ROOT=/data/storage \
+            ai-hvac-api:phase5b-v1.1
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3001/v1/health \
+              > artifacts/previous-health.json; then
+              cat artifacts/previous-health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs phase5b-api-previous
+          exit 1
+
+      - name: Verify previous release DB-backed API
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent \
+            --header 'x-tenant-id: a1000000-0000-7000-8000-000000000000' \
+            http://localhost:3001/v1/import-jobs/a1000000-0000-7000-8000-000000000005/extractions \
+            > artifacts/previous-db-probe.json
+          python -m json.tool artifacts/previous-db-probe.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('artifacts/previous-db-probe.json').read_text())
+          assert len(payload) == 1
+          value = payload[0].get('normalized_value') or payload[0].get('normalizedValue')
+          assert value == 'Stable Rollback Room'
+          print('PREVIOUS_RELEASE_DB_PROBE=PASSED')
+          PY
+
+      - name: Stop previous release before forward deployment
+        run: docker rm -f phase5b-api-previous
+
+      - name: Apply v1.2 forward migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose run --rm migrations \
+            2>&1 | tee artifacts/current-forward-migrations.log
+
+      - name: Run v1.2 database smoke certification
+        run: docker compose run --rm db-smoke
+
+      - name: Capture post-forward fingerprint and schema report
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_stable_fingerprint.sql \
+            > artifacts/post-forward-fingerprint.json
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_schema_report.sql \
+            > artifacts/forward-schema-report.json
+          python -m json.tool artifacts/post-forward-fingerprint.json
+          python -m json.tool artifacts/forward-schema-report.json
+
+      - name: Deploy current release
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d \
+            --name phase5b-api-current \
+            --network "$COMPOSE_NETWORK" \
+            -p 3001:3001 \
+            -e NODE_ENV=production \
+            -e PORT=3001 \
+            -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+            -e STORAGE_ROOT=/data/storage \
+            -e APP_VERSION=1.2.0 \
+            -e GIT_SHA="$GIT_SHA" \
+            -e AUTH_MODE=trusted_gateway \
+            -e AUTH_SHARED_SECRET="$AUTH_SHARED_SECRET" \
+            ai-hvac-api:phase5b-v1.2
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3001/v1/health/ready \
+              > artifacts/current-ready.json; then
+              curl --fail --silent http://localhost:3001/v1/health \
+                > artifacts/current-health.json
+              cat artifacts/current-health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs phase5b-api-current
+          exit 1
+
+      - name: Verify current release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          payload = json.loads(Path('artifacts/current-health.json').read_text())
+          assert payload['status'] == 'ok'
+          assert payload['version'] == '1.2.0'
+          assert payload['buildSha'] == os.environ['GIT_SHA']
+          print('CURRENT_RELEASE_METADATA=PASSED')
+          PY
+
+      - name: Stop healthy current release
+        run: docker rm -f phase5b-api-current
+
+      - name: Inject deliberate failed release
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          timeout 30s docker run --rm \
+            --name phase5b-api-broken \
+            --network "$COMPOSE_NETWORK" \
+            -e NODE_ENV=production \
+            -e PORT=3001 \
+            -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+            -e APP_VERSION=1.2.0 \
+            -e GIT_SHA="$GIT_SHA" \
+            -e AUTH_MODE=trusted_gateway \
+            -e AUTH_SHARED_SECRET= \
+            ai-hvac-api:phase5b-v1.2 \
+            > artifacts/failure-injection.log 2>&1
+          FAILURE_STATUS=$?
+          set -e
+          echo "$FAILURE_STATUS" > artifacts/failure-injection-status.txt
+          cat artifacts/failure-injection.log
+          test "$FAILURE_STATUS" -ne 0
+          grep -q 'Production startup blocked' artifacts/failure-injection.log
+
+      - name: Rollback to previous release image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d \
+            --name phase5b-api-rollback \
+            --network "$COMPOSE_NETWORK" \
+            -p 3001:3001 \
+            -e NODE_ENV=production \
+            -e PORT=3001 \
+            -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+            -e STORAGE_ROOT=/data/storage \
+            ai-hvac-api:phase5b-v1.1
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3001/v1/health \
+              > artifacts/rollback-health.json; then
+              cat artifacts/rollback-health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs phase5b-api-rollback
+          exit 1
+
+      - name: Verify rollback release DB-backed API
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent \
+            --header 'x-tenant-id: a1000000-0000-7000-8000-000000000000' \
+            http://localhost:3001/v1/import-jobs/a1000000-0000-7000-8000-000000000005/extractions \
+            > artifacts/rollback-db-probe.json
+          python -m json.tool artifacts/rollback-db-probe.json
+
+      - name: Capture post-rollback fingerprint and schema report
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_stable_fingerprint.sql \
+            > artifacts/post-rollback-fingerprint.json
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/deployment_schema_report.sql \
+            > artifacts/rollback-schema-report.json
+          python -m json.tool artifacts/post-rollback-fingerprint.json
+          python -m json.tool artifacts/rollback-schema-report.json
+
+      - name: Verify deployment and rollback
+        run: |
+          python scripts/verify_deployment_rollback.py \
+            --checklist config/deployment-checklist.v1.2.json \
+            --policy config/release-rollback-policy.v1.2.json \
+            --pre-forward artifacts/pre-forward-fingerprint.json \
+            --post-forward artifacts/post-forward-fingerprint.json \
+            --post-rollback artifacts/post-rollback-fingerprint.json \
+            --previous-version artifacts/previous-image-version.txt \
+            --current-version artifacts/current-image-version.txt \
+            --previous-health artifacts/previous-health.json \
+            --current-health artifacts/current-health.json \
+            --rollback-health artifacts/rollback-health.json \
+            --previous-db-probe artifacts/previous-db-probe.json \
+            --rollback-db-probe artifacts/rollback-db-probe.json \
+            --forward-schema artifacts/forward-schema-report.json \
+            --rollback-schema artifacts/rollback-schema-report.json \
+            --failure-status artifacts/failure-injection-status.txt \
+            --failure-log artifacts/failure-injection.log \
+            --output artifacts/deployment-rollback-report.json
+
+      - name: Upload Phase 5B deployment rollback artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hvac-v12-phase5b-deployment-rollback-artifacts
+          path: artifacts/
+          if-no-files-found: warn
+
+      - name: Deployment rollback diagnostics
+        if: failure()
+        run: |
+          docker ps -a || true
+          docker network ls || true
+          docker compose ps || true
+          docker compose logs --no-color || true
+          docker logs phase5b-api-previous 2>/dev/null || true
+          docker logs phase5b-api-current 2>/dev/null || true
+          docker logs phase5b-api-rollback 2>/dev/null || true
+          find artifacts -maxdepth 2 -type f -print || true
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f \
+            phase5b-api-previous \
+            phase5b-api-current \
+            phase5b-api-broken \
+            phase5b-api-rollback \
+            2>/dev/null || true
+          docker compose down -v --remove-orphans || true
