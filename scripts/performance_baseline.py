@@ -30,10 +30,6 @@ class Response:
     body: bytes
 
 
-class RequestFailure(Exception):
-    pass
-
-
 def auth_headers(role: str = "ENGINEER", user_id: str = "phase5a-perf") -> dict[str, str]:
     return {
         "x-auth-secret": AUTH_SHARED_SECRET,
@@ -120,6 +116,41 @@ def percentile(values: list[float], percentile_value: float) -> float:
     return ordered[min(rank - 1, len(ordered) - 1)]
 
 
+def failed_warmup_result(
+    config: dict[str, Any],
+    max_error_rate: float,
+    failure: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "requests": int(config["requests"]),
+        "concurrency": int(config["concurrency"]),
+        "completed": 0,
+        "successes": 0,
+        "errors": 1,
+        "errorRate": 1.0,
+        "statuses": {},
+        "wallSeconds": 0.0,
+        "throughputRps": 0.0,
+        "latencyMs": {"min": 0.0, "mean": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0, "max": 0.0},
+        "warmupFailure": failure,
+        "budget": {
+            "limits": {
+                "maxErrorRate": max_error_rate,
+                "p95MsMax": config["p95MsMax"],
+                "p99MsMax": config["p99MsMax"],
+                "minThroughputRps": config["minThroughputRps"],
+            },
+            "checks": {
+                "errorRate": False,
+                "p95Ms": False,
+                "p99Ms": False,
+                "throughputRps": False,
+            },
+            "status": "FAILED",
+        },
+    }
+
+
 def run_scenario(
     name: str,
     config: dict[str, Any],
@@ -133,12 +164,31 @@ def run_scenario(
     errors: list[dict[str, Any]] = []
     statuses: dict[str, int] = {}
 
+    print(f"PHASE5A_SCENARIO_START={name}")
     for index in range(min(3, requests)):
-        response = operation(-(index + 1))
-        if response.status not in expected_statuses:
-            raise RequestFailure(
-                f"{name} warmup failed with HTTP {response.status}: {response.body[:300]!r}"
+        try:
+            response = operation(-(index + 1))
+        except Exception as error:  # noqa: BLE001
+            result = failed_warmup_result(
+                config,
+                max_error_rate,
+                {"index": index, "exception": repr(error)},
             )
+            print(json.dumps({name: result}, indent=2))
+            return result
+        if response.status not in expected_statuses:
+            result = failed_warmup_result(
+                config,
+                max_error_rate,
+                {
+                    "index": index,
+                    "status": response.status,
+                    "expectedStatuses": sorted(expected_statuses),
+                    "body": response.body[:1000].decode("utf-8", errors="replace"),
+                },
+            )
+            print(json.dumps({name: result}, indent=2))
+            return result
 
     wall_started = time.perf_counter()
 
@@ -211,6 +261,11 @@ def run_scenario(
     return metrics
 
 
+def write_report(output: Path, report: dict[str, Any]) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--budgets", required=True)
@@ -220,6 +275,7 @@ def main() -> None:
     budgets = json.loads(Path(args.budgets).read_text(encoding="utf-8"))
     scenarios = budgets["scenarios"]
     max_error_rate = float(budgets["global"]["maxErrorRate"])
+    output = Path(args.output)
     if not AUTH_SHARED_SECRET:
         raise AssertionError("AUTH_SHARED_SECRET is required")
 
@@ -339,32 +395,26 @@ def main() -> None:
         },
         "startedAtEpoch": time.time(),
         "scenarios": {},
+        "status": "RUNNING",
     }
+    write_report(output, report)
 
     all_passed = True
     suite_started = time.perf_counter()
     for name in scenarios:
-        if name not in scenario_operations:
-            raise AssertionError(f"No performance operation is defined for scenario: {name}")
         operation, expected_statuses = scenario_operations[name]
-        result = run_scenario(
-            name,
-            scenarios[name],
-            operation,
-            expected_statuses,
-            max_error_rate,
-        )
+        result = run_scenario(name, scenarios[name], operation, expected_statuses, max_error_rate)
         report["scenarios"][name] = result
         all_passed = all_passed and result["budget"]["status"] == "PASSED"
+        report["status"] = "RUNNING"
+        report["suiteWallSeconds"] = round(time.perf_counter() - suite_started, 6)
+        write_report(output, report)
 
     metrics_response = http_request("GET", "/metrics")
     report["metricsSnapshot"] = metrics_response.body.decode("utf-8", errors="replace")[:20000]
     report["suiteWallSeconds"] = round(time.perf_counter() - suite_started, 6)
     report["status"] = "PASSED" if all_passed else "FAILED"
-
-    output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_report(output, report)
 
     print(
         json.dumps(
@@ -378,6 +428,7 @@ def main() -> None:
                         "throughputRps": value["throughputRps"],
                         "errorRate": value["errorRate"],
                         "budget": value["budget"]["status"],
+                        "warmupFailure": value.get("warmupFailure"),
                     }
                     for name, value in report["scenarios"].items()
                 },
