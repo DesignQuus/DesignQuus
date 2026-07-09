@@ -158,8 +158,30 @@ def main() -> None:
         "GRANT EXECUTE ON ALL FUNCTIONS",
     )
     require_text(
+        "database/migrations/024_reliability_recovery.sql",
+        "CREATE TABLE ops.retry_policies",
+        "CREATE TABLE ops.idempotency_records",
+        "CREATE TABLE ops.outbox_events",
+        "CREATE TABLE ops.dead_letter_jobs",
+        "IDEMPOTENCY_FINGERPRINT_CONFLICT",
+        "FOR UPDATE SKIP LOCKED",
+        "ops.fail_outbox_event",
+        "RETRY_SCHEDULED",
+        "DEAD_LETTER",
+        "ops.replay_dead_letter",
+    )
+    require_text(
+        "database/migrations/025_reliability_recovery_rls.sql",
+        "FORCE ROW LEVEL SECURITY",
+        "tenant_isolation",
+        "ops.fail_outbox_event",
+        "app_runtime",
+    )
+    require_text(
         "database/migrations/runtime-manifest.txt",
         "023_security_runtime_role.sql",
+        "024_reliability_recovery.sql",
+        "025_reliability_recovery_rls.sql",
     )
     require_text(
         "scripts/tenant_isolation_test.sql",
@@ -169,9 +191,23 @@ def main() -> None:
         "TENANT_ISOLATION_CERTIFIED",
     )
     require_text(
+        "scripts/reliability_recovery_test.sql",
+        "IDEMPOTENCY_FIRST_RESERVATION_NOT_NEW",
+        "IDEMPOTENCY_FINGERPRINT_CONFLICT_NOT_BLOCKED",
+        "OUTBOX_DISTINCT_CLAIM_FAILED",
+        "OUTBOX_RETRY_NOT_SCHEDULED",
+        "OUTBOX_DEAD_LETTER_TRANSITION_FAILED",
+        "DEAD_LETTER_REPLAY_STATE_FAILED",
+        "EXPIRED_OUTBOX_LEASE_NOT_RECLAIMED",
+        "TENANT_B_CAN_READ_TENANT_A_OUTBOX",
+        "RELIABILITY_RECOVERY_CERTIFIED",
+    )
+    require_text(
         "scripts/run_db_smoke_test.sh",
         "tenant_isolation_test.sql",
+        "reliability_recovery_test.sql",
         "TENANT_ISOLATION_OK",
+        "RELIABILITY_RECOVERY_OK",
     )
     require_text(
         "compose.yaml",
@@ -217,6 +253,12 @@ def main() -> None:
         "application_rate_limit": True,
         "cyclonedx_sbom": True,
         "container_critical_vulnerability_gate": True,
+        "idempotency_fingerprint_contract": True,
+        "transactional_outbox": True,
+        "skip_locked_claims": True,
+        "lease_recovery": True,
+        "dead_letter_replay": True,
+        "reliability_tenant_isolation": True,
         "compose_readiness_gate": True,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
