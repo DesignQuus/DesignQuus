@@ -57,6 +57,10 @@ GRANT EXECUTE ON FUNCTION ops.move_outbox_to_dead_letter(
     uuid, text
 ) TO app_runtime;
 
+GRANT EXECUTE ON FUNCTION ops.fail_outbox_event(
+    uuid, text, integer, integer
+) TO app_runtime;
+
 GRANT EXECUTE ON FUNCTION ops.replay_dead_letter(
     uuid, text
 ) TO app_runtime;
