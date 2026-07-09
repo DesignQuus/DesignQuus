@@ -33,7 +33,10 @@ GRANT USAGE ON SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 TO app_runtime;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA
@@ -47,7 +50,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 TO app_runtime;
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA
@@ -61,7 +67,10 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 TO app_runtime;
 
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA
@@ -75,7 +84,10 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 TO app_runtime;
 
 DO $$
@@ -91,7 +103,8 @@ BEGIN
         WHERE c.column_name = 'tenant_id'
           AND c.table_schema IN (
               'auth', 'project', 'document', 'model', 'compliance',
-              'calculation', 'approval', 'ops', 'audit', 'cad', 'catalog'
+              'calculation', 'approval', 'ops', 'audit', 'cad', 'catalog',
+              'workflow', 'bom', 'validation'
           )
     LOOP
         EXECUTE format(
@@ -114,7 +127,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_runtime;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA
@@ -128,7 +144,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 GRANT USAGE, SELECT ON SEQUENCES TO app_runtime;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA
@@ -142,7 +161,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA
     ops,
     audit,
     cad,
-    catalog
+    catalog,
+    workflow,
+    bom,
+    validation
 GRANT EXECUTE ON FUNCTIONS TO app_runtime;
 
 COMMIT;
