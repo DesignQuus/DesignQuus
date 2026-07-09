@@ -1,0 +1,182 @@
+name: Recovery Phase 4C
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/ai-hvac-production-hardening-v1.2-20260709
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recovery-phase4c-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backup-restore-certification:
+    name: Phase 4C Backup and Restore Certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      POSTGRES_DB: hvac
+      POSTGRES_USER: hvac
+      POSTGRES_PASSWORD: phase4c-recovery-password
+      GIT_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Prepare artifact directory
+        run: mkdir -p artifacts
+
+      - name: Start source PostgreSQL
+        run: docker compose up -d db
+
+      - name: Apply migrations
+        run: docker compose run --rm migrations
+
+      - name: Run source database certification
+        run: docker compose run --rm db-smoke
+
+      - name: Load recovery fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose run --rm db-smoke /bin/sh -c \
+            'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /app/scripts/recovery_fixture.sql'
+
+      - name: Capture source fingerprint and runtime versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/recovery_fingerprint.sql \
+            > artifacts/source-fingerprint.json
+          python -m json.tool artifacts/source-fingerprint.json
+
+          POSTGRES_VERSION="$(docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAtc 'SHOW server_version')"
+          POSTGIS_VERSION="$(docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAtc 'SELECT postgis_lib_version()')"
+          echo "POSTGRES_VERSION=${POSTGRES_VERSION}" >> "$GITHUB_ENV"
+          echo "POSTGIS_VERSION=${POSTGIS_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Create PostgreSQL logical backup and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              --format=custom --no-owner --no-privileges \
+            > artifacts/postgresql-backup.dump
+          test -s artifacts/postgresql-backup.dump
+          python scripts/build_recovery_manifest.py \
+            --backup artifacts/postgresql-backup.dump \
+            --fingerprint artifacts/source-fingerprint.json \
+            --output artifacts/postgresql-backup-manifest.json
+
+      - name: Mutate source state after backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f - \
+            < scripts/recovery_destructive_mutation.sql
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/recovery_fingerprint.sql \
+            > artifacts/mutated-fingerprint.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          source = json.loads(Path('artifacts/source-fingerprint.json').read_text())
+          mutated = json.loads(Path('artifacts/mutated-fingerprint.json').read_text())
+          assert source != mutated, 'source mutation did not change fingerprint'
+          print('RECOVERY_SOURCE_MUTATION_VERIFIED=PASSED')
+          PY
+
+      - name: Destroy source PostgreSQL volume
+        run: docker compose down -v --remove-orphans
+
+      - name: Start clean PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose up -d db
+          for attempt in $(seq 1 60); do
+            if docker compose exec -T db \
+              pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs --no-color db
+          exit 1
+
+      - name: Restore backup into clean PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+              --exit-on-error --no-owner --no-privileges \
+            < artifacts/postgresql-backup.dump
+
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f - \
+            < database/migrations/023_security_runtime_role.sql
+
+      - name: Capture restored fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAt -v ON_ERROR_STOP=1 -f - \
+            < scripts/recovery_fingerprint.sql \
+            > artifacts/restored-fingerprint.json
+          python -m json.tool artifacts/restored-fingerprint.json
+
+      - name: Verify PostgreSQL backup and restore
+        run: |
+          python scripts/verify_recovery_restore.py \
+            --source artifacts/source-fingerprint.json \
+            --mutated artifacts/mutated-fingerprint.json \
+            --restored artifacts/restored-fingerprint.json \
+            --backup artifacts/postgresql-backup.dump \
+            --manifest artifacts/postgresql-backup-manifest.json \
+            --output artifacts/postgresql-restore-report.json
+
+      - name: Run object-storage backup and restore drill
+        run: |
+          python scripts/object_storage_recovery_probe.py \
+            --work-dir /tmp/ai-hvac-object-recovery \
+            --artifacts-dir artifacts
+
+      - name: Upload recovery certification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hvac-v12-phase4c-recovery-artifacts
+          path: artifacts/
+          if-no-files-found: warn
+
+      - name: Recovery diagnostics
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --no-color || true
+          find artifacts -maxdepth 2 -type f -print || true
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v --remove-orphans || true
