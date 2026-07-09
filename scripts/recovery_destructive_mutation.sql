@@ -1,0 +1,21 @@
+\set ON_ERROR_STOP on
+
+DELETE FROM ops.dead_letter_jobs
+WHERE tenant_id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+DELETE FROM ops.outbox_events
+WHERE tenant_id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+DELETE FROM ops.idempotency_records
+WHERE tenant_id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+DELETE FROM ops.retry_policies
+WHERE tenant_id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+DELETE FROM project.projects
+WHERE tenant_id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+DELETE FROM auth.tenants
+WHERE id = '80000000-0000-7000-8000-000000000000'::uuid;
+
+SELECT 'RECOVERY_SOURCE_MUTATED' AS result;
