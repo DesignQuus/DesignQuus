@@ -1,0 +1,51 @@
+name: Reliability Phase 4B
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/ai-hvac-production-hardening-v1.2-20260709
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reliability-phase4b-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application-services:
+    name: Phase 4B Application Reliability Services
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.17.0"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Validate v1.2 Phase 4B contract
+        run: npm run validate:v12
+
+      - name: Run reliability unit tests
+        run: npm run test:reliability
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Dependency audit
+        run: npm audit --audit-level=low
