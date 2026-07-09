@@ -22,3 +22,4 @@
 023_security_runtime_role.sql
 024_reliability_recovery.sql
 025_reliability_recovery_rls.sql
+026_runtime_role_domain_completion.sql
