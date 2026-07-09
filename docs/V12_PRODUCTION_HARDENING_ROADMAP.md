@@ -69,7 +69,7 @@ Certification: `certification/PRODUCTION_HARDENING_V12_PHASE3.md`
 
 ## Phase 4 — Reliability and Recovery
 
-Status: **IN PROGRESS**
+Status: **PASSED**
 
 ### Phase 4A — Database Reliability Core
 
@@ -106,30 +106,59 @@ Certification: `certification/PRODUCTION_HARDENING_V12_PHASE4B.md`
 
 ### Phase 4C — Backup and Restore Recovery Certification
 
-Status: **IN PROGRESS**
+Status: **PASSED**
 
-Implementation scope:
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE4C.md`
 
-- PostgreSQL logical backup creation.
+- PostgreSQL custom-format logical backup.
 - SHA-256 backup checksum and metadata manifest.
 - Source-state mutation after backup.
-- Restore into a clean PostgreSQL database.
+- Source PostgreSQL volume destruction.
+- `template0` clean target database recreation.
+- Pre-restore PostGIS absence verification.
+- Exact `pg_restore --exit-on-error` recovery.
 - Pre-backup versus post-restore row-count verification.
 - Deterministic content checksum verification.
+- PostGIS geometry recovery probe.
 - Object-storage backup manifest and restore drill.
 - Recovery artifacts and certification record.
 
 ## Phase 5 — Performance and Release Certification
 
-Status: **PLANNED**
+Status: **IN PROGRESS**
 
-- API latency budgets.
+### Phase 5A — Performance Baselines
+
+Initial scope:
+
+- API latency budgets and percentile reporting.
+- Health/readiness concurrency baseline.
+- Authenticated reliability read/write baseline.
 - Concurrent drawing upload and review load tests.
 - Calculation and selection throughput tests.
 - Database connection-pool saturation tests.
+- Performance artifact generation.
+
+### Phase 5B — Deployment and Rollback
+
+Planned:
+
 - Production deployment checklist.
+- Version/build metadata verification.
+- Migration-forward deployment drill.
+- Deliberate release failure injection.
 - Rollback drill.
+- Post-rollback health and data-integrity verification.
+
+### Phase 5C — Final Release Certification
+
+Planned:
+
+- All prior phase certification aggregation.
+- Open defect gate.
+- Release manifest.
 - v1.2 production-readiness certificate.
+- Final PR readiness review.
 
 ## v1.2 Release Gates
 
@@ -149,5 +178,8 @@ A v1.2 release candidate must satisfy all of the following:
 12. Phase 4A database reliability certification passes.
 13. Phase 4B application reliability certification passes.
 14. Phase 4C backup and restore recovery certification passes.
-15. Production readiness defects are documented before certification.
-16. Certification success never auto-merges the branch.
+15. Phase 5 performance budgets pass.
+16. Deployment and rollback drill passes.
+17. Final production-readiness certificate is generated.
+18. Production readiness defects are documented before certification.
+19. Certification success never auto-merges the branch.
