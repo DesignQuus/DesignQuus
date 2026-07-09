@@ -29,6 +29,8 @@ def main() -> None:
     assert package["version"] == "1.2.0"
     assert api_package["version"] == "1.2.0"
     assert package["scripts"]["validate:v12"] == "python scripts/validate_v12.py"
+    assert package["scripts"]["test:reliability"]
+    assert api_package["scripts"]["test:reliability"]
 
     require_text(
         "apps/api/src/main.ts",
@@ -75,6 +77,7 @@ def main() -> None:
         "apps/api/src/app.module.ts",
         "SecurityModule",
         "ObservabilityModule",
+        "ReliabilityModule",
         "RequestObservabilityMiddleware",
         "RequestPolicyMiddleware",
         "forRoutes('*')",
@@ -150,6 +153,7 @@ def main() -> None:
         "SET LOCAL ROLE app_runtime",
         "app.tenant_id",
     )
+
     require_text(
         "database/migrations/023_security_runtime_role.sql",
         "CREATE ROLE app_runtime",
@@ -183,6 +187,92 @@ def main() -> None:
         "024_reliability_recovery.sql",
         "025_reliability_recovery_rls.sql",
     )
+
+    require_text(
+        "apps/api/src/reliability/retry-policy.ts",
+        "calculateRetryDelayMs",
+        "validateRetryPolicy",
+        "jitterRatio",
+    )
+    require_text(
+        "apps/api/src/reliability/idempotency.service.ts",
+        "createRequestFingerprint",
+        "sha256:",
+        "IDEMPOTENCY_FINGERPRINT_CONFLICT",
+        "IDEMPOTENCY_RECORD_NOT_FOUND",
+    )
+    require_text(
+        "apps/api/src/reliability/postgres-idempotency.repository.ts",
+        "ops.reserve_idempotency",
+        "COMPLETED",
+        "FAILED",
+    )
+    require_text(
+        "apps/api/src/reliability/outbox.service.ts",
+        "deterministicJitterUnit",
+        "calculateRetryDelayMs",
+        "RETRY_POLICY_NOT_FOUND",
+        "OUTBOX_EVENT_STATE_INVALID",
+    )
+    require_text(
+        "apps/api/src/reliability/postgres-outbox.repository.ts",
+        "ops.claim_outbox_events",
+        "ops.fail_outbox_event",
+        "PUBLISHED",
+    )
+    require_text(
+        "apps/api/src/reliability/dead-letter.service.ts",
+        "DEAD_LETTER_NOT_PENDING",
+        "newOutboxEventId",
+        "abandonedBy",
+    )
+    require_text(
+        "apps/api/src/reliability/postgres-dead-letter.repository.ts",
+        "ops.replay_dead_letter",
+        "ABANDONED",
+    )
+    require_text(
+        "apps/api/src/reliability/reliability.controller.ts",
+        "@Controller('reliability')",
+        "@Roles('ADMINISTRATOR')",
+        "request.identity.userId",
+        "dead-letters/:deadLetterId/replay",
+    )
+    require_text(
+        "apps/api/src/reliability/reliability.module.ts",
+        "IdempotencyService",
+        "OutboxService",
+        "DeadLetterService",
+        "PostgresIdempotencyRepository",
+        "PostgresOutboxRepository",
+        "PostgresDeadLetterRepository",
+    )
+    require_text(
+        "apps/api/test/jest-unit.json",
+        "src/reliability/**/*.spec.ts",
+        "ts-jest",
+    )
+    require_text(
+        "apps/api/src/reliability/retry-policy.spec.ts",
+        "exponential backoff",
+        "deterministic jitter",
+    )
+    require_text(
+        "apps/api/src/reliability/idempotency.service.spec.ts",
+        "same fingerprint",
+        "HTTP 409",
+    )
+    require_text(
+        "apps/api/src/reliability/outbox.service.spec.ts",
+        "deterministic failure transitions",
+        "PUBLISHING state",
+    )
+    require_text(
+        "apps/api/src/reliability/dead-letter.service.spec.ts",
+        "replays a pending",
+        "no longer pending",
+    )
+
     require_text(
         "scripts/tenant_isolation_test.sql",
         "TENANT_A_READ_ISOLATION_FAILED",
@@ -259,6 +349,9 @@ def main() -> None:
         "lease_recovery": True,
         "dead_letter_replay": True,
         "reliability_tenant_isolation": True,
+        "reliability_application_services": True,
+        "reliability_rbac_api": True,
+        "reliability_unit_tests": True,
         "compose_readiness_gate": True,
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
