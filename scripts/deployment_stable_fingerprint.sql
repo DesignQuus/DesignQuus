@@ -57,6 +57,47 @@ SELECT jsonb_build_object(
         FROM project.revisions r, target x
         WHERE r.tenant_id = x.tenant_id
     ),
+    'importJobCount', (
+        SELECT count(*)
+        FROM document.import_jobs j, target x
+        WHERE j.tenant_id = x.tenant_id
+    ),
+    'importJobChecksum', (
+        SELECT md5(coalesce(string_agg(
+            concat_ws('|',
+                j.id::text,
+                j.project_id::text,
+                j.project_revision_id::text,
+                j.source_file_version_id::text,
+                j.import_type,
+                j.status
+            ),
+            '||' ORDER BY j.id
+        ), ''))
+        FROM document.import_jobs j, target x
+        WHERE j.tenant_id = x.tenant_id
+    ),
+    'extractionCount', (
+        SELECT count(*)
+        FROM document.extractions e, target x
+        WHERE e.tenant_id = x.tenant_id
+    ),
+    'extractionChecksum', (
+        SELECT md5(coalesce(string_agg(
+            concat_ws('|',
+                e.id::text,
+                e.import_job_id::text,
+                e.object_type,
+                coalesce(e.raw_value, ''),
+                coalesce(e.normalized_value, ''),
+                e.confidence_score::text,
+                e.review_status
+            ),
+            '||' ORDER BY e.id
+        ), ''))
+        FROM document.extractions e, target x
+        WHERE e.tenant_id = x.tenant_id
+    ),
     'postgisAreaProbe', (
         SELECT ST_Area(
             ST_GeomFromText('POLYGON((0 0,8 0,8 4,0 4,0 0))')
