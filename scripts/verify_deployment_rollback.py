@@ -38,6 +38,8 @@ def main() -> None:
     parser.add_argument("--previous-health", required=True)
     parser.add_argument("--current-health", required=True)
     parser.add_argument("--rollback-health", required=True)
+    parser.add_argument("--previous-db-probe", required=True)
+    parser.add_argument("--rollback-db-probe", required=True)
     parser.add_argument("--forward-schema", required=True)
     parser.add_argument("--rollback-schema", required=True)
     parser.add_argument("--failure-status", required=True)
@@ -55,6 +57,8 @@ def main() -> None:
     previous_health = load_json(Path(args.previous_health))
     current_health = load_json(Path(args.current_health))
     rollback_health = load_json(Path(args.rollback_health))
+    previous_db_probe = load_json(Path(args.previous_db_probe))
+    rollback_db_probe = load_json(Path(args.rollback_db_probe))
     forward_schema = load_json(Path(args.forward_schema))
     rollback_schema = load_json(Path(args.rollback_schema))
     failure_status = int(load_text(Path(args.failure_status)))
@@ -84,11 +88,26 @@ def main() -> None:
     require_equal(current_health["buildSha"], git_sha, "current release build SHA")
     require_equal(rollback_health["status"], "ok", "rollback release health")
 
+    if previous_db_probe != rollback_db_probe:
+        raise AssertionError("previous release DB-backed API response changed after rollback")
+    if not isinstance(previous_db_probe, list) or len(previous_db_probe) != 1:
+        raise AssertionError(
+            f"previous release DB-backed probe expected one extraction, got {previous_db_probe!r}"
+        )
+    require_equal(
+        previous_db_probe[0].get("normalized_value")
+        or previous_db_probe[0].get("normalizedValue"),
+        "Stable Rollback Room",
+        "previous release DB-backed extraction value",
+    )
+
     if pre_forward != post_forward:
         raise AssertionError("stable data fingerprint changed after forward migration")
     if pre_forward != post_rollback:
         raise AssertionError("stable data fingerprint changed after application rollback")
     require_equal(float(post_rollback["postgisAreaProbe"]), 32.0, "post-rollback PostGIS probe")
+    require_equal(int(post_rollback["importJobCount"]), 1, "post-rollback import job count")
+    require_equal(int(post_rollback["extractionCount"]), 1, "post-rollback extraction count")
 
     require_true(forward_schema["runtimeDomainCompletionApplied"], "forward migration 026 applied")
     require_true(rollback_schema["runtimeDomainCompletionApplied"], "forward migration retained after rollback")
@@ -168,6 +187,12 @@ def main() -> None:
             "preForwardEqualsPostForward": True,
             "preForwardEqualsPostRollback": True,
             "postgisAreaProbe": float(post_rollback["postgisAreaProbe"]),
+            "importJobCount": int(post_rollback["importJobCount"]),
+            "extractionCount": int(post_rollback["extractionCount"]),
+        },
+        "previousApplicationCompatibility": {
+            "preForwardDbProbeEqualsPostRollbackDbProbe": True,
+            "dbBackedExtractionCount": len(previous_db_probe),
         },
         "schema": {
             "forward": forward_schema,
