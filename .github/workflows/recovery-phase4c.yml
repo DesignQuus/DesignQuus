@@ -126,14 +126,39 @@ jobs:
           docker compose logs --no-color db
           exit 1
 
-      - name: Restore backup into clean PostgreSQL
+      - name: Reset target database from template0
         shell: bash
         run: |
           set -euo pipefail
           docker compose exec -T db \
+            dropdb -U "$POSTGRES_USER" \
+              --maintenance-db=postgres \
+              --if-exists --force "$POSTGRES_DB"
+          docker compose exec -T db \
+            createdb -U "$POSTGRES_USER" \
+              --maintenance-db=postgres \
+              --template=template0 \
+              --owner="$POSTGRES_USER" \
+              "$POSTGRES_DB"
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -qAtc \
+              "SELECT count(*) FROM pg_extension WHERE extname = 'postgis'" \
+            > artifacts/pre-restore-postgis-extension-count.txt
+          test "$(tr -d '[:space:]' < artifacts/pre-restore-postgis-extension-count.txt)" = "0"
+
+      - name: Restore backup into template0-clean PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          docker compose exec -T db \
             pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
               --exit-on-error --no-owner --no-privileges \
-            < artifacts/postgresql-backup.dump
+            < artifacts/postgresql-backup.dump \
+            2>&1 | tee artifacts/pg-restore.log
+          RESTORE_STATUS=${PIPESTATUS[0]}
+          set -e
+          test "$RESTORE_STATUS" -eq 0
 
           docker compose exec -T db \
             psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f - \
@@ -179,6 +204,7 @@ jobs:
           docker compose ps || true
           docker compose logs --no-color || true
           find artifacts -maxdepth 2 -type f -print || true
+          test -f artifacts/pg-restore.log && cat artifacts/pg-restore.log || true
 
       - name: Cleanup
         if: always()
