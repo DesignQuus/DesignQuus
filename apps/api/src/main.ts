@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
+import { payloadErrorMiddleware } from './common/payload-error.middleware';
 import {
   requestIdMiddleware,
   REQUEST_ID_HEADER,
@@ -28,6 +29,7 @@ async function bootstrap(): Promise<void> {
       limit: process.env.JSON_BODY_LIMIT ?? '1mb',
     }),
   );
+  app.use(payloadErrorMiddleware);
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableShutdownHooks();
   app.enableCors({
