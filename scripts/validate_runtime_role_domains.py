@@ -23,15 +23,15 @@ def require_text(path: str, *needles: str) -> None:
 def main() -> None:
     require_text(
         "database/migrations/023_security_runtime_role.sql",
-        "workflow",
-        "bom",
-        "validation",
+        "CREATE ROLE app_runtime",
+        "NOSUPERUSER",
         "FORCE ROW LEVEL SECURITY",
         "GRANT SELECT, INSERT, UPDATE, DELETE",
     )
     require_text(
         "database/migrations/026_runtime_role_domain_completion.sql",
-        "GRANT USAGE ON SCHEMA",
+        "pg_namespace",
+        "target_schema",
         "workflow",
         "bom",
         "validation",
@@ -62,6 +62,7 @@ def main() -> None:
 
     summary = {
         "baseMigrationComplete": True,
+        "optionalDomainMigrationSchemaAware": True,
         "upgradeMigrationPresent": True,
         "workflowDomain": True,
         "bomDomain": True,
