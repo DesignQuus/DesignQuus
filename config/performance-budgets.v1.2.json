@@ -26,6 +26,13 @@
       "p99MsMax": 2000,
       "minThroughputRps": 15
     },
+    "reliability_write": {
+      "requests": 60,
+      "concurrency": 10,
+      "p95MsMax": 1200,
+      "p99MsMax": 2500,
+      "minThroughputRps": 10
+    },
     "db_pool_saturation": {
       "requests": 120,
       "concurrency": 50,
