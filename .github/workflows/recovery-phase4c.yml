@@ -163,6 +163,9 @@ jobs:
           docker compose exec -T db \
             psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f - \
             < database/migrations/023_security_runtime_role.sql
+          docker compose exec -T db \
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f - \
+            < database/migrations/026_runtime_role_domain_completion.sql
 
       - name: Capture restored fingerprint
         shell: bash
