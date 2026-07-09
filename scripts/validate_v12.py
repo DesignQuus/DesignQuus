@@ -33,6 +33,7 @@ def main() -> None:
     require_text(
         "apps/api/src/main.ts",
         "requestIdMiddleware",
+        "payloadErrorMiddleware",
         "HttpExceptionFilter",
         "validateSecurityEnvironment",
         "bodyParser: false",
@@ -46,6 +47,13 @@ def main() -> None:
         "x-request-id",
         "randomUUID",
         "response.setHeader",
+    )
+    require_text(
+        "apps/api/src/common/payload-error.middleware.ts",
+        "PAYLOAD_TOO_LARGE",
+        "security.payload_too_large",
+        "response.status(413)",
+        "requestId",
     )
     require_text(
         "apps/api/src/common/tenant.ts",
@@ -205,6 +213,7 @@ def main() -> None:
         "cross_tenant_certification": True,
         "production_secret_blocker": True,
         "json_payload_limit": True,
+        "stable_payload_error_envelope": True,
         "application_rate_limit": True,
         "cyclonedx_sbom": True,
         "container_critical_vulnerability_gate": True,
