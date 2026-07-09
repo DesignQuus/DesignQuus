@@ -12,6 +12,7 @@ import { RuleStudioModule } from './modules/rule-studio/rule-studio.module';
 import { SpaceVentilationModule } from './modules/space-ventilation/space-ventilation.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RequestObservabilityMiddleware } from './observability/request-observability.middleware';
+import { ReliabilityModule } from './reliability/reliability.module';
 import { RequestPolicyMiddleware } from './security/request-policy.middleware';
 import { SecurityModule } from './security/security.module';
 
@@ -21,6 +22,7 @@ import { SecurityModule } from './security/security.module';
     DatabaseModule,
     SecurityModule,
     ObservabilityModule,
+    ReliabilityModule,
     HealthModule,
     RuleStudioModule,
     CatalogImportModule,
