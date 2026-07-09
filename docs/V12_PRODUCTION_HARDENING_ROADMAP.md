@@ -50,27 +50,41 @@ Advanced observability extensions remain available for later hardening:
 
 ## Phase 3 — Security and Tenant Isolation
 
-Status: **IN PROGRESS**
+Status: **PASSED**
 
-Planned:
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE3.md`
 
-- Authentication boundary and identity claims contract.
-- RBAC roles for operator, engineer, approver, and administrator.
-- Automated cross-tenant isolation tests.
-- Rate limiting and payload-size policies.
-- Secret validation with production startup blockers.
-- SBOM and container vulnerability gates.
+- Trusted gateway authentication and verified identity claims.
+- RBAC roles for `OPERATOR`, `ENGINEER`, `APPROVER`, and `ADMINISTRATOR`.
+- Tenant identity resolved only from verified request identity.
+- Non-superuser PostgreSQL `app_runtime` role.
+- `SET LOCAL ROLE app_runtime` for tenant transactions.
+- Forced row-level security for tenant-owned tables.
+- Automated cross-tenant read and write isolation certification.
+- Production secret validation and insecure-startup blockers.
+- Explicit JSON payload-size policy and stable HTTP 413 envelope.
+- Application rate limiting and stable HTTP 429 envelope.
+- CycloneDX npm SBOM artifact generation.
+- API and Web container CRITICAL vulnerability gates.
 
 ## Phase 4 — Reliability and Recovery
 
-Status: **PLANNED**
+Status: **IN PROGRESS**
 
-- Durable job retry policy.
+Initial implementation scope:
+
+- Durable and versioned retry policy.
 - Dead-letter and replay workflow.
-- Idempotency-key contract for mutating APIs.
+- Idempotency-key state and fingerprint contract for mutating APIs.
 - Transactional outbox for cross-service events.
-- Object-storage backup and restore drill.
-- PostgreSQL backup/restore certification.
+- Concurrency-safe worker claims using `FOR UPDATE SKIP LOCKED`.
+- Tenant-isolated reliability tables and replay operations.
+
+Recovery certification scope:
+
+- PostgreSQL backup and restore drill.
+- Pre/post-restore checksum and row-count verification.
+- Object-storage backup manifest and restore drill.
 
 ## Phase 5 — Performance and Release Certification
 
@@ -98,5 +112,7 @@ A v1.2 release candidate must satisfy all of the following:
 8. Request ID propagation is verified end to end.
 9. Structured metrics and stable error envelopes are runtime verified.
 10. Cross-tenant isolation and RBAC gates pass.
-11. Production readiness defects are documented before certification.
-12. Certification success never auto-merges the branch.
+11. Payload, rate-limit, SBOM, and container vulnerability gates pass.
+12. Reliability and recovery certification passes.
+13. Production readiness defects are documented before certification.
+14. Certification success never auto-merges the branch.
