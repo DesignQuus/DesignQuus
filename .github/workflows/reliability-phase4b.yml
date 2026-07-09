@@ -39,7 +39,9 @@ jobs:
         run: npm install
 
       - name: Validate v1.2 Phase 4B contract
-        run: npm run validate:v12
+        run: |
+          npm run validate:v12
+          npm run validate:phase4b
 
       - name: Run reliability unit tests
         run: npm run test:reliability
