@@ -129,30 +129,44 @@ Status: **IN PROGRESS**
 
 ### Phase 5A — Performance Baselines
 
-Initial scope:
+Status: **PASSED**
 
-- API latency budgets and percentile reporting.
-- Health/readiness concurrency baseline.
-- Authenticated reliability read/write baseline.
-- Concurrent drawing upload and review load tests.
-- Calculation and selection throughput tests.
-- Database connection-pool saturation tests.
-- Performance artifact generation.
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE5A.md`
+
+- Versioned latency and throughput budgets.
+- p50, p95, and p99 latency reporting.
+- Zero-error performance gate.
+- Health and readiness concurrency baseline.
+- Authenticated reliability read and write baseline.
+- Database connection-pool saturation baseline.
+- Calculation throughput baseline.
+- ERV selection throughput baseline.
+- Drawing review read baseline.
+- Concurrent drawing upload baseline.
+- Database-side post-load evidence.
+- Performance certification artifacts.
 
 ### Phase 5B — Deployment and Rollback
 
-Planned:
+Status: **IN PROGRESS**
 
-- Production deployment checklist.
-- Version/build metadata verification.
-- Migration-forward deployment drill.
-- Deliberate release failure injection.
-- Rollback drill.
-- Post-rollback health and data-integrity verification.
+Implementation scope:
+
+- Versioned production deployment checklist.
+- Previous certified release (`v1.1`) image build.
+- v1.1 health and data-integrity baseline.
+- v1.2 forward migration deployment drill.
+- v1.2 version and Git SHA verification.
+- Deliberate failed-release injection.
+- Rollback to the previous certified release image.
+- Previous release startup against the forward-migrated database.
+- Post-rollback health verification.
+- Post-rollback stable-data fingerprint verification.
+- Deployment and rollback artifacts.
 
 ### Phase 5C — Final Release Certification
 
-Planned:
+Status: **PLANNED**
 
 - All prior phase certification aggregation.
 - Open defect gate.
@@ -178,8 +192,8 @@ A v1.2 release candidate must satisfy all of the following:
 12. Phase 4A database reliability certification passes.
 13. Phase 4B application reliability certification passes.
 14. Phase 4C backup and restore recovery certification passes.
-15. Phase 5 performance budgets pass.
-16. Deployment and rollback drill passes.
+15. Phase 5A performance budgets pass.
+16. Phase 5B deployment and rollback drill passes.
 17. Final production-readiness certificate is generated.
 18. Production readiness defects are documented before certification.
 19. Certification success never auto-merges the branch.
