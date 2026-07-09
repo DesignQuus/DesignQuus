@@ -20,3 +20,5 @@
 021_rule_studio_catalog_import.sql
 022_rule_studio_catalog_rls.sql
 023_security_runtime_role.sql
+024_reliability_recovery.sql
+025_reliability_recovery_rls.sql
