@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Validate Phase 4C recovery contract
+        run: python scripts/validate_phase4c.py
+
       - name: Prepare artifact directory
         run: mkdir -p artifacts
 
