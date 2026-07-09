@@ -103,7 +103,8 @@ INSERT INTO ops.outbox_events (
     state,
     retry_policy_key,
     attempt_count,
-    next_attempt_at
+    next_attempt_at,
+    published_at
 )
 VALUES
     (
@@ -117,7 +118,8 @@ VALUES
         'PENDING',
         'RECOVERY_RETRY',
         0,
-        now()
+        now(),
+        NULL
     ),
     (
         '80000000-0000-7000-8000-000000000031',
