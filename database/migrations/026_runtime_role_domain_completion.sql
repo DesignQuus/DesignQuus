@@ -1,28 +1,48 @@
 BEGIN;
 
-GRANT USAGE ON SCHEMA
-    workflow,
-    bom,
-    validation
-TO app_runtime;
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA
-    workflow,
-    bom,
-    validation
-TO app_runtime;
-
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA
-    workflow,
-    bom,
-    validation
-TO app_runtime;
-
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA
-    workflow,
-    bom,
-    validation
-TO app_runtime;
+DO $$
+DECLARE
+    target_schema text;
+BEGIN
+    FOREACH target_schema IN ARRAY ARRAY['workflow', 'bom', 'validation']
+    LOOP
+        IF EXISTS (
+            SELECT 1
+            FROM pg_namespace
+            WHERE nspname = target_schema
+        ) THEN
+            EXECUTE format(
+                'GRANT USAGE ON SCHEMA %I TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA %I TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO app_runtime',
+                target_schema
+            );
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT EXECUTE ON FUNCTIONS TO app_runtime',
+                target_schema
+            );
+        END IF;
+    END LOOP;
+END
+$$;
 
 DO $$
 DECLARE
@@ -67,23 +87,5 @@ BEGIN
     END LOOP;
 END
 $$;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA
-    workflow,
-    bom,
-    validation
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_runtime;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA
-    workflow,
-    bom,
-    validation
-GRANT USAGE, SELECT ON SEQUENCES TO app_runtime;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA
-    workflow,
-    bom,
-    validation
-GRANT EXECUTE ON FUNCTIONS TO app_runtime;
 
 COMMIT;
