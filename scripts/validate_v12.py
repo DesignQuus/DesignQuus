@@ -179,7 +179,7 @@ def main() -> None:
     )
     require_text(
         ".github/workflows/production-hardening-v12.yml",
-        "npm sbom --sbom-format cyclonedx",
+        "npm sbom --package-lock-only --sbom-format cyclonedx",
         "aquasecurity/trivy-action@v0.36.0",
         "Scan API image for critical vulnerabilities",
         "Scan Web image for critical vulnerabilities",
