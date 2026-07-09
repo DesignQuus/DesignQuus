@@ -71,20 +71,53 @@ Certification: `certification/PRODUCTION_HARDENING_V12_PHASE3.md`
 
 Status: **IN PROGRESS**
 
-Initial implementation scope:
+### Phase 4A — Database Reliability Core
 
-- Durable and versioned retry policy.
-- Dead-letter and replay workflow.
-- Idempotency-key state and fingerprint contract for mutating APIs.
-- Transactional outbox for cross-service events.
-- Concurrency-safe worker claims using `FOR UPDATE SKIP LOCKED`.
-- Tenant-isolated reliability tables and replay operations.
+Status: **PASSED**
 
-Recovery certification scope:
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE4A.md`
 
-- PostgreSQL backup and restore drill.
-- Pre/post-restore checksum and row-count verification.
+- Versioned retry policies.
+- Tenant-scoped idempotency records.
+- Transactional outbox tables and functions.
+- `FOR UPDATE SKIP LOCKED` worker claims.
+- Retry scheduling and maximum-attempt dead-letter transition.
+- Expired publishing-lease recovery.
+- Dead-letter storage and replay.
+- Forced RLS for reliability tables.
+- PostgreSQL reliability certification tests.
+
+### Phase 4B — Application Reliability Services
+
+Status: **PASSED**
+
+Certification: `certification/PRODUCTION_HARDENING_V12_PHASE4B.md`
+
+- Deterministic retry-delay calculator.
+- Canonical JSON SHA-256 request fingerprints.
+- Idempotency reserve, reuse, complete, fail, and lookup service.
+- Outbox enqueue, claim, publish, and failure-transition service.
+- Dead-letter list, replay, and abandon service.
+- RBAC-protected `/v1/reliability/*` APIs.
+- Verified identity actor attribution.
+- Reliability unit-test suite.
+- End-to-end HTTP reliability API certification.
+- Cross-tenant API isolation probes.
+
+### Phase 4C — Backup and Restore Recovery Certification
+
+Status: **IN PROGRESS**
+
+Implementation scope:
+
+- PostgreSQL logical backup creation.
+- SHA-256 backup checksum and metadata manifest.
+- Source-state mutation after backup.
+- Restore into a clean PostgreSQL database.
+- Pre-backup versus post-restore row-count verification.
+- Deterministic content checksum verification.
 - Object-storage backup manifest and restore drill.
+- Recovery artifacts and certification record.
 
 ## Phase 5 — Performance and Release Certification
 
@@ -113,6 +146,8 @@ A v1.2 release candidate must satisfy all of the following:
 9. Structured metrics and stable error envelopes are runtime verified.
 10. Cross-tenant isolation and RBAC gates pass.
 11. Payload, rate-limit, SBOM, and container vulnerability gates pass.
-12. Reliability and recovery certification passes.
-13. Production readiness defects are documented before certification.
-14. Certification success never auto-merges the branch.
+12. Phase 4A database reliability certification passes.
+13. Phase 4B application reliability certification passes.
+14. Phase 4C backup and restore recovery certification passes.
+15. Production readiness defects are documented before certification.
+16. Certification success never auto-merges the branch.
